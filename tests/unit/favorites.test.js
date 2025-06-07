@@ -1,5 +1,5 @@
 /* global describe, test, expect, beforeEach, jest */
-import { parsePath } from "../../src/popup/path-utils.js";
+import { parsePath } from "../../src/parse-path.js";
 import {
   loadFavorites,
   importFavoritesFromText,

@@ -15,9 +15,15 @@
           (part.startsWith("'") && part.endsWith("'")) ||
           (part.startsWith('"') && part.endsWith('"'))
         ) {
+          const quote = part[0];
           part = part.slice(1, -1);
+          const escRegex = new RegExp("\\\\" + quote, "g");
+          part = part.replace(escRegex, quote);
         }
-        if (/^\\d+$/.test(part)) {
+        if (
+          /^\\d+$/.test(part) &&
+          !(match[1].startsWith("'") || match[1].startsWith('"'))
+        ) {
           part = Number(part);
         }
       }
