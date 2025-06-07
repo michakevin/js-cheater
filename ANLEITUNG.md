@@ -2,7 +2,7 @@
 
 ## Funktionsweise
 
-Die Extension nutzt ein **Side Panel** für persistente Bedienung und verwendet BroadcastChannel-Kommunikation, um CSP-Probleme zu umgehen.
+Die Extension nutzt ein **Side Panel** für persistente Bedienung und verwendet postMessage-Kommunikation, um CSP-Probleme zu umgehen.
 
 ## Schritt-für-Schritt Anleitung
 
@@ -92,4 +92,4 @@ Die Extension nutzt ein **Side Panel** für persistente Bedienung und verwendet 
 
 ## CSP-Problem gelöst
 
-Die Extension injiziert keinen Code direkt, sondern verwendet BroadcastChannel für sichere Kommunikation zwischen Extension und Konsolen-Code.
+Die Extension injiziert keinen Code direkt, sondern verwendet postMessage für sichere Kommunikation zwischen Extension und Konsolen-Code.
