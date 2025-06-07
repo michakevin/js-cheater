@@ -43,13 +43,16 @@ Viele Spiele liefern strenge CSP‑Header. Daher wird der Scanner nicht automati
    cd js-cheater
    ```
 
-2. Erweiterungsseite öffnen
+2. `npm run build`   # generiert src/popup/scanner-code.js
+3. Erweiterungsseite öffnen
    - Chrome → `chrome://extensions/`
    - Firefox → `about:debugging#/runtime/this-firefox`
-3. Entwicklermodus aktivieren → **Entpackte Erweiterung laden** → Projektordner wählen
-4. 🎮 GamePad‑Icon erscheint in der Toolbar
+4. Entwicklermodus aktivieren → **Entpackte Erweiterung laden** → Projektordner wählen
+5. 🎮 GamePad‑Icon erscheint in der Toolbar
 
 ## Schnellstart
+
+> Vor dem Start einmalig `npm run build` ausführen.
 
 1. `python3 -m http.server 8000` starten
 2. `http://localhost:8000/test.html` öffnen
