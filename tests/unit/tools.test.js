@@ -22,6 +22,10 @@ describe("tools export/import", () => {
     };
   });
 
+  afterEach(() => {
+    delete globalThis.chrome;
+  });
+
   test("exportLocalStorage triggers download", async () => {
     send.mockResolvedValue({ foo: "bar" });
 

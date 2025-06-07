@@ -7,6 +7,10 @@ import {
   renameFavorite,
 } from "../../src/popup/favorites.js";
 
+afterEach(() => {
+  delete globalThis.chrome;
+});
+
 describe("parsePath", () => {
   test("parses dot notation paths", () => {
     expect(parsePath("foo.bar.baz")).toEqual(["foo", "bar", "baz"]);

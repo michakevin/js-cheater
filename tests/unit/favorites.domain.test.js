@@ -17,6 +17,10 @@ describe("domain isolated favorites", () => {
     localStorage.clear();
   });
 
+  afterEach(() => {
+    delete globalThis.chrome;
+  });
+
   test("loads favorites for the current domain only", async () => {
     const favsA = { 1: { id: "1", name: "favA", path: "a", value: 1 } };
     const favsB = { 2: { id: "2", name: "favB", path: "b", value: 2 } };

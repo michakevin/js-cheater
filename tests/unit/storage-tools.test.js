@@ -10,12 +10,7 @@ jest.mock("../../src/popup/messages.js", () => ({
   showSuccess: jest.fn(),
 }));
 
-// Mock chrome API
-globalThis.chrome = {
-  tabs: {
-    query: jest.fn(),
-  },
-};
+// chrome API will be mocked in beforeEach
 
 // Mock URL and Blob APIs
 globalThis.URL = class {
@@ -46,9 +41,17 @@ import { send } from "../../src/popup/communication.js";
 describe("storage tools export/import", () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    globalThis.chrome.tabs.query.mockResolvedValue([
-      { url: "https://example.com" },
-    ]);
+    globalThis.chrome = {
+      tabs: {
+        query: jest.fn().mockResolvedValue([
+          { url: "https://example.com" },
+        ]),
+      },
+    };
+  });
+
+  afterEach(() => {
+    delete globalThis.chrome;
   });
 
   test("exportLocalStorage triggers download", async () => {
