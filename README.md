@@ -93,11 +93,11 @@ Viele Spiele liefern strenge CSP‑Header. Daher wird der Scanner nicht automati
 Side Panel  ←→  Service Worker
       ↑                     ↓
    Content Script ←→ Scanner (Main World)
-                   (BroadcastChannel)
+                   (postMessage)
 ```
 
 - **Manifest V3** mit Service‑Worker
-- **BroadcastChannel** statt localStorage‑Polling
+- **postMessage** statt localStorage‑Polling
 - **Scanner** läuft im Haupt‑Kontext → Vollzugriff ohne CSP‑Probleme
 - **Service-Worker-Lebenszeit** – Chrome hält ihn am Leben, solange das Side Panel offen ist. In Firefox übernimmt die Sidebar diese Rolle. Für geplante Auto-Freeze-Features können `chrome.alarms` oder `offscreenDocuments` genutzt werden.
 
