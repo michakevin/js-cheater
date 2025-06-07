@@ -2,6 +2,10 @@
 import { jest } from "@jest/globals";
 
 describe("service worker panel behavior", () => {
+  afterEach(() => {
+    delete globalThis.chrome;
+  });
+
   describe("Chrome side panel", () => {
     beforeEach(() => {
       globalThis.chrome = {
