@@ -3,6 +3,12 @@
   "description": "Cheat-Engine-ähnlicher Scanner für Browser-RPGs",
   "version": "0.1.0",
   "manifest_version": 3,
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "js-cheater@example.com",
+      "strict_min_version": "109.0"
+    }
+  },
 
   "icons": {
     "16": "icons/icon128.png",
