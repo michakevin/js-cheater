@@ -1,0 +1,31 @@
+<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="60" fill="#2c3e50"/>
+  <circle cx="64" cy="64" r="55" fill="#34495e"/>
+  
+  <!-- GamePad body -->
+  <path d="M25 45 C20 45, 15 50, 15 55 L15 75 C15 85, 25 90, 35 85 L45 80 L83 80 L93 85 C103 90, 113 85, 113 75 L113 55 C113 50, 108 45, 103 45 Z" fill="#e74c3c"/>
+  
+  <!-- D-Pad (left) -->
+  <rect x="30" y="58" width="15" height="4" rx="2" fill="#ffffff"/>
+  <rect x="35.5" y="52.5" width="4" height="15" rx="2" fill="#ffffff"/>
+  
+  <!-- Action buttons (right) -->
+  <circle cx="85" cy="55" r="4" fill="#f39c12"/>
+  <circle cx="95" cy="60" r="4" fill="#e67e22"/>
+  <circle cx="85" cy="65" r="4" fill="#27ae60"/>
+  <circle cx="75" cy="60" r="4" fill="#3498db"/>
+  
+  <!-- Center elements -->
+  <rect x="50" y="50" width="8" height="3" rx="1.5" fill="#7f8c8d"/>
+  <rect x="70" y="50" width="8" height="3" rx="1.5" fill="#7f8c8d"/>
+  
+  <!-- Analog sticks -->
+  <circle cx="40" cy="75" r="6" fill="#34495e"/>
+  <circle cx="40" cy="75" r="4" fill="#7f8c8d"/>
+  <circle cx="88" cy="75" r="6" fill="#34495e"/>
+  <circle cx="88" cy="75" r="4" fill="#7f8c8d"/>
+  
+  <!-- Cheat indicator -->
+  <text x="64" y="95" text-anchor="middle" fill="#e74c3c" font-family="Arial, sans-serif" font-size="10" font-weight="bold">CHEAT</text>
+</svg>

@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cheat-Scanner</title>
+    <style>
+      body {
+        font:
+          14px/1.4 system-ui,
+          sans-serif;
+        width: 100%;
+        max-width: 400px;
+        padding: 0;
+        margin: 0;
+        box-sizing: border-box;
+      }
+
+      /* Tab Navigation */
+      .tab-nav {
+        display: flex;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e0e0e0;
+      }
+
+      .tab-button {
+        flex: 1;
+        padding: 12px 8px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-size: 13px;
+        font-weight: 500;
+        color: #666;
+        border-bottom: 3px solid transparent;
+        transition: all 0.2s;
+        margin-top: 0;
+        width: auto;
+      }
+
+      .tab-button:hover {
+        background: #e9ecef;
+        color: #333;
+      }
+
+      .tab-button.active {
+        color: #3498db;
+        border-bottom-color: #3498db;
+        background: white;
+      }
+
+      /* Tab Content */
+      .tab-content {
+        padding: 12px;
+        min-height: 300px;
+      }
+
+      .tab-panel {
+        display: none;
+      }
+
+      .tab-panel.active {
+        display: block;
+      }
+
+      input,
+      select,
+      button {
+        width: 100%;
+        margin-top: 6px;
+        box-sizing: border-box;
+      }
+
+      #hits {
+        max-height: 160px;
+        overflow-y: auto;
+        margin-top: 10px;
+        font-size: 12px;
+        list-style: none;
+        padding: 0;
+      }
+
+      #hits li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 8px;
+        margin: 2px 0;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        background: #f9f9f9;
+      }
+
+      #hits li:hover {
+        background: #e9e9e9;
+      }
+
+      .hit-info {
+        flex: 1;
+        cursor: pointer;
+        font-size: 11px;
+      }
+
+      .save-btn {
+        background: #f39c12;
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        margin-left: 8px;
+        margin-top: 0;
+        width: auto;
+        flex-shrink: 0;
+      }
+
+      .freeze-btn {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        margin-left: 4px;
+        margin-top: 0;
+        width: auto;
+        flex-shrink: 0;
+      }
+
+      .save-btn:hover {
+        background: #e67e22;
+      }
+
+      /* Favorites Table */
+      .favorites-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+
+      .favorites-table th,
+      .favorites-table td {
+        padding: 8px 4px;
+        border-bottom: 1px solid #eee;
+        text-align: left;
+        vertical-align: middle;
+      }
+
+      .favorites-table th {
+        background: #f8f9fa;
+        font-weight: 600;
+        color: #666;
+        font-size: 11px;
+      }
+
+      .favorites-table input {
+        margin: 0;
+        padding: 4px;
+        font-size: 11px;
+        width: 70px;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+      }
+
+      .favorites-table input:focus {
+        outline: none;
+        border-color: #3498db;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+
+      .update-btn {
+        background: #27ae60;
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        margin-left: 4px;
+        margin-top: 0;
+        width: auto;
+        flex-shrink: 0;
+      }
+
+      .update-btn:hover {
+        background: #219a52;
+      }
+
+      .delete-btn {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 3px;
+        cursor: pointer;
+        font-size: 12px;
+        margin-left: 4px;
+        margin-top: 0;
+        width: auto;
+        flex-shrink: 0;
+      }
+
+      .delete-btn:hover {
+        background: #c0392b;
+      }
+
+      .no-favorites {
+        text-align: center;
+        color: #666;
+        font-style: italic;
+        padding: 20px;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      #scannerUI {
+        display: none;
+      }
+
+      #setupSection {
+        text-align: center;
+        padding: 20px 10px;
+      }
+
+      #setupSection h3 {
+        margin: 0 0 15px 0;
+        color: #333;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: #1e1e1e;
+          color: #f0f0f0;
+        }
+        .tab-nav {
+          background: #2b2b2b;
+          border-bottom-color: #555;
+        }
+        .tab-button {
+          color: #ccc;
+        }
+        .tab-button:hover {
+          background: #444;
+          color: #fff;
+        }
+        .tab-button.active {
+          background: #1e1e1e;
+          color: #4dabf7;
+          border-bottom-color: #4dabf7;
+        }
+        #hits li {
+          border-color: #555;
+          background: #2a2a2a;
+        }
+        #hits li:hover {
+          background: #3a3a3a;
+        }
+        .favorites-table th {
+          background: #2b2b2b;
+          color: #ccc;
+        }
+        #instructions {
+          background: #534b32 !important;
+          border-color: #705b36 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Setup Section: Nur sichtbar bis Scanner geladen ist -->
+    <div id="setupSection">
+      <div style="padding: 12px">
+        <h3>🎮 JS-Cheater Setup</h3>
+        <p style="font-size: 12px; color: #666; margin-bottom: 15px">
+          Zuerst muss der Scanner-Code in die Browser-Konsole geladen werden.
+        </p>
+
+        <button
+          id="inject"
+          style="
+            background: #e74c3c;
+            color: white;
+            font-size: 16px;
+            padding: 12px;
+          "
+        >
+          📋 Scanner-Code kopieren
+        </button>
+
+        <div
+          id="instructions"
+          style="
+            display: none;
+            margin: 15px 0;
+            padding: 10px;
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            font-size: 11px;
+            text-align: left;
+          "
+        >
+          <strong>Anleitung:</strong><br />
+          1. Öffne Developer Tools (F12)<br />
+          2. Gehe zur "Console" / "Konsole"<br />
+          3. Füge den kopierten Code ein (Ctrl+V)<br />
+          4. Drücke Enter<br />
+          5. Die Buttons erscheinen automatisch
+        </div>
+      </div>
+    </div>
+
+    <!-- Main UI: Tab-System -->
+    <div id="scannerUI">
+      <!-- Tab Navigation -->
+      <div class="tab-nav">
+        <button class="tab-button active" data-tab="search">🔍 Suche</button>
+        <button class="tab-button" data-tab="favorites">⭐ Favoriten</button>
+        <button class="tab-button" data-tab="tools">🛠 Tools</button>
+      </div>
+
+      <!-- Tab Content -->
+      <div class="tab-content">
+        <!-- Search Tab -->
+        <div id="searchTab" class="tab-panel active">
+          <label>Wert suchen / verfeinern:</label>
+          <select id="searchType">
+            <option value="value">Nach Wert</option>
+            <option value="name">Nach Name</option>
+          </select>
+          <input id="value" placeholder='z. B. 123 oder "gold"' />
+
+          <!-- Initial State: Nur erster Scan -->
+          <div id="initialScanGroup">
+            <button id="start">🔍 Erster Scan</button>
+          </div>
+
+          <!-- After Scan State: Verfeinern + Neue Suche -->
+          <div id="refineScanGroup" style="display: none">
+            <button id="refine" style="background: #27ae60; color: white">
+              🔬 Verfeinern
+            </button>
+            <button id="newSearch" style="background: #3498db; color: white">
+              🆕 Neue Suche
+            </button>
+          </div>
+
+          <ul id="hits"></ul>
+        </div>
+
+        <!-- Favorites Tab -->
+        <div id="favoritesTab" class="tab-panel">
+          <div
+            class="favorites-actions"
+            style="display: flex; gap: 6px; margin-bottom: 8px"
+          >
+            <button id="exportFavorites" style="width: 50%">📤 Export</button>
+            <button id="importFavorites" style="width: 50%">📥 Import</button>
+            <input
+              id="importFavoritesFile"
+              type="file"
+              accept="application/json"
+              style="display: none"
+            />
+          </div>
+          <div id="favoritesContent">
+            <div class="no-favorites">
+              📝 Keine Favoriten gespeichert.<br />
+              <small>Speichere Variablen im Such-Tab mit dem 💾 Button.</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tools Tab -->
+        <div id="toolsTab" class="tab-panel">
+          <!-- Speicherstände Group -->
+          <div style="margin-bottom: 20px">
+            <h3
+              style="
+                margin: 0 0 8px 0;
+                font-size: 14px;
+                color: #333;
+                font-weight: 600;
+                border-bottom: 1px solid #e0e0e0;
+                padding-bottom: 4px;
+              "
+            >
+              💾 Speicherstände
+            </h3>
+            <div style="display: flex; gap: 6px">
+              <button id="exportLocalStorage" style="width: 50%">
+                📤 Export
+              </button>
+              <button id="importLocalStorage" style="width: 50%">
+                📥 Import
+              </button>
+              <input
+                id="importLocalStorageFile"
+                type="file"
+                accept="application/json"
+                style="display: none"
+              />
+            </div>
+          </div>
+
+          <!-- Placeholder for future tool groups -->
+          <!-- Future tools will be added here in separate groups -->
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

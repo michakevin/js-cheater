@@ -1,0 +1,14 @@
+# Node / Editor
+node_modules/
+dist/
+.DS_Store
+.vscode/
+
+# Build
+src/popup/scanner-code.js
+
+# Test / Coverage
+test-results/
+
+# Build-Artefakte
+*.zip

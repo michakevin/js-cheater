@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>JS Cheater Test Page</title>
+  </head>
+  <body>
+    <h1>JS Cheater Test</h1>
+    <p>Diese Seite dient zum Testen der js-cheater Extension.</p>
+
+    <div
+      style="
+        border: 2px solid #333;
+        padding: 15px;
+        margin: 10px 0;
+        background: #f5f5f5;
+      "
+    >
+      <h2>🎮 Game Status (Live Updates)</h2>
+      <div
+        style="
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 10px;
+          margin: 10px 0;
+        "
+      >
+        <div>
+          <strong>Score:</strong>
+          <span id="score" style="color: #e74c3c; font-weight: bold">1337</span>
+        </div>
+        <div>
+          <strong>Lives:</strong>
+          <span id="lives" style="color: #3498db; font-weight: bold">3</span>
+        </div>
+        <div>
+          <strong>Gold:</strong>
+          <span id="gold" style="color: #f39c12; font-weight: bold">999</span>
+        </div>
+        <div>
+          <strong>Level:</strong>
+          <span id="level" style="color: #9b59b6; font-weight: bold">5</span>
+        </div>
+        <div>
+          <strong>Health:</strong>
+          <span id="health" style="color: #e67e22; font-weight: bold">100</span>
+        </div>
+        <div>
+          <strong>Mana:</strong>
+          <span id="mana" style="color: #1abc9c; font-weight: bold">50</span>
+        </div>
+        <div>
+          <strong>Random:</strong>
+          <span id="random" style="color: #2ecc71; font-weight: bold">0</span>
+        </div>
+      </div>
+
+      <div style="margin: 15px 0">
+        <button onclick="increaseScore()">Score +10</button>
+        <button onclick="loseLife()">Life -1</button>
+        <button onclick="addGold()">Gold +100</button>
+        <button onclick="levelUp()">Level Up</button>
+        <button onclick="takeDamage()">Take Damage (-10 HP)</button>
+        <button onclick="restoreMana()">Restore Mana (+25)</button>
+      </div>
+
+      <div
+        style="
+          margin: 15px 0;
+          padding: 10px;
+          background: #ecf0f1;
+          border-radius: 5px;
+        "
+      >
+        <h3>🎯 Test Instructions:</h3>
+        <ol>
+          <li>Suche nach einem Wert (z.B. <code>1337</code> für Score)</li>
+          <li>Klicke auf einen Button um den Wert zu ändern</li>
+          <li>Verfeinere die Suche mit dem neuen Wert</li>
+          <li>Klicke auf einen Treffer um ihn zu manipulieren</li>
+          <li>
+            "Random" findest du über den
+            <strong>Name</strong>-Scan mit <code>randomValue</code> und kannst ihn
+            per ❄️ Freeze-Button einfrieren.
+          </li>
+        </ol>
+      </div>
+    </div>
+
+    <script>
+      // Global variables for testing
+      window.gameScore = 1337;
+      window.playerLives = 3;
+      window.playerName = "Player";
+      window.playerGold = 999;
+      window.gameLevel = 5;
+      window.playerHealth = 100;
+      window.playerMana = 50;
+      window.randomValue = Math.floor(Math.random() * 1000);
+
+      // Nested object for advanced testing
+      window.gameState = {
+        player: {
+          stats: {
+            score: 1337,
+            lives: 3,
+            gold: 999,
+            health: 100,
+            mana: 50,
+          },
+          inventory: {
+            coins: 999,
+            gems: 42,
+          },
+        },
+        level: 5,
+        difficulty: "normal",
+        random: window.randomValue,
+      };
+
+      // Update display functions
+      function updateDisplay() {
+        document.getElementById("score").textContent = window.gameScore;
+        document.getElementById("lives").textContent = window.playerLives;
+        document.getElementById("gold").textContent = window.playerGold;
+        document.getElementById("level").textContent = window.gameLevel;
+        document.getElementById("health").textContent = window.playerHealth;
+        document.getElementById("mana").textContent = window.playerMana;
+        document.getElementById("random").textContent = window.randomValue;
+
+        // Sync with nested object
+        window.gameState.player.stats.score = window.gameScore;
+        window.gameState.player.stats.lives = window.playerLives;
+        window.gameState.player.stats.gold = window.playerGold;
+        window.gameState.player.stats.health = window.playerHealth;
+        window.gameState.player.stats.mana = window.playerMana;
+        window.gameState.level = window.gameLevel;
+        window.gameState.random = window.randomValue;
+      }
+
+      // Game actions
+      function increaseScore() {
+        window.gameScore += 10;
+        updateDisplay();
+        console.log("Score increased to", window.gameScore);
+      }
+
+      function loseLife() {
+        if (window.playerLives > 0) {
+          window.playerLives--;
+          updateDisplay();
+          console.log("Lives decreased to", window.playerLives);
+        }
+      }
+
+      function addGold() {
+        window.playerGold += 100;
+        window.gameState.player.inventory.coins += 100;
+        updateDisplay();
+        console.log("Gold increased to", window.playerGold);
+      }
+
+      function levelUp() {
+        window.gameLevel++;
+        updateDisplay();
+        console.log("Level increased to", window.gameLevel);
+      }
+
+      function takeDamage() {
+        if (window.playerHealth > 0) {
+          window.playerHealth = Math.max(0, window.playerHealth - 10);
+          updateDisplay();
+          console.log("Health decreased to", window.playerHealth);
+        }
+      }
+
+      function restoreMana() {
+        window.playerMana = Math.min(100, window.playerMana + 25);
+        updateDisplay();
+        console.log("Mana increased to", window.playerMana);
+      }
+
+      // Initialize display
+      updateDisplay();
+
+      console.log("🎮 Test page loaded with variables:", {
+        gameScore: window.gameScore,
+        playerLives: window.playerLives,
+        playerGold: window.playerGold,
+        gameLevel: window.gameLevel,
+        playerHealth: window.playerHealth,
+        playerMana: window.playerMana,
+        randomValue: window.randomValue,
+        gameState: window.gameState,
+      });
+
+      // Auto-update demo (optional)
+      setInterval(() => {
+        // Simulate slow health regeneration
+        if (window.playerHealth < 100 && Math.random() < 0.1) {
+          window.playerHealth = Math.min(100, window.playerHealth + 1);
+          updateDisplay();
+        }
+      }, 2000);
+
+      // Random value changes every second
+      setInterval(() => {
+        window.randomValue = Math.floor(Math.random() * 1000);
+        updateDisplay();
+      }, 1000);
+    </script>
+  </body>
+</html>
