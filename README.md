@@ -42,13 +42,19 @@ Viele Spiele liefern strenge CSP‑Header. Daher wird der Scanner nicht automati
    git clone https://github.com/<user>/js-cheater.git
    cd js-cheater
    ```
+2. Abhängigkeiten installieren
 
-2. `npm run build`   # generiert src/popup/scanner-code.js
-3. Erweiterungsseite öffnen
+   ```bash
+   npm install        # Abhängigkeiten installieren
+   npm run setup      # optional: Playwright-Browser laden
+   ```
+
+3. `npm run build`   # generiert src/popup/scanner-code.js
+4. Erweiterungsseite öffnen
    - Chrome → `chrome://extensions/`
    - Firefox → `about:debugging#/runtime/this-firefox`
-4. Entwicklermodus aktivieren → **Entpackte Erweiterung laden** → Projektordner wählen
-5. 🎮 GamePad‑Icon erscheint in der Toolbar
+5. Entwicklermodus aktivieren → **Entpackte Erweiterung laden** → Projektordner wählen
+6. 🎮 GamePad‑Icon erscheint in der Toolbar
 
 ## Schnellstart
 
