@@ -97,7 +97,8 @@ export function renderHits(list) {
 
   list.forEach((h, i) => {
     const li = document.createElement("li");
-    li.textContent = `[${i}] ${h.path} = ${safeStringify(h.value)}`;
+    const displayPath = h.path.replace(/^window\.globalThis\./, "");
+    li.textContent = `[${i}] ${displayPath} = ${safeStringify(h.value)}`;
     li.onclick = async () => {
       const value = prompt(`Neuer Wert für ${h.path}:`, h.value);
       if (value !== null) {
@@ -121,7 +122,8 @@ export function renderHitsWithSaveButtons(list) {
     const li = document.createElement("li");
     const hitInfo = document.createElement("div");
     hitInfo.className = "hit-info";
-    hitInfo.innerHTML = `[${i}] ${escapeHtml(h.path)} = ${escapeHtml(safeStringify(h.value))}`;
+    const displayPath = h.path.replace(/^window\.globalThis\./, "");
+    hitInfo.innerHTML = `[${i}] ${escapeHtml(displayPath)} = ${escapeHtml(safeStringify(h.value))}`;
 
     const saveBtn = document.createElement("button");
     saveBtn.className = "save-btn";

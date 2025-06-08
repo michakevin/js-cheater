@@ -68,6 +68,20 @@ describe("ui rendering", () => {
     expect(send).toHaveBeenCalledWith("unfreeze", { path: "foo" });
   });
 
+  test("renderHits trims window.globalThis prefix", () => {
+    const list = [{ path: "window.globalThis.foo", value: 1 }];
+    renderHits(list);
+    const li = document.querySelector("#hits li");
+    expect(li.textContent).toBe("[0] foo = 1");
+  });
+
+  test("renderHitsWithSaveButtons trims window.globalThis prefix", () => {
+    const list = [{ path: "window.globalThis.bar", value: 2 }];
+    renderHitsWithSaveButtons(list);
+    const info = document.querySelector("#hits .hit-info");
+    expect(info.innerHTML).toBe("[0] bar = 2");
+  });
+
   test("updateList fetches and displays hits with refine state", async () => {
     send.mockResolvedValue([{ path: "p", value: 1 }]);
     await updateList();
