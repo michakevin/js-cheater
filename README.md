@@ -134,6 +134,7 @@ npm run lint         # Prüft den Code-Stil mit ESLint und Prettier
 npm run format       # Formatiert den Code mit Prettier
 npm test             # Führt die Unit-Tests mit Jest aus
 npm run test:e2e     # Startet die Playwright-Tests (benötigt installierte Browser)
+# Vor dem Ausführen unbedingt `npm run setup` oder `npx playwright install` ausführen
 ```
 
 - Vor `npm test`, `npm run lint` oder `npm run format` unbedingt einmal `npm install` (oder `npm run setup`) ausführen.
