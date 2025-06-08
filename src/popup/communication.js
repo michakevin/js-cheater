@@ -23,6 +23,10 @@ export async function send(cmd, extra = {}) {
     console.log("Sending message:", { cmd, ...extra });
     const response = await chrome.tabs.sendMessage(tabId, { cmd, ...extra });
     console.log("Received response:", response);
+    if (response && response.timeout) {
+      showError("❌ Anfrage an Content Script dauerte zu lange.");
+      return null;
+    }
     return response;
   } catch (error) {
     console.error("Kommunikationsfehler:", error);

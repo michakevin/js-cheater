@@ -1,6 +1,10 @@
 /* global describe, test, expect, beforeEach, afterEach */
 import { jest } from "@jest/globals";
 
+jest.mock("../../src/popup/messages.js", () => ({
+  showError: jest.fn(),
+}));
+
 describe("communication send", () => {
   beforeEach(() => {
     jest.resetModules();
@@ -29,5 +33,16 @@ describe("communication send", () => {
     await send("ping");
     expect(chrome.tabs.query).not.toHaveBeenCalled();
     expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(5, { cmd: "ping" });
+  });
+
+  test("shows message on timeout", async () => {
+    const { send } = await import("../../src/popup/communication.js");
+    const { showError } = await import("../../src/popup/messages.js");
+    chrome.tabs.sendMessage.mockResolvedValue({ error: "Timeout", timeout: true });
+    const result = await send("start");
+    expect(showError).toHaveBeenCalledWith(
+      "❌ Anfrage an Content Script dauerte zu lange."
+    );
+    expect(result).toBeNull();
   });
 });
