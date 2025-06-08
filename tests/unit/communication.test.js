@@ -46,3 +46,39 @@ describe("communication send", () => {
     expect(result).toBeNull();
   });
 });
+
+describe("checkScannerStatus", () => {
+  beforeEach(() => {
+    jest.resetModules();
+    globalThis.chrome = {
+      tabs: {
+        query: jest.fn().mockResolvedValue([{ id: 1 }]),
+        sendMessage: jest.fn().mockResolvedValue({ scannerLoaded: true }),
+      },
+    };
+  });
+
+  afterEach(() => {
+    delete globalThis.chrome;
+  });
+
+  test("returns true when scanner is loaded", async () => {
+    const { checkScannerStatus } = await import("../../src/popup/communication.js");
+    const result = await checkScannerStatus();
+    expect(result).toBe(true);
+  });
+
+  test("returns false when scanner is not loaded", async () => {
+    const { checkScannerStatus } = await import("../../src/popup/communication.js");
+    chrome.tabs.sendMessage.mockResolvedValue({ scannerLoaded: false });
+    const result = await checkScannerStatus();
+    expect(result).toBe(false);
+  });
+
+  test("returns false on error", async () => {
+    const { checkScannerStatus } = await import("../../src/popup/communication.js");
+    chrome.tabs.sendMessage.mockRejectedValue(new Error("fail"));
+    const result = await checkScannerStatus();
+    expect(result).toBe(false);
+  });
+});
