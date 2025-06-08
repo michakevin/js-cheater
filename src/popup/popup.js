@@ -13,6 +13,13 @@ import { SCANNER_CODE } from "./scanner-code.js";
 let statusInterval;
 let statusFailures = 0;
 
+// Handlers are exported for unit testing. They are assigned once the
+// DOMContentLoaded handler runs and all required DOM elements exist.
+export let onInject;
+export let onStart;
+export let onRefine;
+export let onNewSearch;
+
 export function startConnectionMonitor() {
   clearInterval(statusInterval);
   statusFailures = 0;
@@ -64,7 +71,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   if (tab) setActiveTab(tab.id);
 
-  async function onInject() {
+  async function onInjectHandler() {
     try {
       await navigator.clipboard.writeText(SCANNER_CODE);
       startPolling();
@@ -87,8 +94,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
   }
+  onInject = onInjectHandler;
 
-  async function onStart() {
+  async function onStartHandler() {
     const type = searchTypeSelect.value;
     const raw = valueInput.value;
     const val = type === "value" ? tryParse(raw) : raw.trim();
@@ -113,8 +121,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
   }
+  onStart = onStartHandler;
 
-  async function onRefine() {
+  async function onRefineHandler() {
     const type = searchTypeSelect.value;
     const raw = valueInput.value;
     const val = type === "value" ? tryParse(raw) : raw.trim();
@@ -138,8 +147,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     }
   }
+  onRefine = onRefineHandler;
 
-  async function onNewSearch() {
+  async function onNewSearchHandler() {
     const type = searchTypeSelect.value;
     const raw = valueInput.value;
     const currentValue = type === "value" ? tryParse(raw) : raw.trim();
@@ -168,6 +178,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       valueInput.focus();
     }
   }
+  onNewSearch = onNewSearchHandler;
 
   // ensure old listeners are removed before adding new ones
   $("#inject").removeEventListener("click", onInject);
