@@ -24,7 +24,8 @@ export function safeStringify(value) {
   try {
     const json = JSON.stringify(value);
     return json === undefined ? String(value) : json;
-  } catch {
+  } catch (err) {
+    if (/circular/i.test(String(err))) return "[unserializable]";
     try {
       return String(value);
     } catch {
