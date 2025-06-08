@@ -72,9 +72,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (tab) setActiveTab(tab.id);
 
   async function onInjectHandler() {
+    let copied = false;
     try {
       await navigator.clipboard.writeText(SCANNER_CODE);
-      startPolling();
+      copied = true;
     } catch (error) {
       console.error("Copy failed:", error);
       try {
@@ -87,11 +88,28 @@ document.addEventListener("DOMContentLoaded", async () => {
         textarea.select();
         document.execCommand("copy");
         document.body.removeChild(textarea);
-        startPolling();
+        copied = true;
       } catch (err) {
         console.error("Fallback copy failed:", err);
         alert("❌ Kopieren fehlgeschlagen - Bitte manuell kopieren");
       }
+    }
+    try {
+      const [currTab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      if (currTab) {
+        await chrome.scripting.executeScript({
+          target: { tabId: currTab.id },
+          files: ["src/content.js"],
+        });
+      }
+    } catch (err) {
+      console.error("Content-script injection failed", err);
+    }
+    if (copied) {
+      startPolling();
     }
   }
   onInject = onInjectHandler;
