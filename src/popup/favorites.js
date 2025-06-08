@@ -2,6 +2,7 @@ import { showSuccess } from "./messages.js";
 import { send } from "./communication.js";
 import { escapeHtml } from "./utils.js";
 import { parsePath } from "./path-utils.js";
+import { loadFromStorage, saveToStorage } from "./storage-utils.js";
 
 let domainKeyPromise;
 export async function getDomainKey() {
@@ -27,12 +28,8 @@ async function getInputsKey() {
 }
 
 async function getFavorites() {
-  try {
-    const key = await getFavoritesKey();
-    return JSON.parse(localStorage.getItem(key) || "{}");
-  } catch (e) {
-    return {};
-  }
+  const key = await getFavoritesKey();
+  return loadFromStorage(key);
 }
 
 export async function exportFavorites() {
@@ -70,7 +67,7 @@ export async function importFavoritesFromText(text) {
       };
     });
     const key = await getFavoritesKey();
-    localStorage.setItem(key, JSON.stringify(favorites));
+    saveToStorage(key, favorites);
     loadFavorites();
     showSuccess("Favoriten importiert!");
   } catch (e) {
@@ -82,9 +79,9 @@ export async function importFavoritesFromText(text) {
 async function saveFavoriteInputValue(id, value) {
   try {
     const key = await getInputsKey();
-    const inputs = JSON.parse(localStorage.getItem(key) || "{}");
+    const inputs = loadFromStorage(key);
     inputs[id] = value;
-    localStorage.setItem(key, JSON.stringify(inputs));
+    saveToStorage(key, inputs);
   } catch (e) {
     console.error("Failed to save favorite input value:", e);
   }
@@ -93,9 +90,9 @@ async function saveFavoriteInputValue(id, value) {
 async function clearFavoriteInputValue(id) {
   try {
     const key = await getInputsKey();
-    const inputs = JSON.parse(localStorage.getItem(key) || "{}");
+    const inputs = loadFromStorage(key);
     delete inputs[id];
-    localStorage.setItem(key, JSON.stringify(inputs));
+    saveToStorage(key, inputs);
   } catch (e) {
     console.error("Failed to clear favorite input value:", e);
   }
@@ -105,7 +102,7 @@ async function deleteFavorite(id) {
   const favorites = await getFavorites();
   delete favorites[id];
   const key = await getFavoritesKey();
-  localStorage.setItem(key, JSON.stringify(favorites));
+  saveToStorage(key, favorites);
   await clearFavoriteInputValue(id);
   loadFavorites();
 }
@@ -125,7 +122,7 @@ async function updateFavorite(id, newValue) {
         favorite.value = newValue;
         favorites[id] = favorite;
         const key = await getFavoritesKey();
-        localStorage.setItem(key, JSON.stringify(favorites));
+        saveToStorage(key, favorites);
         loadFavorites();
       } else {
         const errorMsg =
@@ -147,7 +144,7 @@ export async function renameFavorite(id, newName) {
   favorite.name = newName;
   favorites[id] = favorite;
   const key = await getFavoritesKey();
-  localStorage.setItem(key, JSON.stringify(favorites));
+  saveToStorage(key, favorites);
   loadFavorites();
   showSuccess(`Name geändert zu "${newName}"`);
   return true;
@@ -164,7 +161,7 @@ export async function saveFavorite(path, value) {
   const id = Date.now().toString();
   favorites[id] = { id, name, path, value, savedAt: new Date().toISOString() };
   const key = await getFavoritesKey();
-  localStorage.setItem(key, JSON.stringify(favorites));
+  saveToStorage(key, favorites);
   showSuccess(`💾 "${name}" als Favorit gespeichert!`);
 
   if (
@@ -178,7 +175,7 @@ export async function saveFavorite(path, value) {
 
 export async function loadFavorites() {
   const favorites = await getFavorites();
-  const inputs = JSON.parse(localStorage.getItem(await getInputsKey()) || "{}");
+  const inputs = loadFromStorage(await getInputsKey());
   const favoritesContent = document.getElementById("favoritesContent");
 
   if (Object.keys(favorites).length === 0) {
