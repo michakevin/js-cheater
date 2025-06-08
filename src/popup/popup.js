@@ -1,5 +1,5 @@
 import { $, tryParse } from "./utils.js";
-import { send, checkScannerStatus } from "./communication.js";
+import { send, checkScannerStatus, setActiveTab } from "./communication.js";
 import {
   showSetupMode,
   showScannerMode,
@@ -33,6 +33,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   const valueInput = $("#value");
   const searchTypeSelect = $("#searchType");
   const hitsUl = $("#hits");
+
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (tab) setActiveTab(tab.id);
 
   async function onInject() {
     try {
