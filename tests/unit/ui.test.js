@@ -9,6 +9,10 @@ jest.mock("../../src/popup/favorites.js", () => ({
   saveFavorite: jest.fn(),
 }));
 
+jest.mock("../../src/popup/messages.js", () => ({
+  showError: jest.fn(),
+}));
+
 import {
   renderHits,
   renderHitsWithSaveButtons,
@@ -16,6 +20,7 @@ import {
 } from "../../src/popup/ui.js";
 import { send } from "../../src/popup/communication.js";
 import { saveFavorite } from "../../src/popup/favorites.js";
+import { showError } from "../../src/popup/messages.js";
 
 describe("ui rendering", () => {
   beforeEach(() => {
@@ -86,5 +91,17 @@ describe("ui rendering", () => {
     expect(document.getElementById("refineScanGroup").style.display).toBe(
       "none"
     );
+  });
+
+  test("updateList handles error object", async () => {
+    send.mockResolvedValue({ error: "bad" });
+    await updateList();
+    expect(showError).toHaveBeenCalledWith("❌ bad");
+  });
+
+  test("updateList handles unexpected response", async () => {
+    send.mockResolvedValue({ foo: 1 });
+    await updateList();
+    expect(showError).toHaveBeenCalledWith('⚠️ Unerwartete Antwort: {"foo":1}');
   });
 });
