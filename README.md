@@ -55,6 +55,7 @@ Viele Spiele liefern strenge CSP‑Header. Daher wird der Scanner nicht automati
    - Firefox → `about:debugging#/runtime/this-firefox`
 5. Entwicklermodus aktivieren → **Entpackte Erweiterung laden** → Projektordner wählen
 6. 🎮 GamePad‑Icon erscheint in der Toolbar
+7. Chrome meldet beim Laden möglicherweise `Unrecognized manifest key 'sidebar_action'`. Diese Warnung ist harmlos, da das Feld nur von Firefox genutzt wird.
 
 ## Schnellstart
 
@@ -145,6 +146,7 @@ npm run test:e2e     # Startet die Playwright-Tests (benötigt installierte Brow
 - **Manuelles Testen:** Die Erweiterung kann weiterhin als entpackte Erweiterung geladen werden (Chrome oder Firefox).
 - **Reload:** Nach Code-Änderungen die Erweiterung in `chrome://extensions/` bzw. `about:debugging` neu laden.
 - **Manifest:** Änderungen an `manifest.json` immer manuell prüfen, da sie nicht automatisch generiert werden.
+- **Hinweis:** Das Feld `sidebar_action` wird nur von Firefox verwendet. Chrome ignoriert es und zeigt beim Laden der Erweiterung lediglich die Warnung `Unrecognized manifest key 'sidebar_action'` an. Wer eine warnungsfreie Version bauen möchte, kann ein kleines Skript schreiben, das vor dem Packen eine manifest.json ohne dieses Feld erzeugt.
 
 **Tipp:**
 
