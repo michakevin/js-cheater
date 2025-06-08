@@ -50,6 +50,7 @@ beforeEach(async () => {
   global.alert = jest.fn();
   globalThis.chrome = {
     tabs: { query: jest.fn().mockResolvedValue([{ id: 1 }]) },
+    scripting: { executeScript: jest.fn().mockResolvedValue() },
   };
 
   const popup = await import("../../src/popup/popup.js");
@@ -76,6 +77,7 @@ describe("popup handlers", () => {
   test("onInject copies code", async () => {
     await onInject();
     expect(navigator.clipboard.writeText).toHaveBeenCalled();
+    expect(globalThis.chrome.scripting.executeScript).toHaveBeenCalled();
   });
 
   test("onStart sends start command and switches state", async () => {
