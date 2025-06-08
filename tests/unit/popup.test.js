@@ -19,11 +19,8 @@ jest.mock("../../src/popup/messages.js", () => ({
   showError: jest.fn(),
 }));
 
-import {
-  startPolling,
-  startConnectionMonitor,
-  stopConnectionMonitor,
-} from "../../src/popup/popup.js";
+import * as popup from "../../src/popup/popup.js";
+const { startPolling, startConnectionMonitor, stopConnectionMonitor } = popup;
 import { checkScannerStatus } from "../../src/popup/communication.js";
 import { showScannerMode, showSetupMode } from "../../src/popup/ui.js";
 import { showError } from "../../src/popup/messages.js";
@@ -54,6 +51,18 @@ describe("startPolling", () => {
     );
     expect(showScannerMode).not.toHaveBeenCalled();
     expect(document.getElementById("instructions").style.display).toBe("block");
+  });
+
+  test("scanner found quickly", async () => {
+    checkScannerStatus.mockResolvedValue(true);
+    const monitorSpy = jest.spyOn(popup, "startConnectionMonitor");
+    startPolling();
+
+    jest.advanceTimersByTime(500);
+    await Promise.resolve();
+
+    expect(showScannerMode).toHaveBeenCalledTimes(1);
+    expect(monitorSpy).toHaveBeenCalledTimes(1);
   });
 });
 
