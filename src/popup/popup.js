@@ -9,6 +9,7 @@ import {
 } from "./ui.js";
 import { showError } from "./messages.js";
 import { SCANNER_CODE } from "./scanner-code.js";
+import * as popupSelf from "./popup.js";
 
 let statusInterval;
 let statusFailures = 0;
@@ -20,7 +21,7 @@ export let onStart;
 export let onRefine;
 export let onNewSearch;
 
-export function startConnectionMonitor() {
+export let startConnectionMonitor = function startConnectionMonitor() {
   clearInterval(statusInterval);
   statusFailures = 0;
   statusInterval = setInterval(async () => {
@@ -33,7 +34,7 @@ export function startConnectionMonitor() {
       stopConnectionMonitor();
     }
   }, 5000);
-}
+};
 
 export function stopConnectionMonitor() {
   if (statusInterval) {
@@ -52,7 +53,7 @@ export function startPolling() {
       scannerFound = true;
       clearInterval(checkInterval);
       showScannerMode();
-      startConnectionMonitor();
+      popupSelf.startConnectionMonitor();
     }
   }, 500);
   setTimeout(() => {
@@ -214,7 +215,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scannerReady = await checkScannerStatus();
   if (scannerReady) {
     showScannerMode();
-    startConnectionMonitor();
+    popupSelf.startConnectionMonitor();
     await updateList();
   } else {
     showSetupMode();
