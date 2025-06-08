@@ -83,4 +83,16 @@ describe("content message handler", () => {
     listener({ cmd: "nope" }, null, sendResponse);
     expect(sendResponse).toHaveBeenCalledWith({ error: "Unknown command: nope" });
   });
+
+  test("sendCommand timeout returns indicator", async () => {
+    jest.useFakeTimers();
+    window.postMessage = jest.fn();
+    const sendResponse = jest.fn();
+    const ret = listener({ cmd: "start", value: 1 }, null, sendResponse);
+    expect(ret).toBe(true);
+    jest.advanceTimersByTime(10000);
+    await jest.runOnlyPendingTimersAsync();
+    expect(sendResponse).toHaveBeenCalledWith({ error: "Timeout", timeout: true });
+    jest.useRealTimers();
+  });
 });

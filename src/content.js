@@ -26,7 +26,7 @@
 
         setTimeout(() => {
           window.removeEventListener("message", cb);
-          resolve({ error: "Timeout" });
+          resolve({ error: "Timeout", timeout: true });
         }, 10000);
       });
     },
