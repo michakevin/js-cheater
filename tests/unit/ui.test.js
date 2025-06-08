@@ -68,6 +68,32 @@ describe("ui rendering", () => {
     expect(send).toHaveBeenCalledWith("unfreeze", { path: "foo" });
   });
 
+  test("renderHits trims window prefixes and sets tooltip", () => {
+    const list = [
+      { path: "window.globalThis.foo", value: 1 },
+      { path: "window.bar", value: 2 },
+    ];
+    renderHits(list);
+    const items = document.querySelectorAll("#hits li");
+    expect(items[0].textContent).toBe("[0] foo = 1");
+    expect(items[0].title).toBe("window.globalThis.foo");
+    expect(items[1].textContent).toBe("[1] bar = 2");
+    expect(items[1].title).toBe("window.bar");
+  });
+
+  test("renderHitsWithSaveButtons trims window prefixes and sets tooltip", () => {
+    const list = [
+      { path: "window.globalThis.baz", value: 3 },
+      { path: "window.qux", value: 4 },
+    ];
+    renderHitsWithSaveButtons(list);
+    const infos = document.querySelectorAll("#hits .hit-info");
+    expect(infos[0].innerHTML).toBe("[0] baz = 3");
+    expect(infos[0].title).toBe("window.globalThis.baz");
+    expect(infos[1].innerHTML).toBe("[1] qux = 4");
+    expect(infos[1].title).toBe("window.qux");
+  });
+
   test("updateList fetches and displays hits with refine state", async () => {
     send.mockResolvedValue([{ path: "p", value: 1 }]);
     await updateList();

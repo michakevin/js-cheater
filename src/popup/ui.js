@@ -12,6 +12,10 @@ import { showError } from "./messages.js";
 let favoritesListenerAdded = false;
 let toolsListenerAdded = false;
 
+function shortenPath(path) {
+  return path.replace(/^(?:window\.globalThis\.|window\.)/, "");
+}
+
 export function initTabs() {
   const tabButtons = document.querySelectorAll(".tab-button");
   const tabPanels = document.querySelectorAll(".tab-panel");
@@ -97,7 +101,9 @@ export function renderHits(list) {
 
   list.forEach((h, i) => {
     const li = document.createElement("li");
-    li.textContent = `[${i}] ${h.path} = ${safeStringify(h.value)}`;
+    const displayPath = shortenPath(h.path);
+    li.textContent = `[${i}] ${displayPath} = ${safeStringify(h.value)}`;
+    li.title = h.path;
     li.onclick = async () => {
       const value = prompt(`Neuer Wert für ${h.path}:`, h.value);
       if (value !== null) {
@@ -121,7 +127,9 @@ export function renderHitsWithSaveButtons(list) {
     const li = document.createElement("li");
     const hitInfo = document.createElement("div");
     hitInfo.className = "hit-info";
-    hitInfo.innerHTML = `[${i}] ${escapeHtml(h.path)} = ${escapeHtml(safeStringify(h.value))}`;
+    const displayPath = shortenPath(h.path);
+    hitInfo.innerHTML = `[${i}] ${escapeHtml(displayPath)} = ${escapeHtml(safeStringify(h.value))}`;
+    hitInfo.title = h.path;
 
     const saveBtn = document.createElement("button");
     saveBtn.className = "save-btn";
