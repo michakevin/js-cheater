@@ -19,9 +19,13 @@ jest.mock("../../src/popup/messages.js", () => ({
   showError: jest.fn(),
 }));
 
-import { startPolling } from "../../src/popup/popup.js";
+import {
+  startPolling,
+  startConnectionMonitor,
+  stopConnectionMonitor,
+} from "../../src/popup/popup.js";
 import { checkScannerStatus } from "../../src/popup/communication.js";
-import { showScannerMode } from "../../src/popup/ui.js";
+import { showScannerMode, showSetupMode } from "../../src/popup/ui.js";
 import { showError } from "../../src/popup/messages.js";
 
 describe("startPolling", () => {
@@ -50,5 +54,30 @@ describe("startPolling", () => {
     );
     expect(showScannerMode).not.toHaveBeenCalled();
     expect(document.getElementById("instructions").style.display).toBe("block");
+  });
+});
+
+describe("connection monitoring", () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    stopConnectionMonitor();
+    jest.useRealTimers();
+  });
+
+  test("fallback to setup mode after repeated failures", async () => {
+    checkScannerStatus.mockResolvedValue(false);
+    startConnectionMonitor();
+
+    jest.advanceTimersByTime(15000);
+    await Promise.resolve();
+
+    expect(showError).toHaveBeenCalledWith(
+      "Scanner-Verbindung verloren – bitte Code erneut einfügen"
+    );
+    expect(showSetupMode).toHaveBeenCalled();
   });
 });
