@@ -10,6 +10,32 @@ import {
 import { showError } from "./messages.js";
 import { SCANNER_CODE } from "./scanner-code.js";
 
+let statusInterval;
+let statusFailures = 0;
+
+export function startConnectionMonitor() {
+  clearInterval(statusInterval);
+  statusFailures = 0;
+  statusInterval = setInterval(async () => {
+    const ok = await checkScannerStatus();
+    if (ok) {
+      statusFailures = 0;
+    } else if (++statusFailures >= 3) {
+      showError("Scanner-Verbindung verloren – bitte Code erneut einfügen");
+      showSetupMode();
+      stopConnectionMonitor();
+    }
+  }, 5000);
+}
+
+export function stopConnectionMonitor() {
+  if (statusInterval) {
+    clearInterval(statusInterval);
+    statusInterval = null;
+  }
+  statusFailures = 0;
+}
+
 export function startPolling() {
   $("#instructions").style.display = "block";
   let scannerFound = false;
@@ -19,6 +45,7 @@ export function startPolling() {
       scannerFound = true;
       clearInterval(checkInterval);
       showScannerMode();
+      startConnectionMonitor();
     }
   }, 500);
   setTimeout(() => {
@@ -158,8 +185,10 @@ document.addEventListener("DOMContentLoaded", async () => {
   const scannerReady = await checkScannerStatus();
   if (scannerReady) {
     showScannerMode();
+    startConnectionMonitor();
     await updateList();
   } else {
     showSetupMode();
+    stopConnectionMonitor();
   }
 });
