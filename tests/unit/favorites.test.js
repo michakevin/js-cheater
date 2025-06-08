@@ -23,6 +23,19 @@ describe("parsePath", () => {
   test("handles escaped quotes inside brackets", () => {
     expect(parsePath("foo['ba\\'r']")).toEqual(["foo", "ba'r"]);
   });
+
+  test("parses mixed dot and bracket notation", () => {
+    expect(parsePath("foo['bar'].baz[0]")).toEqual(["foo", "bar", "baz", 0]);
+  });
+
+  test("handles escaped double quotes inside brackets", () => {
+    expect(parsePath('foo["ba\\"z"].qux')).toEqual(["foo", 'ba"z', "qux"]);
+  });
+
+  test("handles invalid or empty input gracefully", () => {
+    expect(parsePath("")).toEqual([]);
+    expect(parsePath("foo.bar.")).toEqual(["foo", "bar"]);
+  });
 });
 
 describe("loadFavorites", () => {
