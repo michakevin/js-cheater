@@ -142,6 +142,7 @@ npm run test:e2e     # Startet die Playwright-Tests (benötigt installierte Brow
 
 - **Build-Schritt:** `npm run build` generiert den String aus `src/scanner-source.js`.
 - **Scanner-Code bearbeiten:** Änderungen in `src/scanner-source.js` erfordern `npm run build`.
+- **Debug-Logs:** Ändere `DEBUG` in `src/debug.js` auf `true`, um zusätzliche Konsolenausgaben zu erhalten.
 - **Testen:** Unit-Tests mit `npm test`, E2E-Tests mit `npm run test:e2e`. Führe zuvor `npm install` oder `npm run setup` aus.
 - **Manuelles Testen:** Die Erweiterung kann weiterhin als entpackte Erweiterung geladen werden (Chrome oder Firefox).
 - **Reload:** Nach Code-Änderungen die Erweiterung in `chrome://extensions/` bzw. `about:debugging` neu laden.
