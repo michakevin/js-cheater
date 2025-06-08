@@ -116,4 +116,24 @@ describe("popup handlers", () => {
     expect(showInitialScanState).toHaveBeenCalled();
     expect(document.getElementById("hits").innerHTML).toContain("Erster Scan");
   });
+
+  test("onStart ohne Eingabe", async () => {
+    document.getElementById("value").value = "";
+    document.getElementById("searchType").value = "value";
+
+    await onStart();
+    expect(showError).toHaveBeenCalledWith("Bitte einen Wert eingeben");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  test("onRefine mit Fehlerantwort", async () => {
+    document.getElementById("value").value = "7";
+    document.getElementById("searchType").value = "value";
+    send.mockResolvedValue({ error: "fail" });
+
+    await onRefine();
+    await Promise.resolve();
+    expect(showError).toHaveBeenCalledWith("❌ fail");
+    expect(updateList).not.toHaveBeenCalled();
+  });
 });
