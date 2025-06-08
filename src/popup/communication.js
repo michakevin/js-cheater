@@ -1,17 +1,27 @@
 import { $ } from "./utils.js";
 import { showError } from "./messages.js";
 
+let activeTabId;
+
+export function setActiveTab(tabId) {
+  activeTabId = tabId;
+}
+
 export async function send(cmd, extra = {}) {
   try {
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      lastFocusedWindow: true,
-    });
-    if (!tab) {
-      throw new Error("Kein aktiver Tab gefunden");
+    let tabId = activeTabId;
+    if (!tabId) {
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        lastFocusedWindow: true,
+      });
+      if (!tab) {
+        throw new Error("Kein aktiver Tab gefunden");
+      }
+      tabId = tab.id;
     }
     console.log("Sending message:", { cmd, ...extra });
-    const response = await chrome.tabs.sendMessage(tab.id, { cmd, ...extra });
+    const response = await chrome.tabs.sendMessage(tabId, { cmd, ...extra });
     console.log("Received response:", response);
     return response;
   } catch (error) {
