@@ -1,5 +1,6 @@
 (() => {
-  console.log("[js-cheater] Content script loaded (postMessage Mode)");
+  const DEBUG = false;
+  if (DEBUG) console.log("[js-cheater] Content script loaded (postMessage Mode)");
 
   const REQ = "__jsCheaterRequest";
   const RES = "__jsCheaterResponse";
@@ -74,7 +75,7 @@
 
   // Message Handler
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    if (msg.cmd !== "test") {
+    if (DEBUG && msg.cmd !== "test") {
       console.log("[js-cheater] Received message:", msg);
     }
 
@@ -84,31 +85,31 @@
         break;
       case "start":
         API.start(msg.value).then((result) => {
-          console.log("[js-cheater] Start result:", result);
+          if (DEBUG) console.log("[js-cheater] Start result:", result);
           sendResponse(result);
         });
         return true;
       case "scanByName":
         API.scanByName(msg.value).then((result) => {
-          console.log("[js-cheater] scanByName result:", result);
+          if (DEBUG) console.log("[js-cheater] scanByName result:", result);
           sendResponse(result);
         });
         return true;
       case "refine":
         API.refine(msg.value).then((result) => {
-          console.log("[js-cheater] Refine result:", result);
+          if (DEBUG) console.log("[js-cheater] Refine result:", result);
           sendResponse(result);
         });
         return true;
       case "refineByName":
         API.refineByName(msg.value).then((result) => {
-          console.log("[js-cheater] refineByName result:", result);
+          if (DEBUG) console.log("[js-cheater] refineByName result:", result);
           sendResponse(result);
         });
         return true;
       case "list":
         API.list().then((result) => {
-          console.log("[js-cheater] List result:", result);
+          if (DEBUG) console.log("[js-cheater] List result:", result);
           sendResponse(result);
         });
         return true;
@@ -116,25 +117,25 @@
         // Check if it's a path-based poke (for favorites) or index-based poke (for search results)
         if (msg.path) {
           API.pokeByPath(msg.path, msg.value).then((result) => {
-            console.log("[js-cheater] PokeByPath result:", result);
+            if (DEBUG) console.log("[js-cheater] PokeByPath result:", result);
             sendResponse(result);
           });
         } else {
           API.poke(msg.idx, msg.value).then((result) => {
-            console.log("[js-cheater] Poke result:", result);
+            if (DEBUG) console.log("[js-cheater] Poke result:", result);
             sendResponse(result);
           });
         }
         return true;
       case "freeze":
         API.freezeByPath(msg.path, msg.value).then((result) => {
-          console.log("[js-cheater] Freeze result:", result);
+          if (DEBUG) console.log("[js-cheater] Freeze result:", result);
           sendResponse(result);
         });
         return true;
       case "unfreeze":
         API.unfreezeByPath(msg.path).then((result) => {
-          console.log("[js-cheater] Unfreeze result:", result);
+          if (DEBUG) console.log("[js-cheater] Unfreeze result:", result);
           sendResponse(result);
         });
         return true;
@@ -159,7 +160,7 @@
         break;
       case "test":
         API.test().then((result) => {
-          console.log("[js-cheater] Test result:", result);
+          if (DEBUG) console.log("[js-cheater] Test result:", result);
           sendResponse(result);
         });
         return true;

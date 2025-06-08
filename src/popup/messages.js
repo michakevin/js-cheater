@@ -1,4 +1,5 @@
 import { $, escapeHtml } from "./utils.js";
+import { DEBUG } from "../debug.js";
 
 export function showError(message) {
   const hitsUl = $("#hits");
@@ -11,6 +12,6 @@ export function showSuccess(message) {
   if (activeTab && activeTab.id === "searchTab") {
     hitsUl.innerHTML = `<li style='color: #27ae60;'>${escapeHtml(message)}</li>`;
   } else {
-    console.log("✅", message);
+    if (DEBUG) console.log("✅", message);
   }
 }

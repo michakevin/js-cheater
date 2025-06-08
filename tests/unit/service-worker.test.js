@@ -53,6 +53,16 @@ describe("service worker panel behavior", () => {
         }
       );
     });
+
+    test("opens panel when icon clicked", async () => {
+      await import("../../src/service-worker.js");
+      const listener =
+        globalThis.chrome.action.onClicked.addListener.mock.calls[0][0];
+      await listener({ id: 42, url: "https://example.com/" });
+      expect(globalThis.chrome.sidePanel.open).toHaveBeenCalledWith({
+        tabId: 42,
+      });
+    });
   });
 
   describe("Firefox sidebar fallback", () => {

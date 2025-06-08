@@ -1,5 +1,6 @@
 import { $ } from "./utils.js";
 import { showError } from "./messages.js";
+import { DEBUG } from "../debug.js";
 
 let activeTabId;
 
@@ -20,9 +21,9 @@ export async function send(cmd, extra = {}) {
       }
       tabId = tab.id;
     }
-    console.log("Sending message:", { cmd, ...extra });
+    if (DEBUG) console.log("Sending message:", { cmd, ...extra });
     const response = await chrome.tabs.sendMessage(tabId, { cmd, ...extra });
-    console.log("Received response:", response);
+    if (DEBUG) console.log("Received response:", response);
     if (response && response.timeout) {
       showError("❌ Anfrage an Content Script dauerte zu lange.");
       return null;

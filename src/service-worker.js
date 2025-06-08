@@ -1,5 +1,6 @@
 // src/service-worker.js
 // js-cheater – Background Service-Worker (Manifest V3)
+import { DEBUG } from "./debug.js";
 
 // Sets the side panel to open automatically when clicking the action icon.
 // Firefox does not support this API, so we guard it.
@@ -26,9 +27,9 @@ async function openPanel(tabId) {
 // Called when the extension is first installed or updated
 chrome.runtime.onInstalled.addListener(({ reason, previousVersion }) => {
   if (reason === "install") {
-    console.log("[js-cheater] Extension installed 🚀");
+    if (DEBUG) console.log("[js-cheater] Extension installed 🚀");
   } else if (reason === "update") {
-    console.log(`[js-cheater] Updated from ${previousVersion}`);
+    if (DEBUG) console.log(`[js-cheater] Updated from ${previousVersion}`);
   }
   enableSidePanelOnClick();
 });
@@ -41,7 +42,7 @@ chrome.action.onClicked.addListener(async (tab) => {
   if (!tab.id) return;
   try {
     await openPanel(tab.id);
-    console.log("[js-cheater] Side panel opened successfully");
+    if (DEBUG) console.log("[js-cheater] Side panel opened successfully");
   } catch (error) {
     console.error("[js-cheater] Failed to open side panel:", error);
   }
