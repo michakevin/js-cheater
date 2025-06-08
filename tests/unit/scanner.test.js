@@ -124,10 +124,16 @@ describe("list and helpers", () => {
     window.listVar = 55;
     delete window.__cheatScanner__;
 
+    window.DEBUG = true;
+
     const originalConsoleLog = console.log;
     console.log = jest.fn();
     eval(SCANNER_CODE);
     console.log = originalConsoleLog;
+  });
+
+  afterEach(() => {
+    delete window.DEBUG;
   });
 
   test("list returns path/value pairs", () => {

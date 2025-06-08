@@ -1,7 +1,8 @@
 import { parsePath } from "./parse-path.js";
 // JS-Cheater Scanner - Füge diesen Code in die Browser-Konsole ein
 (function () {
-  console.log("🎮 JS-Cheater Scanner wird geladen...");
+  const DEBUG = window.DEBUG || false;
+  if (DEBUG) console.log("🎮 JS-Cheater Scanner wird geladen...");
 
   // Path parsing utility function
 
@@ -98,10 +99,10 @@ import { parsePath } from "./parse-path.js";
     },
 
     scan: function (value) {
-      console.log("🔍 Scanning for:", value, "type:", typeof value);
+      if (DEBUG) console.log("🔍 Scanning for:", value, "type:", typeof value);
       this.hits = this.findAll(window, (v) => v === value);
-      console.log("✅ Found hits:", this.hits.length);
-      if (this.hits.length > 0) {
+      if (DEBUG) console.log("✅ Found hits:", this.hits.length);
+      if (DEBUG && this.hits.length > 0) {
         console.log("📍 First few hits:", this.hits.slice(0, 5));
       }
       return this.hits.length;
@@ -116,12 +117,12 @@ import { parsePath } from "./parse-path.js";
           return false;
         }
       });
-      console.log(`🔬 Refined from ${oldCount} to ${this.hits.length} hits`);
+      if (DEBUG) console.log(`🔬 Refined from ${oldCount} to ${this.hits.length} hits`);
       return this.hits.length;
     },
 
     scanByName: function (name) {
-      console.log("🔍 Scanning by name:", name);
+      if (DEBUG) console.log("🔍 Scanning by name:", name);
       this.hits = this.findAll(window, (val, k) => {
         // match key substring and ensure the value is primitive
         const matches = k.toLowerCase().includes(name.toLowerCase());
@@ -130,8 +131,8 @@ import { parsePath } from "./parse-path.js";
           (typeof val !== "object" && typeof val !== "function");
         return matches && isPrimitive;
       });
-      console.log("✅ Found hits:", this.hits.length);
-      if (this.hits.length > 0) {
+      if (DEBUG) console.log("✅ Found hits:", this.hits.length);
+      if (DEBUG && this.hits.length > 0) {
         console.log("📍 First few hits:", this.hits.slice(0, 5));
       }
       return this.hits.length;
@@ -153,9 +154,10 @@ import { parsePath } from "./parse-path.js";
           (typeof val !== "object" && typeof val !== "function");
         return matches && isPrimitive;
       });
-      console.log(
-        `🔬 Refined by name from ${oldCount} to ${this.hits.length} hits`
-      );
+      if (DEBUG)
+        console.log(
+          `🔬 Refined by name from ${oldCount} to ${this.hits.length} hits`
+        );
       return this.hits.length;
     },
 
@@ -171,7 +173,7 @@ import { parsePath } from "./parse-path.js";
           typeof rawValue === "function" ? rawValue.toString() : rawValue;
         return { path, value };
       });
-      console.table(result);
+      if (DEBUG) console.table(result);
       return result;
     },
 
@@ -183,21 +185,21 @@ import { parsePath } from "./parse-path.js";
       }
       const oldVal = hit.obj[hit.key];
       hit.obj[hit.key] = value;
-      console.log(`🎯 Changed ${hit.path}: ${oldVal} → ${value}`);
+      if (DEBUG) console.log(`🎯 Changed ${hit.path}: ${oldVal} → ${value}`);
       return true;
     },
 
     pokeByPath: function (path, value) {
       try {
-        console.log("🎯 pokeByPath called with:", path, "value:", value);
+        if (DEBUG) console.log("🎯 pokeByPath called with:", path, "value:", value);
 
         const pathParts = parsePath(path);
-        console.log("🎯 Path parts:", pathParts);
+        if (DEBUG) console.log("🎯 Path parts:", pathParts);
 
         let obj = window;
 
         for (let i = 1; i < pathParts.length - 1; i++) {
-          console.log("🎯 Navigating to: " + pathParts[i]);
+          if (DEBUG) console.log("🎯 Navigating to: " + pathParts[i]);
           obj = obj[pathParts[i]];
           if (obj === undefined || obj === null) {
             console.error("❌ Path not found at:", pathParts[i]);
@@ -209,9 +211,9 @@ import { parsePath } from "./parse-path.js";
         }
 
         const key = pathParts[pathParts.length - 1];
-        console.log("🎯 Final key:", key);
-        console.log("🎯 Target object:", obj);
-        console.log("🎯 Current value:", obj[key]);
+        if (DEBUG) console.log("🎯 Final key:", key);
+        if (DEBUG) console.log("🎯 Target object:", obj);
+        if (DEBUG) console.log("🎯 Current value:", obj[key]);
 
         if (!(key in obj)) {
           console.error("❌ Property not found:", key);
@@ -221,10 +223,11 @@ import { parsePath } from "./parse-path.js";
         const oldVal = obj[key];
         obj[key] = value;
 
-        console.log(
-          "🎯 Successfully changed " + path + ": " + oldVal + " → " + value
-        );
-        console.log("🎯 Verification - new value:", obj[key]);
+        if (DEBUG)
+          console.log(
+            "🎯 Successfully changed " + path + ": " + oldVal + " → " + value
+          );
+        if (DEBUG) console.log("🎯 Verification - new value:", obj[key]);
 
         return { success: true, oldValue: oldVal, newValue: value };
       } catch (error) {
@@ -260,7 +263,7 @@ import { parsePath } from "./parse-path.js";
         }, 100);
 
         this.frozen.set(path, { timer });
-        console.log("❄️ Frozen", path, "to", value);
+        if (DEBUG) console.log("❄️ Frozen", path, "to", value);
         return { success: true };
       } catch (error) {
         console.error("freezeByPath error", error);
@@ -273,7 +276,7 @@ import { parsePath } from "./parse-path.js";
       if (entry) {
         clearInterval(entry.timer);
         this.frozen.delete(path);
-        console.log("🧊 Unfrozen", path);
+        if (DEBUG) console.log("🧊 Unfrozen", path);
         return { success: true };
       }
       return { success: false, error: "Not frozen" };
@@ -281,12 +284,13 @@ import { parsePath } from "./parse-path.js";
 
     showHits: function () {
       if (this.hits.length === 0) {
-        console.log("📭 No hits found");
+        if (DEBUG) console.log("📭 No hits found");
         return;
       }
-      console.log(`📋 ${this.hits.length} hits:`);
+      if (DEBUG) console.log(`📋 ${this.hits.length} hits:`);
       this.hits.forEach((hit, i) => {
-        console.log(`[${i}] ${hit.path} = ${JSON.stringify(hit.obj[hit.key])}`);
+        if (DEBUG)
+          console.log(`[${i}] ${hit.path} = ${JSON.stringify(hit.obj[hit.key])}`);
       });
     },
 
@@ -357,7 +361,8 @@ import { parsePath } from "./parse-path.js";
     false
   );
 
-  console.log(
-    "🎮 JS-Cheater Scanner bereit! Verwende window.__cheatScanner__.scan(wert)"
-  );
+  if (DEBUG)
+    console.log(
+      "🎮 JS-Cheater Scanner bereit! Verwende window.__cheatScanner__.scan(wert)"
+    );
 })();
