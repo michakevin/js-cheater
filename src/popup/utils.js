@@ -25,10 +25,6 @@ export function safeStringify(value) {
     const json = JSON.stringify(value);
     return json === undefined ? String(value) : json;
   } catch {
-    try {
-      return String(value);
-    } catch {
-      return "[unserializable]";
-    }
+    return "[unserializable]";
   }
 }
