@@ -74,7 +74,9 @@
 
   // Message Handler
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    console.log("[js-cheater] Received message:", msg);
+    if (msg.cmd !== "test") {
+      console.log("[js-cheater] Received message:", msg);
+    }
 
     switch (msg.cmd) {
       case "ping":
