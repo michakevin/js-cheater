@@ -338,3 +338,6 @@ export function setupFavoritesEventListeners() {
     });
   }
 }
+
+// Export additional functions for unit tests
+export { updateFavorite, deleteFavorite };
