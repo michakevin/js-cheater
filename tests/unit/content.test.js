@@ -69,6 +69,50 @@ describe("content message handler", () => {
     expect(sendResponse).toHaveBeenCalledWith("scan-ok");
   });
 
+  test("poke triggers poke command and responds asynchronously", async () => {
+    const sendResponse = jest.fn();
+    const ret = listener(
+      { cmd: "poke", idx: 0, value: 42 },
+      null,
+      sendResponse
+    );
+    expect(ret).toBe(true);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sendResponse).toHaveBeenCalledWith("poke-ok");
+  });
+
+  test("pokeByPath triggers poke command and responds asynchronously", async () => {
+    const sendResponse = jest.fn();
+    const ret = listener(
+      { cmd: "poke", path: "window.score", value: 7 },
+      null,
+      sendResponse
+    );
+    expect(ret).toBe(true);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sendResponse).toHaveBeenCalledWith("poke-ok");
+  });
+
+  test("freeze triggers freeze command and responds asynchronously", async () => {
+    const sendResponse = jest.fn();
+    const ret = listener(
+      { cmd: "freeze", path: "window.score", value: 99 },
+      null,
+      sendResponse
+    );
+    expect(ret).toBe(true);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sendResponse).toHaveBeenCalledWith("freeze-ok");
+  });
+
+  test("unfreeze triggers unfreeze command and responds asynchronously", async () => {
+    const sendResponse = jest.fn();
+    const ret = listener({ cmd: "unfreeze", path: "window.score" }, null, sendResponse);
+    expect(ret).toBe(true);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sendResponse).toHaveBeenCalledWith("unfreeze-ok");
+  });
+
   test("getLocalStorage returns stored values", () => {
     localStorage.setItem("a", "1");
     localStorage.setItem("b", "2");
