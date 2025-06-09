@@ -122,6 +122,18 @@ describe("content message handler", () => {
     expect(sendResponse).toHaveBeenCalledWith({ a: "1", b: "2" });
   });
 
+  test("setLocalStorage stores values and responds", () => {
+    const sendResponse = jest.fn();
+    const ret = listener(
+      { cmd: "setLocalStorage", data: { c: "3" } },
+      null,
+      sendResponse
+    );
+    expect(ret).toBeUndefined();
+    expect(localStorage.getItem("c")).toBe("3");
+    expect(sendResponse).toHaveBeenCalledWith({ success: true });
+  });
+
   test("unknown command returns error", () => {
     const sendResponse = jest.fn();
     listener({ cmd: "nope" }, null, sendResponse);
