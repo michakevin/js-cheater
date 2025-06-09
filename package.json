@@ -13,13 +13,13 @@
     "setup": "npm install && npx playwright install"
   },
   "devDependencies": {
-    "@babel/preset-env": "^7.24.0",
-    "babel-jest": "^29.7.0",
-    "eslint": "^8.56.0",
+    "@babel/preset-env": "^7.27.2",
+    "babel-jest": "^30.0.0-beta.3",
+    "eslint": "^9.28.0",
     "jest": "^29.7.0",
     "jest-environment-jsdom": "^30.0.0-beta.3",
-    "playwright": "^1.42.1",
-    "prettier": "^3.1.1"
+    "playwright": "^1.52.0",
+    "prettier": "^3.5.3"
   },
   "type": "module"
 }
