@@ -13,6 +13,7 @@ Die Extension nutzt ein **Side Panel** für persistente Bedienung und verwendet 
   - Firefox: `about:debugging#/runtime/this-firefox`
 - Aktiviere "Developer mode" (Entwicklermodus)
 - Klicke "Load unpacked" und wähle den Projektordner (z.B. <Pfad zum Projektordner>/js-cheater)
+- **Nur Firefox:** `about:config` öffnen und `extensions.manifestV3.enabled` sowie `extensions.backgroundServiceWorker.enabled` auf `true` setzen. Danach Firefox neu starten.
 - Das 🎮 GamePad-Icon erscheint in der Browser-Toolbar
 
 ### 2. Test-Seite öffnen
