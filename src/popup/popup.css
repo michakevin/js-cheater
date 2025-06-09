@@ -272,4 +272,7 @@
           background: #534b32 !important;
           border-color: #705b36 !important;
         }
+        #setupSection h3 {
+          color: #ccc; 
+        }
       }
