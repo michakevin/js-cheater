@@ -73,99 +73,65 @@
     },
   };
 
+  const commandHandlers = {
+    ping: () => "pong",
+    start: (msg) => API.start(msg.value),
+    scanByName: (msg) => API.scanByName(msg.value),
+    refine: (msg) => API.refine(msg.value),
+    refineByName: (msg) => API.refineByName(msg.value),
+    list: () => API.list(),
+    poke: (msg) =>
+      msg.path ? API.pokeByPath(msg.path, msg.value) : API.poke(msg.idx, msg.value),
+    freeze: (msg) => API.freezeByPath(msg.path, msg.value),
+    unfreeze: (msg) => API.unfreezeByPath(msg.path),
+    getLocalStorage: () => {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        data[key] = localStorage.getItem(key);
+      }
+      return data;
+    },
+    setLocalStorage: (msg) => {
+      Object.entries(msg.data || {}).forEach(([k, v]) => {
+        try {
+          localStorage.setItem(k, v);
+        } catch (e) {
+          console.error("[js-cheater] Failed to set", k, e);
+        }
+      });
+      return { success: true };
+    },
+    test: () => API.test(),
+  };
+
   // Message Handler
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (DEBUG && msg.cmd !== "test") {
       console.log("[js-cheater] Received message:", msg);
     }
 
-    switch (msg.cmd) {
-      case "ping":
-        sendResponse("pong");
-        break;
-      case "start":
-        API.start(msg.value).then((result) => {
-          if (DEBUG) console.log("[js-cheater] Start result:", result);
-          sendResponse(result);
-        });
-        return true;
-      case "scanByName":
-        API.scanByName(msg.value).then((result) => {
-          if (DEBUG) console.log("[js-cheater] scanByName result:", result);
-          sendResponse(result);
-        });
-        return true;
-      case "refine":
-        API.refine(msg.value).then((result) => {
-          if (DEBUG) console.log("[js-cheater] Refine result:", result);
-          sendResponse(result);
-        });
-        return true;
-      case "refineByName":
-        API.refineByName(msg.value).then((result) => {
-          if (DEBUG) console.log("[js-cheater] refineByName result:", result);
-          sendResponse(result);
-        });
-        return true;
-      case "list":
-        API.list().then((result) => {
-          if (DEBUG) console.log("[js-cheater] List result:", result);
-          sendResponse(result);
-        });
-        return true;
-      case "poke":
-        // Check if it's a path-based poke (for favorites) or index-based poke (for search results)
-        if (msg.path) {
-          API.pokeByPath(msg.path, msg.value).then((result) => {
-            if (DEBUG) console.log("[js-cheater] PokeByPath result:", result);
-            sendResponse(result);
-          });
-        } else {
-          API.poke(msg.idx, msg.value).then((result) => {
-            if (DEBUG) console.log("[js-cheater] Poke result:", result);
-            sendResponse(result);
-          });
-        }
-        return true;
-      case "freeze":
-        API.freezeByPath(msg.path, msg.value).then((result) => {
-          if (DEBUG) console.log("[js-cheater] Freeze result:", result);
-          sendResponse(result);
-        });
-        return true;
-      case "unfreeze":
-        API.unfreezeByPath(msg.path).then((result) => {
-          if (DEBUG) console.log("[js-cheater] Unfreeze result:", result);
-          sendResponse(result);
-        });
-        return true;
-      case "getLocalStorage": {
-        const data = {};
-        for (let i = 0; i < localStorage.length; i++) {
-          const key = localStorage.key(i);
-          data[key] = localStorage.getItem(key);
-        }
-        sendResponse(data);
-        break;
-      }
-      case "setLocalStorage":
-        Object.entries(msg.data || {}).forEach(([k, v]) => {
-          try {
-            localStorage.setItem(k, v);
-          } catch (e) {
-            console.error("[js-cheater] Failed to set", k, e);
+    const handler = commandHandlers[msg.cmd];
+    if (!handler) {
+      sendResponse({ error: "Unknown command: " + msg.cmd });
+      return;
+    }
+
+    try {
+      const result = handler(msg);
+      if (result && typeof result.then === "function") {
+        result.then((res) => {
+          if (DEBUG && msg.cmd !== "test") {
+            console.log(`[js-cheater] ${msg.cmd} result:`, res);
           }
-        });
-        sendResponse({ success: true });
-        break;
-      case "test":
-        API.test().then((result) => {
-          if (DEBUG) console.log("[js-cheater] Test result:", result);
-          sendResponse(result);
+          sendResponse(res);
         });
         return true;
-      default:
-        sendResponse({ error: "Unknown command: " + msg.cmd });
+      }
+      sendResponse(result);
+    } catch (e) {
+      console.error(`[js-cheater] Handler for ${msg.cmd} failed:`, e);
+      sendResponse({ error: e.message });
     }
   });
 })();
