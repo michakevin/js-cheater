@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await send("start", { value: "__RESET_SCAN__" + Math.random() });
       showInitialScanState();
       hitsUl.innerHTML =
-        "<li style='color: #666;'>Gib einen Wert ein und klicke 'Erster Scan'</li>";
+        "<li class='text-secondary'>Gib einen Wert ein und klicke 'Erster Scan'</li>";
       valueInput.focus();
     }
   }

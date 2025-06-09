@@ -9,6 +9,11 @@
         box-sizing: border-box;
       }
 
+      /* Text colors */
+      .text-secondary {
+        color: #666;
+      }
+
       /* Tab Navigation */
       .tab-nav {
         display: flex;
@@ -232,6 +237,9 @@
         body {
           background: #1e1e1e;
           color: #f0f0f0;
+        }
+        .text-secondary {
+          color: #ccc;
         }
         .tab-nav {
           background: #2b2b2b;

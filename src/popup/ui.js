@@ -53,7 +53,7 @@ export function showScannerMode() {
   showError("✅ Scanner erfolgreich geladen!");
   setTimeout(() => {
     $("#hits").innerHTML =
-      "<li style='color: #666;'>Gib einen Wert ein und klicke 'Erster Scan'</li>";
+      "<li class='text-secondary'>Gib einen Wert ein und klicke 'Erster Scan'</li>";
   }, 2000);
   setTimeout(() => $("#value")?.focus(), 100);
   showInitialScanState();
@@ -91,7 +91,7 @@ export function renderHits(list) {
   const hitsUl = $("#hits");
   hitsUl.textContent = "";
   if (!list || list.length === 0) {
-    hitsUl.innerHTML = "<li style='color: #666;'>Keine Treffer gefunden</li>";
+    hitsUl.innerHTML = "<li class='text-secondary'>Keine Treffer gefunden</li>";
     return;
   }
 
@@ -114,7 +114,7 @@ export function renderHitsWithSaveButtons(list) {
   const hitsUl = $("#hits");
   hitsUl.textContent = "";
   if (!list || list.length === 0) {
-    hitsUl.innerHTML = "<li style='color: #666;'>Keine Treffer gefunden</li>";
+    hitsUl.innerHTML = "<li class='text-secondary'>Keine Treffer gefunden</li>";
     return;
   }
 

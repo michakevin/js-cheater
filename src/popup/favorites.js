@@ -205,7 +205,7 @@ export async function loadFavorites() {
           (fav) => `
         <tr>
           <td class="favorite-name" data-id="${fav.id}" title="${escapeHtml(fav.path)}" style="max-width: 80px; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">${escapeHtml(fav.name)}</td>
-          <td style="font-weight: bold; color: #2c3e50;">${escapeHtml(JSON.stringify(fav.value))}</td>
+          <td style="font-weight: bold;">${escapeHtml(JSON.stringify(fav.value))}</td>
           <td><input type="text" id="newValue_${fav.id}" placeholder="Neuer Wert..." value="${inputs[fav.id] || ""}" /></td>
           <td>
             <div class="action-buttons">

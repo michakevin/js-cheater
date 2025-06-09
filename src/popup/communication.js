@@ -48,7 +48,7 @@ export async function checkScannerStatus() {
     if (result && result.scannerLoaded) {
       return true;
     }
-  } catch (e) {
+  } catch {
     // Scanner nicht verfügbar
   }
   return false;
