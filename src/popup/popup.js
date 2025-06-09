@@ -64,6 +64,22 @@ export function startPolling() {
   }, 30000);
 }
 
+async function runSearch({ cmd, value }) {
+  const result = await send(cmd, { value });
+  if (result !== null) {
+    if (typeof result === "object") {
+      if (result.error) {
+        showError(`❌ ${result.error}`);
+      } else {
+        showError(`⚠️ Unerwartete Antwort: ${JSON.stringify(result)}`);
+      }
+      return null;
+    }
+    return result;
+  }
+  return null;
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const valueInput = $("#value");
   const searchTypeSelect = $("#searchType");
@@ -125,19 +141,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     showError("Scanne...");
     const cmd = type === "value" ? "start" : "scanByName";
-    const result = await send(cmd, { value: val });
+    const result = await runSearch({ cmd, value: val });
     if (result !== null) {
-      if (typeof result === "object") {
-        if (result.error) {
-          showError(`❌ ${result.error}`);
-        } else {
-          showError(`⚠️ Unerwartete Antwort: ${JSON.stringify(result)}`);
-        }
-      } else {
-        showError(`✅ ${result} Treffer gefunden`);
-        showRefineScanState();
-        setTimeout(updateList, 100);
-      }
+      showError(`✅ ${result} Treffer gefunden`);
+      showRefineScanState();
+      setTimeout(updateList, 100);
     }
   }
   onStart = onStartHandler;
@@ -152,18 +160,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
     showError("Verfeinere...");
     const cmd = type === "value" ? "refine" : "refineByName";
-    const result = await send(cmd, { value: val });
+    const result = await runSearch({ cmd, value: val });
     if (result !== null) {
-      if (typeof result === "object") {
-        if (result.error) {
-          showError(`❌ ${result.error}`);
-        } else {
-          showError(`⚠️ Unerwartete Antwort: ${JSON.stringify(result)}`);
-        }
-      } else {
-        showError(`🔬 ${result} Treffer nach Verfeinerung`);
-        setTimeout(updateList, 100);
-      }
+      showError(`🔬 ${result} Treffer nach Verfeinerung`);
+      setTimeout(updateList, 100);
     }
   }
   onRefine = onRefineHandler;
@@ -175,19 +175,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (currentValue !== "") {
       showError("Neue Suche wird gestartet...");
       const cmd = type === "value" ? "start" : "scanByName";
-      const result = await send(cmd, { value: currentValue });
+      const result = await runSearch({ cmd, value: currentValue });
       if (result !== null) {
-        if (typeof result === "object") {
-          if (result.error) {
-            showError(`❌ ${result.error}`);
-          } else {
-            showError(`⚠️ Unerwartete Antwort: ${JSON.stringify(result)}`);
-          }
-        } else {
-          showError(`✅ ${result} Treffer gefunden`);
-          showRefineScanState();
-          setTimeout(updateList, 100);
-        }
+        showError(`✅ ${result} Treffer gefunden`);
+        showRefineScanState();
+        setTimeout(updateList, 100);
       }
     } else {
       await send("start", { value: "__RESET_SCAN__" + Math.random() });
