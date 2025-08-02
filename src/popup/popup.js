@@ -117,10 +117,26 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentWindow: true,
       });
       if (currTab) {
-        await chrome.scripting.executeScript({
-          target: { tabId: currTab.id },
-          files: ["src/content.js"],
-        });
+        if (chrome.scripting?.executeScript) {
+          await chrome.scripting.executeScript({
+            target: { tabId: currTab.id },
+            files: ["src/content.js"],
+          });
+        } else if (chrome.tabs?.executeScript) {
+          await new Promise((resolve, reject) => {
+            chrome.tabs.executeScript(
+              currTab.id,
+              { file: "src/content.js" },
+              () => {
+                if (chrome.runtime.lastError) {
+                  reject(chrome.runtime.lastError);
+                } else {
+                  resolve();
+                }
+              }
+            );
+          });
+        }
       }
     } catch (err) {
       console.error("Content-script injection failed", err);
