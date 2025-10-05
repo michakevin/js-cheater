@@ -9,7 +9,7 @@
     "build": "node scripts/build-scanner.mjs",
     "build:extensions": "node scripts/build-extensions.mjs",
     "test": "npm run build && jest",
-    "test:unit": "jest",
+    "test:unit": "npm run build && jest",
     "test:e2e": "npm run build && playwright test",
     "setup": "npm install && npx playwright install"
   },
