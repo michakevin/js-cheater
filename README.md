@@ -50,13 +50,14 @@ Viele Spiele liefern strenge CSP‑Header. Daher wird der Scanner nicht automati
    ```
 
 3. `npm run build`   # generiert src/popup/scanner-code.js
-4. Erweiterungsseite öffnen
+4. `npm run build:extensions`   # erstellt dist/mv2 und dist/mv3 als ladbare Pakete
+5. Erweiterungsseite öffnen
    - Chrome → `chrome://extensions/`
    - Firefox → `about:debugging#/runtime/this-firefox`
-5. Entwicklermodus aktivieren → **Entpackte Erweiterung laden** → Projektordner wählen
-6. **Nur Firefox:** In `about:config` die Flags `extensions.manifestV3.enabled` und `extensions.backgroundServiceWorker.enabled` auf `true` setzen und Firefox neu starten.
-7. 🎮 GamePad‑Icon erscheint in der Toolbar
-8. Chrome meldet beim Laden möglicherweise `Unrecognized manifest key 'sidebar_action'`. Diese Warnung ist harmlos, da das Feld nur von Firefox genutzt wird.
+6. Entwicklermodus aktivieren → **Entpackte Erweiterung laden** → Projektordner wählen
+7. **Nur Firefox:** In `about:config` die Flags `extensions.manifestV3.enabled` und `extensions.backgroundServiceWorker.enabled` auf `true` setzen und Firefox neu starten.
+8. 🎮 GamePad‑Icon erscheint in der Toolbar
+9. Chrome meldet beim Laden möglicherweise `Unrecognized manifest key 'sidebar_action'`. Diese Warnung ist harmlos, da das Feld nur von Firefox genutzt wird.
 
 ## Schnellstart
 
