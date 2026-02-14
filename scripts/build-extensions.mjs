@@ -14,7 +14,7 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 const distDir = resolve(projectRoot, "dist");
-const manifestPath = resolve(projectRoot, "manifest.json");
+const baseManifestPath = resolve(projectRoot, "manifest.chrome.json");
 const debugPath = resolve(projectRoot, "src/debug.js");
 const mv2TemplatePath = resolve(__dirname, "templates/background-mv2.js");
 
@@ -133,7 +133,7 @@ async function main() {
   await ensureScannerBuild();
   await resetDist();
 
-  const baseManifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  const baseManifest = JSON.parse(await readFile(baseManifestPath, "utf8"));
   const debugSource = await readFile(debugPath, "utf8");
   const debugMatch = debugSource.match(/DEBUG\s*=\s*([^;]+);/);
   const debugValue = debugMatch ? debugMatch[1].trim() : "false";

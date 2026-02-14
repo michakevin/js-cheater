@@ -134,7 +134,7 @@ js-cheater/
 ```bash
 npm install          # Installiert alle Abhängigkeiten
 npm run setup        # Lädt zusätzlich die Playwright-Browser herunter
-npm run lint         # Prüft den Code-Stil mit ESLint und Prettier
+npm run lint         # Prüft den Code-Stil mit ESLint
 npm run format       # Formatiert den Code mit Prettier
 npm test             # Führt die Unit-Tests mit Jest aus
 npm run test:e2e     # Startet die Playwright-Tests (benötigt installierte Browser)

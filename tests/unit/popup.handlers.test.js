@@ -89,7 +89,7 @@ describe("popup handlers", () => {
     await onInject();
     expect(globalThis.chrome.tabs.executeScript).toHaveBeenCalledWith(1, {
       file: "src/content.js",
-    });
+    }, expect.any(Function));
   });
 
   test("onStart sends start command and switches state", async () => {

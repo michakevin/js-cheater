@@ -124,17 +124,29 @@ document.addEventListener("DOMContentLoaded", async () => {
           });
         } else if (chrome.tabs?.executeScript) {
           await new Promise((resolve, reject) => {
-            chrome.tabs.executeScript(
-              currTab.id,
-              { file: "src/content.js" },
-              () => {
-                if (chrome.runtime.lastError) {
-                  reject(chrome.runtime.lastError);
-                } else {
-                  resolve();
-                }
-              },
-            );
+            let settled = false;
+            const settle = (error = null) => {
+              if (settled) return;
+              settled = true;
+              if (error) {
+                reject(error);
+              } else {
+                resolve();
+              }
+            };
+
+            try {
+              const maybePromise = chrome.tabs.executeScript(
+                currTab.id,
+                { file: "src/content.js" },
+                () => settle(chrome.runtime?.lastError ?? null),
+              );
+              if (maybePromise && typeof maybePromise.then === "function") {
+                maybePromise.then(() => settle()).catch((error) => settle(error));
+              }
+            } catch (error) {
+              settle(error);
+            }
           });
         }
       }
