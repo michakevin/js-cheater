@@ -2,24 +2,24 @@
   "name": "js-cheater",
   "description": "Cheat-Engine-ähnlicher Scanner für Browser-RPGs",
   "version": "0.1.0",
-  "manifest_version": 3,
+  "manifest_version": 2,
   "browser_specific_settings": {
     "gecko": {
       "id": "js-cheater@example.com",
       "strict_min_version": "109.0"
     }
   },
-
   "icons": {
     "16": "icons/icon128.png",
     "32": "icons/icon128.png",
     "48": "icons/icon128.png",
     "128": "icons/icon128.png"
   },
-
-  "permissions": ["activeTab", "scripting", "storage", "sidePanel", "tabs"],
-  "host_permissions": ["<all_urls>"],
-
+  "permissions": ["activeTab", "storage", "tabs", "<all_urls>"],
+  "background": {
+    "scripts": ["src/background.js"],
+    "persistent": false
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
@@ -27,18 +27,8 @@
       "run_at": "document_idle"
     }
   ],
-
-  "action": {
+  "browser_action": {
     "default_title": "Aktiviere JS-Cheater für diese Site",
-    "default_icon": {
-      "16": "icons/icon128.png",
-      "32": "icons/icon128.png",
-      "48": "icons/icon128.png",
-      "128": "icons/icon128.png"
-    }
-  },
-  "side_panel": {
-    "default_path": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon128.png",
       "32": "icons/icon128.png",
@@ -56,11 +46,5 @@
       "128": "icons/icon128.png"
     }
   },
-  "background": { "service_worker": "src/service-worker.js" },
-  "web_accessible_resources": [
-    {
-      "resources": ["src/content.js"],
-      "matches": ["<all_urls>"]
-    }
-  ]
+  "web_accessible_resources": ["src/content.js"]
 }
