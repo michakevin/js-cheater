@@ -133,7 +133,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 } else {
                   resolve();
                 }
-              }
+              },
             );
           });
         }
