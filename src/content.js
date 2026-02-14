@@ -6,18 +6,15 @@
   const RES = "__jsCheaterResponse";
 
   const API = {
-    async sendCommand(command, data = {}) {
+    async sendCommand(command, data = {}, timeoutMs = 20000) {
       const id =
         "req_" + Date.now() + "_" + Math.random().toString(36).slice(2);
 
       return new Promise((resolve) => {
+        let timerId;
         const cb = (ev) => {
-          if (
-            ev.source !== window ||
-            ev.data?.type !== RES ||
-            ev.data.id !== id
-          )
-            return;
+          if (ev.data?.type !== RES || ev.data.id !== id) return;
+          clearTimeout(timerId);
           window.removeEventListener("message", cb);
           resolve(ev.data.result);
         };
@@ -25,10 +22,10 @@
         window.addEventListener("message", cb, false);
         window.postMessage({ type: REQ, id, command, data }, "*");
 
-        setTimeout(() => {
+        timerId = setTimeout(() => {
           window.removeEventListener("message", cb);
           resolve({ error: "Timeout", timeout: true });
-        }, 10000);
+        }, timeoutMs);
       });
     },
 
@@ -69,7 +66,8 @@
     },
 
     async test() {
-      return this.sendCommand("test");
+      // Short timeout for setup polling, but not too short for slower pages.
+      return this.sendCommand("test", {}, 1500);
     },
   };
 
@@ -120,12 +118,17 @@
     try {
       const result = handler(msg);
       if (result && typeof result.then === "function") {
-        result.then((res) => {
-          if (DEBUG && msg.cmd !== "test") {
-            console.log(`[js-cheater] ${msg.cmd} result:`, res);
-          }
-          sendResponse(res);
-        });
+        result
+          .then((res) => {
+            if (DEBUG && msg.cmd !== "test") {
+              console.log(`[js-cheater] ${msg.cmd} result:`, res);
+            }
+            sendResponse(res);
+          })
+          .catch((error) => {
+            console.error(`[js-cheater] Async handler for ${msg.cmd} failed:`, error);
+            sendResponse({ error: error?.message || String(error) });
+          });
         return true;
       }
       sendResponse(result);

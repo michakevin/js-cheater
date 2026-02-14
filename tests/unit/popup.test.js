@@ -5,6 +5,7 @@ import { jest } from "@jest/globals";
 jest.mock("../../src/popup/communication.js", () => ({
   checkScannerStatus: jest.fn(),
   send: jest.fn(),
+  queryTabs: jest.fn(),
 }));
 
 jest.mock("../../src/popup/ui.js", () => ({

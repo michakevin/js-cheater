@@ -1,5 +1,5 @@
 // Storage tools for managing localStorage export/import
-import { send } from "./communication.js";
+import { send, queryTabs } from "./communication.js";
 import { showSuccess } from "./messages.js";
 
 export async function exportLocalStorage() {
@@ -8,7 +8,7 @@ export async function exportLocalStorage() {
   const blob = new Blob([JSON.stringify(data, null, 2)], {
     type: "application/json",
   });
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await queryTabs({ active: true, currentWindow: true });
   const domain = tab ? new URL(tab.url).origin : "unknown";
   const fileName = `js-cheater-localStorage-${domain.replace(/[^a-z0-9]+/gi, "_")}.json`;
   const url = URL.createObjectURL(blob);

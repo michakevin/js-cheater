@@ -3,6 +3,7 @@ import { jest } from "@jest/globals";
 
 jest.mock("../../src/popup/communication.js", () => ({
   send: jest.fn(),
+  queryTabs: jest.fn(),
 }));
 
 import * as fav from "../../src/popup/favorites.js";
@@ -13,7 +14,7 @@ const {
   loadFavorites,
   setupFavoritesEventListeners,
 } = fav;
-import { send } from "../../src/popup/communication.js";
+import { send, queryTabs } from "../../src/popup/communication.js";
 
 let favoritesKey;
 
@@ -29,6 +30,7 @@ beforeEach(() => {
       query: jest.fn().mockResolvedValue([{ url: "https://example.com" }]),
     },
   };
+  queryTabs.mockResolvedValue([{ url: "https://example.com" }]);
   favoritesKey = "cheat_favorites_https://example.com";
 });
 

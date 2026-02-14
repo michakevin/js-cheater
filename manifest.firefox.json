@@ -15,7 +15,13 @@
     "48": "icons/icon128.png",
     "128": "icons/icon128.png"
   },
-  "permissions": ["activeTab", "storage", "tabs", "<all_urls>"],
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs",
+    "clipboardWrite",
+    "<all_urls>"
+  ],
   "background": {
     "scripts": ["src/background.js"],
     "persistent": false
@@ -24,7 +30,9 @@
     {
       "matches": ["<all_urls>"],
       "js": ["src/content.js"],
-      "run_at": "document_idle"
+      "run_at": "document_idle",
+      "all_frames": true,
+      "match_about_blank": true
     }
   ],
   "browser_action": {

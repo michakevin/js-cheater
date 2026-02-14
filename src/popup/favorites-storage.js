@@ -1,10 +1,10 @@
 import { loadFromStorage, saveToStorage } from "./storage-utils.js";
+import { queryTabs } from "./communication.js";
 
 let domainKeyPromise;
 export async function getDomainKey() {
   if (!domainKeyPromise) {
-    domainKeyPromise = chrome.tabs
-      .query({ active: true, currentWindow: true })
+    domainKeyPromise = queryTabs({ active: true, currentWindow: true })
       .then((tabs) => {
         const url = tabs[0]?.url || "";
         return "cheat_favorites_" + new URL(url).origin;

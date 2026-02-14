@@ -24,7 +24,11 @@ describe("communication send", () => {
     const { send } = await import("../../src/popup/communication.js");
     await send("ping");
     expect(chrome.tabs.query).toHaveBeenCalled();
-    expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(1, { cmd: "ping" });
+    expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+      1,
+      { cmd: "ping" },
+      expect.any(Function)
+    );
   });
 
   test("uses stored tab id when set", async () => {
@@ -32,7 +36,11 @@ describe("communication send", () => {
     setActiveTab(5);
     await send("ping");
     expect(chrome.tabs.query).not.toHaveBeenCalled();
-    expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(5, { cmd: "ping" });
+    expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+      5,
+      { cmd: "ping" },
+      expect.any(Function)
+    );
   });
 
   test("shows message on timeout", async () => {
@@ -44,6 +52,28 @@ describe("communication send", () => {
       "❌ Anfrage an Content Script dauerte zu lange."
     );
     expect(result).toBeNull();
+  });
+
+  test("supports callback-style tabs.query", async () => {
+    chrome.tabs.query.mockImplementation((queryInfo, callback) => {
+      callback([{ id: 77 }]);
+    });
+    const { send } = await import("../../src/popup/communication.js");
+    await send("ping");
+    expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+      77,
+      { cmd: "ping" },
+      expect.any(Function)
+    );
+  });
+
+  test("supports callback-style tabs.sendMessage", async () => {
+    chrome.tabs.sendMessage.mockImplementation((tabId, payload, callback) => {
+      callback("ok");
+    });
+    const { send } = await import("../../src/popup/communication.js");
+    const result = await send("ping");
+    expect(result).toBe("ok");
   });
 });
 

@@ -6,6 +6,91 @@ export function createScanner(DEBUG = false) {
   return {
     hits: [],
 
+    shouldAvoidGetterEvaluation: function () {
+      try {
+        if (
+          typeof navigator !== "undefined" &&
+          typeof navigator.userAgent === "string" &&
+          /jsdom/i.test(navigator.userAgent)
+        ) {
+          return true;
+        }
+      } catch {
+        // Ignore environment detection errors.
+      }
+
+      try {
+        if (
+          typeof window !== "undefined" &&
+          Object.prototype.hasOwnProperty.call(window, "_globalObject")
+        ) {
+          return true;
+        }
+      } catch {
+        // Ignore environment detection errors.
+      }
+
+      return false;
+    },
+
+    collectKeys: function (root, opts = {}) {
+      const includeNonEnumerableKeys = opts.includeNonEnumerableKeys === true;
+      const maxKeysPerObject = opts.maxKeysPerObject || 0;
+      const keyHint =
+        typeof opts.keyHint === "string" ? opts.keyHint.toLowerCase() : "";
+      const priorityPatterns = Array.isArray(opts.priorityPatterns)
+        ? opts.priorityPatterns
+            .filter((pattern) => typeof pattern === "string" && pattern.trim() !== "")
+            .map((pattern) => pattern.toLowerCase())
+        : [];
+
+      const keySet = new Set();
+      if (includeNonEnumerableKeys) {
+        try {
+          Object.getOwnPropertyNames(root).forEach((key) => keySet.add(key));
+        } catch {
+          // Ignore errors (e.g., non-configurable properties)
+        }
+      }
+
+      try {
+        Object.keys(root).forEach((key) => keySet.add(key));
+      } catch {
+        // Ignore errors (e.g., non-configurable properties)
+      }
+
+      try {
+        for (const key in root) {
+          keySet.add(key);
+        }
+      } catch {
+        // Ignore errors (e.g., non-configurable properties)
+      }
+
+      const preferred = [];
+      const normal = [];
+      for (const key of keySet) {
+        const keyString = String(key);
+        const lowerKey = keyString.toLowerCase();
+        const matchesHint = keyHint && lowerKey.includes(keyHint);
+        const matchesPriority =
+          !matchesHint &&
+          priorityPatterns.some((pattern) => lowerKey.includes(pattern));
+
+        if (matchesHint || matchesPriority) {
+          preferred.push(keyString);
+        } else {
+          normal.push(keyString);
+        }
+      }
+
+      const ordered = preferred.concat(normal);
+      if (maxKeysPerObject > 0 && ordered.length > maxKeysPerObject) {
+        return ordered.slice(0, maxKeysPerObject);
+      }
+      return ordered;
+    },
+
     findAll: function (
       root,
       predicate,
@@ -16,10 +101,14 @@ export function createScanner(DEBUG = false) {
     ) {
       let out = [];
       if (maxDepth <= 0) return out;
+      if (!root || (typeof root !== "object" && typeof root !== "function")) {
+        return out;
+      }
+      if (seen.has(root)) return out;
+      seen.add(root);
 
       // Skip prototype objects to avoid triggering illegal invocation errors
       if (
-        root &&
         typeof root === "object" &&
         root.constructor &&
         root.constructor.prototype === root
@@ -29,38 +118,30 @@ export function createScanner(DEBUG = false) {
 
       if (!opts.startTime) opts.startTime = performance.now();
       const start = opts.startTime;
-      const maxTime = opts.maxTime || 1000;
+      const maxTime = opts.maxTime || 3000;
+      const allowGetters = opts.allowGetters && !this.shouldAvoidGetterEvaluation();
+      if (!opts.traversalState) {
+        opts.traversalState = { hitCount: 0 };
+      }
+      const maxHits = opts.maxHits || 0;
       if (performance.now() - start > maxTime) return out;
+      if (maxHits > 0 && opts.traversalState.hitCount >= maxHits) return out;
 
-      const keys = new Set();
-      try {
-        Object.getOwnPropertyNames(root).forEach((key) => keys.add(key));
-      } catch {
-        // Ignore errors (e.g., non-configurable properties)
-      }
-
-      try {
-        Object.keys(root).forEach((key) => keys.add(key));
-      } catch {
-        // Ignore errors (e.g., non-configurable properties)
-      }
-
-      try {
-        for (const key in root) {
-          keys.add(key);
-        }
-      } catch {
-        // Ignore errors (e.g., non-configurable properties)
-      }
+      const keys = this.collectKeys(root, opts);
 
       for (const key of keys) {
+        if (performance.now() - start > maxTime) break;
         let val;
         try {
-          const desc = Object.getOwnPropertyDescriptor(root, key);
-          if (desc && typeof desc.get === "function") {
-            continue; // avoid invoking getters that may throw
+          if (allowGetters) {
+            val = root[key];
+          } else {
+            const desc = Object.getOwnPropertyDescriptor(root, key);
+            if (desc && typeof desc.get === "function" && !("value" in desc)) {
+              continue; // avoid invoking getters unless explicitly requested
+            }
+            val = root[key];
           }
-          val = root[key];
         } catch {
           continue;
         }
@@ -70,6 +151,10 @@ export function createScanner(DEBUG = false) {
         try {
           if (predicate(val, key)) {
             out.push({ obj: root, key, path: cur });
+            opts.traversalState.hitCount += 1;
+            if (maxHits > 0 && opts.traversalState.hitCount >= maxHits) {
+              break;
+            }
           }
         } catch {
           continue;
@@ -79,10 +164,11 @@ export function createScanner(DEBUG = false) {
         if (
           val !== null &&
           (type === "object" || type === "function") &&
-          !seen.has(val) &&
           maxDepth > 1
         ) {
-          seen.add(val);
+          if (maxHits > 0 && opts.traversalState.hitCount >= maxHits) {
+            break;
+          }
           try {
             out = out.concat(
               this.findAll(val, predicate, seen, cur, maxDepth - 1, opts)
@@ -94,17 +180,122 @@ export function createScanner(DEBUG = false) {
       }
       return out;
     },
-
     scan: function (value) {
       if (DEBUG) console.log("🔍 Scanning for:", value, "type:", typeof value);
-      this.hits = this.findAll(window, (v) => v === value);
+      const priorityPatterns = [
+        "game",
+        "player",
+        "party",
+        "actor",
+        "character",
+        "unit",
+        "hero",
+        "hp",
+        "sp",
+        "mp",
+        "health",
+        "mana",
+        "stamina",
+        "state",
+        "stats",
+        "data",
+        "gold",
+        "coin",
+        "score",
+      ];
+      const exactMatch = (v) => v === value;
+      const isNumericTarget = typeof value === "number" && Number.isFinite(value);
+      const isStringTarget = typeof value === "string";
+      const conservativeMode = this.shouldAvoidGetterEvaluation();
+      const looseNumericMatch = (v) => {
+        if (v === value) return true;
+        if (!isNumericTarget) return false;
+        if (typeof v === "string" && v.trim() !== "" && Number(v) === value) {
+          return true;
+        }
+        if (typeof v === "bigint") {
+          return Number(v) === value;
+        }
+        return false;
+      };
+
+      const passes = [
+        {
+          predicate: exactMatch,
+          depth: isNumericTarget ? 5 : 4,
+          opts: {
+            maxTime: isNumericTarget ? 1600 : 900,
+            allowGetters: false,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: isNumericTarget ? 450 : 320,
+            maxHits: isNumericTarget ? 1200 : 450,
+            priorityPatterns,
+          },
+        },
+        {
+          predicate: exactMatch,
+          depth: isNumericTarget ? 8 : 6,
+          opts: {
+            maxTime: isNumericTarget ? 3600 : 1500,
+            allowGetters: isNumericTarget && !isStringTarget,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: isNumericTarget ? 900 : 500,
+            maxHits: isNumericTarget ? 1500 : 600,
+            priorityPatterns,
+          },
+        },
+      ];
+
+      if (isNumericTarget && !conservativeMode) {
+        passes.push({
+          predicate: exactMatch,
+          depth: 10,
+          opts: {
+            maxTime: 5000,
+            allowGetters: true,
+            includeNonEnumerableKeys: true,
+            maxKeysPerObject: 1200,
+            maxHits: 1800,
+            priorityPatterns,
+          },
+        });
+      }
+
+      if (isNumericTarget && !conservativeMode) {
+        passes.push({
+          predicate: looseNumericMatch,
+          depth: 9,
+          opts: {
+            maxTime: 3200,
+            allowGetters: true,
+            includeNonEnumerableKeys: true,
+            maxKeysPerObject: 1000,
+            maxHits: 1000,
+            priorityPatterns,
+          },
+        });
+      }
+
+      this.hits = [];
+      for (const pass of passes) {
+        this.hits = this.findAll(
+          window,
+          pass.predicate,
+          new WeakSet(),
+          "window",
+          pass.depth,
+          pass.opts
+        );
+        if (this.hits.length > 0) {
+          break;
+        }
+      }
       if (DEBUG) console.log("✅ Found hits:", this.hits.length);
       if (DEBUG && this.hits.length > 0) {
         console.log("📍 First few hits:", this.hits.slice(0, 5));
       }
       return this.hits.length;
     },
-
     refine: function (value) {
       const oldCount = this.hits.length;
       this.hits = this.hits.filter(({ obj, key }) => {
@@ -117,24 +308,99 @@ export function createScanner(DEBUG = false) {
       if (DEBUG) console.log(`🔬 Refined from ${oldCount} to ${this.hits.length} hits`);
       return this.hits.length;
     },
-
     scanByName: function (name) {
       if (DEBUG) console.log("🔍 Scanning by name:", name);
-      this.hits = this.findAll(window, (val, k) => {
-        // match key substring and ensure the value is primitive
-        const matches = k.toLowerCase().includes(name.toLowerCase());
+      const loweredName = name.toLowerCase();
+      const conservativeMode = this.shouldAvoidGetterEvaluation();
+      const priorityPatterns = [
+        loweredName,
+        "game",
+        "player",
+        "party",
+        "actor",
+        "character",
+        "unit",
+        "hero",
+        "hp",
+        "sp",
+        "mp",
+        "health",
+        "mana",
+        "stamina",
+        "state",
+        "stats",
+        "data",
+      ];
+      const matchByName = (val, k) => {
+        const matches = k.toLowerCase().includes(loweredName);
         const isPrimitive =
           val === null ||
           (typeof val !== "object" && typeof val !== "function");
         return matches && isPrimitive;
-      });
+      };
+
+      const passes = [
+        {
+          depth: 5,
+          opts: {
+            maxTime: 1200,
+            allowGetters: false,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: 350,
+            maxHits: 800,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        },
+        {
+          depth: 8,
+          opts: {
+            maxTime: 2800,
+            allowGetters: true,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: 700,
+            maxHits: 1200,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        },
+      ];
+
+      if (!conservativeMode) {
+        passes.push({
+          depth: 10,
+          opts: {
+            maxTime: 3500,
+            allowGetters: true,
+            includeNonEnumerableKeys: true,
+            maxKeysPerObject: 1000,
+            maxHits: 1500,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        });
+      }
+
+      this.hits = [];
+      for (const pass of passes) {
+        this.hits = this.findAll(
+          window,
+          matchByName,
+          new WeakSet(),
+          "window",
+          pass.depth,
+          pass.opts
+        );
+        if (this.hits.length > 0) {
+          break;
+        }
+      }
       if (DEBUG) console.log("✅ Found hits:", this.hits.length);
       if (DEBUG && this.hits.length > 0) {
         console.log("📍 First few hits:", this.hits.slice(0, 5));
       }
       return this.hits.length;
     },
-
     refineByName: function (name) {
       const oldCount = this.hits.length;
       this.hits = this.hits.filter(({ obj, key }) => {
@@ -303,3 +569,6 @@ export function createScanner(DEBUG = false) {
     },
     };
 }
+
+
+

@@ -1,5 +1,5 @@
 import { $, tryParse } from "./utils.js";
-import { send, checkScannerStatus, setActiveTab } from "./communication.js";
+import { send, checkScannerStatus, setActiveTab, queryTabs } from "./communication.js";
 import {
   showSetupMode,
   showScannerMode,
@@ -47,13 +47,20 @@ export function stopConnectionMonitor() {
 export function startPolling() {
   $("#instructions").style.display = "block";
   let scannerFound = false;
+  let checkInFlight = false;
   const checkInterval = setInterval(async () => {
-    const isLoaded = await checkScannerStatus();
-    if (isLoaded) {
-      scannerFound = true;
-      clearInterval(checkInterval);
-      showScannerMode();
-      popupSelf.startConnectionMonitor();
+    if (checkInFlight) return;
+    checkInFlight = true;
+    try {
+      const isLoaded = await checkScannerStatus();
+      if (isLoaded) {
+        scannerFound = true;
+        clearInterval(checkInterval);
+        showScannerMode();
+        popupSelf.startConnectionMonitor();
+      }
+    } finally {
+      checkInFlight = false;
     }
   }, 500);
   setTimeout(() => {
@@ -80,46 +87,70 @@ async function runSearch({ cmd, value }) {
   return null;
 }
 
+function fallbackCopyText(text) {
+  if (typeof document.execCommand !== "function") {
+    return false;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+
+  try {
+    textarea.focus();
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+    return document.execCommand("copy") === true;
+  } catch (error) {
+    console.error("Fallback copy failed:", error);
+    return false;
+  } finally {
+    textarea.remove();
+  }
+}
+
+async function copyScannerCode(text) {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch (error) {
+      console.error("Copy failed:", error);
+    }
+  }
+
+  return fallbackCopyText(text);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const valueInput = $("#value");
   const searchTypeSelect = $("#searchType");
   const hitsUl = $("#hits");
 
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  const [tab] = await queryTabs({ active: true, currentWindow: true });
   if (tab) setActiveTab(tab.id);
 
   async function onInjectHandler() {
-    let copied = false;
-    try {
-      await navigator.clipboard.writeText(SCANNER_CODE);
-      copied = true;
-    } catch (error) {
-      console.error("Copy failed:", error);
-      try {
-        // Fallback for insecure contexts or denied permissions
-        const textarea = document.createElement("textarea");
-        textarea.value = SCANNER_CODE;
-        textarea.style.position = "fixed";
-        textarea.style.top = "-9999px";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-        copied = true;
-      } catch (err) {
-        console.error("Fallback copy failed:", err);
-        alert("❌ Kopieren fehlgeschlagen - Bitte manuell kopieren");
-      }
+    const copied = await copyScannerCode(SCANNER_CODE);
+    if (!copied) {
+      alert("Kopieren fehlgeschlagen - Bitte manuell kopieren");
     }
+    let contentScriptReady = true;
     try {
-      const [currTab] = await chrome.tabs.query({
+      const [currTab] = await queryTabs({
         active: true,
         currentWindow: true,
       });
       if (currTab) {
+        setActiveTab(currTab.id);
         if (chrome.scripting?.executeScript) {
           await chrome.scripting.executeScript({
-            target: { tabId: currTab.id },
+            target: { tabId: currTab.id, allFrames: true },
             files: ["src/content.js"],
           });
         } else if (chrome.tabs?.executeScript) {
@@ -138,7 +169,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
               const maybePromise = chrome.tabs.executeScript(
                 currTab.id,
-                { file: "src/content.js" },
+                { file: "/src/content.js", allFrames: true, matchAboutBlank: true },
                 () => settle(chrome.runtime?.lastError ?? null),
               );
               if (maybePromise && typeof maybePromise.then === "function") {
@@ -149,12 +180,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
           });
         }
+      } else {
+        contentScriptReady = false;
       }
     } catch (err) {
+      contentScriptReady = false;
       console.error("Content-script injection failed", err);
     }
-    if (copied) {
+    if (copied && contentScriptReady) {
       startPolling();
+    } else if (copied && !contentScriptReady) {
+      alert("Content Script konnte nicht geladen werden. Seite neu laden und erneut versuchen.");
     }
   }
   onInject = onInjectHandler;

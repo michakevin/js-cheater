@@ -3,6 +3,7 @@ import { jest } from "@jest/globals";
 
 jest.mock("../../src/popup/communication.js", () => ({
   send: jest.fn(),
+  queryTabs: jest.fn(),
 }));
 
 jest.mock("../../src/popup/messages.js", () => ({
@@ -13,7 +14,7 @@ import {
   exportLocalStorage,
   importLocalStorageFromText,
 } from "../../src/popup/storage-tools.js";
-import { send } from "../../src/popup/communication.js";
+import { send, queryTabs } from "../../src/popup/communication.js";
 import { showSuccess } from "../../src/popup/messages.js";
 
 describe("storage tools export/import", () => {
@@ -25,6 +26,7 @@ describe("storage tools export/import", () => {
         query: jest.fn().mockResolvedValue([{ url: "https://example.com" }]),
       },
     };
+    queryTabs.mockResolvedValue([{ url: "https://example.com" }]);
   });
 
   afterEach(() => {

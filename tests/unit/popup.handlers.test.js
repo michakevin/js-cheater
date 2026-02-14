@@ -6,6 +6,7 @@ jest.mock("../../src/popup/communication.js", () => ({
   send: jest.fn(),
   checkScannerStatus: jest.fn(),
   setActiveTab: jest.fn(),
+  queryTabs: jest.fn(),
 }));
 
 jest.mock("../../src/popup/ui.js", () => ({
@@ -20,14 +21,14 @@ jest.mock("../../src/popup/messages.js", () => ({
   showError: jest.fn(),
 }));
 
-let send, showError, showRefineScanState, showInitialScanState, updateList;
+let send, queryTabs, showError, showRefineScanState, showInitialScanState, updateList;
 
 let onInject, onStart, onRefine, onNewSearch, startPolling;
 
 beforeEach(async () => {
   jest.useFakeTimers();
   jest.resetModules();
-  ({ send } = await import("../../src/popup/communication.js"));
+  ({ send, queryTabs } = await import("../../src/popup/communication.js"));
   ({ showError } = await import("../../src/popup/messages.js"));
   ({ showRefineScanState, showInitialScanState, updateList } = await import("../../src/popup/ui.js"));
   document.body.innerHTML = `
@@ -61,6 +62,7 @@ beforeEach(async () => {
   startPolling = popup.startPolling;
 
   const { checkScannerStatus } = await import("../../src/popup/communication.js");
+  queryTabs.mockResolvedValue([{ id: 1 }]);
   checkScannerStatus.mockResolvedValue(false);
 
   await document.dispatchEvent(new Event("DOMContentLoaded"));
@@ -88,8 +90,30 @@ describe("popup handlers", () => {
 
     await onInject();
     expect(globalThis.chrome.tabs.executeScript).toHaveBeenCalledWith(1, {
-      file: "src/content.js",
+      file: "/src/content.js",
+      allFrames: true,
+      matchAboutBlank: true,
     }, expect.any(Function));
+  });
+
+  test("onInject falls back to execCommand when clipboard API fails", async () => {
+    navigator.clipboard.writeText.mockRejectedValueOnce(new Error("denied"));
+    document.execCommand.mockReturnValue(true);
+
+    await onInject();
+    expect(document.execCommand).toHaveBeenCalledWith("copy");
+    expect(global.alert).not.toHaveBeenCalled();
+  });
+
+  test("onInject shows alert when all clipboard paths fail", async () => {
+    navigator.clipboard.writeText.mockRejectedValueOnce(new Error("denied"));
+    document.execCommand.mockReturnValue(false);
+
+    await onInject();
+    expect(global.alert).toHaveBeenCalledWith(
+      "Kopieren fehlgeschlagen - Bitte manuell kopieren",
+    );
+    expect(startPolling).not.toHaveBeenCalled();
   });
 
   test("onStart sends start command and switches state", async () => {

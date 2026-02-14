@@ -93,6 +93,100 @@ describe("refineByName", () => {
   });
 });
 
+describe("getter fallback scan", () => {
+  beforeEach(() => {
+    delete window.__cheatScanner__;
+
+    Object.defineProperty(window, "gameStateGetter", {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return { gold: 6100, gems: 42 };
+      },
+    });
+
+    const originalConsoleLog = console.log;
+    console.log = jest.fn();
+    eval(SCANNER_CODE);
+    console.log = originalConsoleLog;
+  });
+
+  afterEach(() => {
+    delete window.gameStateGetter;
+  });
+
+  test("finds value behind getter object", () => {
+    const scanner = window.__cheatScanner__;
+    const originalCollectKeys = scanner.collectKeys;
+    const originalShouldAvoid = scanner.shouldAvoidGetterEvaluation;
+    scanner.shouldAvoidGetterEvaluation = () => false;
+    scanner.collectKeys = function (root, opts) {
+      if (root === window) return ["gameStateGetter"];
+      return originalCollectKeys.call(this, root, opts);
+    };
+
+    const count = window.__cheatScanner__.scan(6100);
+    scanner.collectKeys = originalCollectKeys;
+    scanner.shouldAvoidGetterEvaluation = originalShouldAvoid;
+
+    expect(count).toBeGreaterThan(0);
+    const paths = window.__cheatScanner__.list().map((entry) => entry.path);
+    expect(paths.some((p) => p.toLowerCase().includes("gold"))).toBe(true);
+  });
+
+  test("finds name behind getter object", () => {
+    const scanner = window.__cheatScanner__;
+    const originalCollectKeys = scanner.collectKeys;
+    const originalShouldAvoid = scanner.shouldAvoidGetterEvaluation;
+    scanner.shouldAvoidGetterEvaluation = () => false;
+    scanner.collectKeys = function (root, opts) {
+      if (root === window) return ["gameStateGetter"];
+      return originalCollectKeys.call(this, root, opts);
+    };
+
+    const count = window.__cheatScanner__.scanByName("gold");
+    scanner.collectKeys = originalCollectKeys;
+    scanner.shouldAvoidGetterEvaluation = originalShouldAvoid;
+
+    expect(count).toBeGreaterThan(0);
+  });
+});
+
+describe("numeric string fallback scan", () => {
+  beforeEach(() => {
+    delete window.__cheatScanner__;
+    window.hpTextValue = "987654321";
+
+    const originalConsoleLog = console.log;
+    console.log = jest.fn();
+    eval(SCANNER_CODE);
+    console.log = originalConsoleLog;
+  });
+
+  afterEach(() => {
+    delete window.hpTextValue;
+  });
+
+  test("finds numeric values stored as strings", () => {
+    const scanner = window.__cheatScanner__;
+    const originalCollectKeys = scanner.collectKeys;
+    const originalShouldAvoid = scanner.shouldAvoidGetterEvaluation;
+    scanner.shouldAvoidGetterEvaluation = () => false;
+    scanner.collectKeys = function (root, opts) {
+      if (root === window) return ["hpTextValue"];
+      return originalCollectKeys.call(this, root, opts);
+    };
+
+    const count = window.__cheatScanner__.scan(987654321);
+    scanner.collectKeys = originalCollectKeys;
+    scanner.shouldAvoidGetterEvaluation = originalShouldAvoid;
+
+    expect(count).toBeGreaterThan(0);
+    const paths = window.__cheatScanner__.list().map((entry) => entry.path);
+    expect(paths.some((p) => p.includes("hpTextValue"))).toBe(true);
+  });
+});
+
 describe("poke and pokeByPath", () => {
   beforeEach(() => {
     window.pokeVar = 11;
