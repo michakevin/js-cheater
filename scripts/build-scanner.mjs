@@ -19,7 +19,7 @@ parsePath = parsePath.replace(/\\/g, "\\\\");
 
 // remove import line referencing parse-path.js in core
 coreCode = coreCode.replace(
-  /^import\s+\{\s*parsePath\s*\}\s+from\s+"\.\/parse-path\.js";\n/m,
+  /^import\s+\{\s*parsePath\s*\}\s+from\s+"\.\/parse-path\.js";\r?\n/m,
   ""
 );
 
@@ -40,7 +40,7 @@ coreCode = coreCode.replace(
 
 // remove import line referencing scanner-core.js in source
 sourceCode = sourceCode.replace(
-  /^import\s+\{\s*createScanner\s*\}\s+from\s+"\.\/scanner-core\.js";\n/m,
+  /^import\s+\{\s*createScanner\s*\}\s+from\s+"\.\/scanner-core\.js";\r?\n/m,
   ""
 );
 

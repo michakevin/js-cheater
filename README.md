@@ -54,9 +54,10 @@ Viele Spiele liefern strenge CSP‑Header. Daher wird der Scanner nicht automati
    - Chrome → `chrome://extensions/`
    - Firefox → `about:debugging#/runtime/this-firefox`
 5. Entwicklermodus aktivieren → **Entpackte Erweiterung laden** → Projektordner wählen
-6. **Nur Firefox:** Die Datei `manifest.firefox.json` verwenden (z.B. als `manifest.json` kopieren) – keine `about:config`‑Flags nötig.
+6. **Nur Firefox:** `npm run use:firefox` ausführen, damit `manifest.json` auf die Firefox-Variante zeigt.
 7. 🎮 GamePad‑Icon erscheint in der Toolbar
 8. Chrome meldet beim Laden möglicherweise `Unrecognized manifest key 'sidebar_action'`. Diese Warnung ist harmlos, da das Feld nur von Firefox genutzt wird.
+9. Für Chrome wieder auf MV3 zurückschalten: `npm run use:chrome`.
 
 ## Schnellstart
 

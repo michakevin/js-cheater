@@ -35,13 +35,13 @@ export function createScanner(DEBUG = false) {
       const keys = new Set();
       try {
         Object.getOwnPropertyNames(root).forEach((key) => keys.add(key));
-      } catch (e) {
+      } catch {
         // Ignore errors (e.g., non-configurable properties)
       }
 
       try {
         Object.keys(root).forEach((key) => keys.add(key));
-      } catch (e) {
+      } catch {
         // Ignore errors (e.g., non-configurable properties)
       }
 
@@ -49,7 +49,7 @@ export function createScanner(DEBUG = false) {
         for (const key in root) {
           keys.add(key);
         }
-      } catch (e) {
+      } catch {
         // Ignore errors (e.g., non-configurable properties)
       }
 
@@ -61,7 +61,7 @@ export function createScanner(DEBUG = false) {
             continue; // avoid invoking getters that may throw
           }
           val = root[key];
-        } catch (e) {
+        } catch {
           continue;
         }
 
@@ -71,7 +71,7 @@ export function createScanner(DEBUG = false) {
           if (predicate(val, key)) {
             out.push({ obj: root, key, path: cur });
           }
-        } catch (e) {
+        } catch {
           continue;
         }
 
@@ -87,7 +87,7 @@ export function createScanner(DEBUG = false) {
             out = out.concat(
               this.findAll(val, predicate, seen, cur, maxDepth - 1, opts)
             );
-          } catch (e) {
+          } catch {
             continue;
           }
         }
