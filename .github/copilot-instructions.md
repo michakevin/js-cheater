@@ -1,36 +1,29 @@
-# GitHub Copilot – Projektleitplanken für *js-cheater*
+﻿# Copilot Instructions (Thin Baseline)
 
-## 1. Allgemeine Ziele
-- **Einfachheit vor Perfektion**: schnelle Iterationen, aber sauberen Code liefern.
-- **Manifest V3** strikt einhalten. Keine veralteten API-Vorschläge.
-- **Kein externes Framework** im Popup (plain JS + kleines CSS).
+## Scope
+These guardrails apply to the whole repository.
+For setup and command details, see `AGENTS.md`.
 
-## 2. Code-Stil
-- ES2022 (Top-Level await nicht benötigt)
-- 2-Space-Indent, Semicolons
-- Funktionsnamen in camelCase, Konstanten in UPPER_SNAKE
-- Kommentare auf Englisch
+## Stack and Package Manager
+- Use plain JavaScript (ES modules) for extension code.
+- Use `npm` with `package-lock.json` as the source of truth.
+- Keep the popup free of external UI frameworks.
 
-## 3. Dateien
-| Pfad | Zweck |
-|------|-------|
-| `src/content.js`         | Scan-/Refine-Logik, Nachricht-Handler |
-| `src/service-worker.js`  | Hintergrundlogik (optional)           |
-| `src/popup/*`            | UI (HTML + JS)                        |
-| `manifest.json`          | Nicht automatisch ändern, nur per Review! |
+## Architecture Guardrails
+- `manifest.json` is the Manifest V3 target.
+- Keep Firefox-specific compatibility in `manifest.firefox.json`.
+- Do not hand-edit generated `src/popup/scanner-code.js`; rebuild it.
 
-## 4. Typische Snippet-Prompts
-```js
-// Scan starten
-chrome.runtime.sendMessage({ cmd: 'start', value: 123 });
-```
+## Code Quality
+- Follow repo ESLint and Prettier configuration.
+- Prefer small, testable functions and focused modules.
+- Avoid `eval` and `Function` constructor.
 
-## 5. Vermeide
-- Framework-Imports (React, Vue, jQuery)
-- `eval`, `Function`-Konstruktor
-- Legacy `chrome.extension` API
+## Change Rules
+- If scanner runtime files change (`src/scanner-source.js`, `src/scanner-core.js`, `src/parse-path.js`), run the build script.
+- If behavior changes, update or add Jest tests in `tests/unit`.
+- Only change manifest permissions when required and explain why.
 
-## 6. Tests
-Copilot darf einfache Jest-Snippets für reine Utility-Funktionen vorschlagen, aber keine E2E-Tests.
-
-*(Letzte Aktualisierung: 2025-06-01)*
+## Boundaries
+- Do not commit secrets, tokens, or private URLs.
+- Do not add dependencies unless task-required and justified.

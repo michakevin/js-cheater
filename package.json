@@ -6,6 +6,7 @@
   "scripts": {
     "lint": "eslint src/**/*.js",
     "format": "prettier --write .",
+    "check:ai-instructions": "node scripts/check-ai-instructions.mjs",
     "build": "node scripts/build-scanner.mjs",
     "test": "npm run build && jest",
     "test:unit": "jest",
