@@ -7,6 +7,8 @@
         padding: 0;
         margin: 0;
         box-sizing: border-box;
+        background: #ffffff;
+        color: #333;
       }
 
       /* Text colors */
@@ -14,7 +16,45 @@
         color: #666;
       }
 
-      /* Tab Navigation */
+      /* ---- Setup Section ---- */
+      .setup-inner {
+        padding: 12px;
+      }
+
+      .setup-description {
+        font-size: 12px;
+        margin-bottom: 15px;
+      }
+
+      .btn-inject {
+        background: #e74c3c;
+        color: white;
+        font-size: 16px;
+        padding: 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      .btn-inject:hover {
+        background: #c0392b;
+      }
+
+      .btn-inject.copied {
+        background: #27ae60;
+      }
+
+      .instructions-box {
+        margin: 15px 0;
+        padding: 10px;
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 4px;
+        font-size: 11px;
+        text-align: left;
+      }
+
+      /* ---- Tab Navigation ---- */
       .tab-nav {
         display: flex;
         background: #f8f9fa;
@@ -47,7 +87,12 @@
         background: white;
       }
 
-      /* Tab Content */
+      .tab-button:focus-visible {
+        outline: 2px solid #3498db;
+        outline-offset: -2px;
+      }
+
+      /* ---- Tab Content ---- */
       .tab-content {
         padding: 12px;
         min-height: 300px;
@@ -61,6 +106,7 @@
         display: block;
       }
 
+      /* ---- Forms ---- */
       input,
       select,
       button {
@@ -69,6 +115,159 @@
         box-sizing: border-box;
       }
 
+      input,
+      select {
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: #fff;
+        color: #333;
+        font-size: 13px;
+      }
+
+      input:focus,
+      select:focus {
+        outline: 2px solid #3498db;
+        outline-offset: -1px;
+        border-color: #3498db;
+      }
+
+      button {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 13px;
+      }
+
+      button:focus-visible {
+        outline: 2px solid #3498db;
+        outline-offset: 2px;
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      /* ---- Scan Buttons ---- */
+      .btn-refine {
+        background: #27ae60;
+        color: white;
+      }
+
+      .btn-refine:hover:not(:disabled) {
+        background: #219a52;
+      }
+
+      .btn-new-search {
+        background: #3498db;
+        color: white;
+      }
+
+      .btn-new-search:hover:not(:disabled) {
+        background: #2980b9;
+      }
+
+      /* ---- Half-width button pairs ---- */
+      .btn-half {
+        width: 50%;
+      }
+
+      .favorites-actions,
+      .tool-group-buttons {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+
+      /* ---- Tool Groups ---- */
+      .tool-group {
+        margin-bottom: 20px;
+      }
+
+      .tool-group-title {
+        margin: 0 0 8px 0;
+        font-size: 14px;
+        font-weight: 600;
+        border-bottom: 1px solid #e0e0e0;
+        padding-bottom: 4px;
+      }
+
+      /* ---- Status Bar ---- */
+      .status-bar {
+        margin-top: 8px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+
+      .status-bar.status-success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .status-bar.status-error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .status-bar.status-info {
+        background: #d1ecf1;
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+      }
+
+      /* ---- Loading Spinner ---- */
+      .loading-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 0;
+        justify-content: center;
+      }
+
+      .spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid #e0e0e0;
+        border-top-color: #3498db;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        flex-shrink: 0;
+      }
+
+      .loading-text {
+        font-size: 13px;
+        color: #666;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* ---- Empty State ---- */
+      .empty-state {
+        text-align: center;
+        padding: 30px 10px;
+        color: #999;
+      }
+
+      .empty-state-icon {
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+
+      .empty-state-text {
+        font-size: 13px;
+      }
+
+      /* ---- Hit List ---- */
       #hits {
         margin-top: 10px;
         font-size: 12px;
@@ -95,6 +294,7 @@
         flex: 1;
         cursor: pointer;
         font-size: 11px;
+        word-break: break-all;
       }
 
       .save-btn {
@@ -111,6 +311,10 @@
         flex-shrink: 0;
       }
 
+      .save-btn:hover {
+        background: #e67e22;
+      }
+
       .freeze-btn {
         background: #3498db;
         color: white;
@@ -125,11 +329,21 @@
         flex-shrink: 0;
       }
 
-      .save-btn:hover {
-        background: #e67e22;
+      .freeze-btn:hover {
+        background: #2980b9;
       }
 
-      /* Favorites Table */
+      .freeze-btn.active {
+        background: #e74c3c;
+        animation: pulse-freeze 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse-freeze {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+      }
+
+      /* ---- Favorites Table ---- */
       .favorites-table {
         width: 100%;
         border-collapse: collapse;
@@ -162,8 +376,20 @@
       }
 
       .favorites-table input:focus {
-        outline: none;
+        outline: 2px solid #3498db;
+        outline-offset: -1px;
         border-color: #3498db;
+      }
+
+      .favorite-name {
+        max-width: 80px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+      }
+
+      .favorite-value {
+        font-weight: bold;
       }
 
       .action-buttons {
@@ -215,6 +441,7 @@
         padding: 20px;
       }
 
+      /* ---- Utility classes ---- */
       .hidden {
         display: none !important;
       }
@@ -233,46 +460,278 @@
         color: #333;
       }
 
+      /* ---- Custom Dialog ---- */
+      .dialog-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+
+      .dialog-box {
+        background: #fff;
+        border-radius: 8px;
+        padding: 16px;
+        min-width: 260px;
+        max-width: 340px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .dialog-title {
+        font-weight: 600;
+        font-size: 14px;
+        margin-bottom: 8px;
+        color: #333;
+      }
+
+      .dialog-message {
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 12px;
+        line-height: 1.4;
+      }
+
+      .dialog-input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 13px;
+        margin-bottom: 12px;
+        box-sizing: border-box;
+      }
+
+      .dialog-input:focus {
+        outline: 2px solid #3498db;
+        outline-offset: -1px;
+        border-color: #3498db;
+      }
+
+      .dialog-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+      }
+
+      .dialog-btn {
+        padding: 6px 16px;
+        border: none;
+        border-radius: 4px;
+        font-size: 13px;
+        cursor: pointer;
+        width: auto;
+        margin-top: 0;
+      }
+
+      .dialog-btn-cancel {
+        background: #e0e0e0;
+        color: #333;
+      }
+
+      .dialog-btn-cancel:hover {
+        background: #ccc;
+      }
+
+      .dialog-btn-confirm {
+        background: #3498db;
+        color: white;
+      }
+
+      .dialog-btn-confirm:hover {
+        background: #2980b9;
+      }
+
+      /* ---- Dark Mode ---- */
       @media (prefers-color-scheme: dark) {
         body {
           background: #1e1e1e;
           color: #f0f0f0;
         }
+
         .text-secondary {
           color: #ccc;
         }
+
+        /* Setup */
+        #setupSection h3 {
+          color: #ccc;
+        }
+
+        .instructions-box {
+          background: #534b32;
+          border-color: #705b36;
+          color: #f0f0f0;
+        }
+
+        /* Tabs */
         .tab-nav {
           background: #2b2b2b;
           border-bottom-color: #555;
         }
+
         .tab-button {
           color: #ccc;
         }
+
         .tab-button:hover {
           background: #444;
           color: #fff;
         }
+
         .tab-button.active {
           background: #1e1e1e;
           color: #4dabf7;
           border-bottom-color: #4dabf7;
         }
+
+        .tab-button:focus-visible {
+          outline-color: #4dabf7;
+        }
+
+        /* Forms */
+        input,
+        select {
+          background: #2a2a2a;
+          color: #f0f0f0;
+          border-color: #555;
+        }
+
+        input:focus,
+        select:focus {
+          outline-color: #4dabf7;
+          border-color: #4dabf7;
+        }
+
+        button {
+          background: #3a3a3a;
+          color: #f0f0f0;
+        }
+
+        button:focus-visible {
+          outline-color: #4dabf7;
+        }
+
+        /* Status bar */
+        .status-bar.status-success {
+          background: #1e3a1e;
+          color: #7ddf7d;
+          border-color: #2d5a2d;
+        }
+
+        .status-bar.status-error {
+          background: #3a1e1e;
+          color: #df7d7d;
+          border-color: #5a2d2d;
+        }
+
+        .status-bar.status-info {
+          background: #1e2e3a;
+          color: #7dbfdf;
+          border-color: #2d4a5a;
+        }
+
+        /* Spinner */
+        .spinner {
+          border-color: #555;
+          border-top-color: #4dabf7;
+        }
+
+        .loading-text {
+          color: #ccc;
+        }
+
+        /* Empty state */
+        .empty-state {
+          color: #777;
+        }
+
+        /* Hits */
         #hits li {
           border-color: #555;
           background: #2a2a2a;
         }
+
         #hits li:hover {
           background: #3a3a3a;
         }
+
+        .hit-info {
+          color: #f0f0f0;
+        }
+
+        /* Favorites */
         .favorites-table th {
           background: #2b2b2b;
           color: #ccc;
         }
-        #instructions {
-          background: #534b32 !important;
-          border-color: #705b36 !important;
+
+        .favorites-table td {
+          border-bottom-color: #444;
         }
-        #setupSection h3 {
-          color: #ccc; 
+
+        .favorites-table input {
+          background: #2a2a2a;
+          color: #f0f0f0;
+          border-color: #555;
+        }
+
+        .favorites-table input:focus {
+          outline-color: #4dabf7;
+          border-color: #4dabf7;
+        }
+
+        .no-favorites {
+          color: #999;
+        }
+
+        /* Tool groups */
+        .tool-group-title {
+          border-bottom-color: #555;
+          color: #ccc;
+        }
+
+        /* Dialog */
+        .dialog-box {
+          background: #2a2a2a;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .dialog-title {
+          color: #f0f0f0;
+        }
+
+        .dialog-message {
+          color: #ccc;
+        }
+
+        .dialog-input {
+          background: #1e1e1e;
+          color: #f0f0f0;
+          border-color: #555;
+        }
+
+        .dialog-input:focus {
+          outline-color: #4dabf7;
+          border-color: #4dabf7;
+        }
+
+        .dialog-btn-cancel {
+          background: #444;
+          color: #f0f0f0;
+        }
+
+        .dialog-btn-cancel:hover {
+          background: #555;
+        }
+
+        .dialog-btn-confirm {
+          background: #4dabf7;
+        }
+
+        .dialog-btn-confirm:hover {
+          background: #3d9be7;
         }
       }

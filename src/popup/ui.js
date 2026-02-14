@@ -8,34 +8,76 @@ import { setupToolsEventListeners } from "./tools.js";
 import { setupStorageToolsEventListeners } from "./storage-tools.js";
 import { send } from "./communication.js";
 import { showError } from "./messages.js";
+import { showDialog } from "./dialog.js";
 
 let favoritesListenerAdded = false;
 let toolsListenerAdded = false;
+let tabsInitialized = false;
 
 export function initTabs() {
+  if (tabsInitialized) return;
+  tabsInitialized = true;
+
   const tabButtons = document.querySelectorAll(".tab-button");
   const tabPanels = document.querySelectorAll(".tab-panel");
 
-  tabButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      const targetTab = button.getAttribute("data-tab");
-      tabButtons.forEach((btn) => btn.classList.remove("active"));
-      button.classList.add("active");
-      tabPanels.forEach((panel) => panel.classList.remove("active"));
-      const targetPanel = document.getElementById(targetTab + "Tab");
-      if (targetPanel) targetPanel.classList.add("active");
-      if (targetTab === "favorites") {
-        loadFavorites();
-        if (!favoritesListenerAdded) {
-          setupFavoritesEventListeners();
-          favoritesListenerAdded = true;
-        }
-      } else if (targetTab === "tools") {
-        if (!toolsListenerAdded) {
-          setupToolsEventListeners();
-          setupStorageToolsEventListeners();
-          toolsListenerAdded = true;
-        }
+  function activateTab(button) {
+    const targetTab = button.getAttribute("data-tab");
+    tabButtons.forEach((btn) => {
+      btn.classList.remove("active");
+      btn.setAttribute("aria-selected", "false");
+      btn.setAttribute("tabindex", "-1");
+    });
+    button.classList.add("active");
+    button.setAttribute("aria-selected", "true");
+    button.setAttribute("tabindex", "0");
+    tabPanels.forEach((panel) => panel.classList.remove("active"));
+    const targetPanel = document.getElementById(targetTab + "Tab");
+    if (targetPanel) targetPanel.classList.add("active");
+    if (targetTab === "favorites") {
+      loadFavorites();
+      if (!favoritesListenerAdded) {
+        setupFavoritesEventListeners();
+        favoritesListenerAdded = true;
+      }
+    } else if (targetTab === "tools") {
+      if (!toolsListenerAdded) {
+        setupToolsEventListeners();
+        setupStorageToolsEventListeners();
+        toolsListenerAdded = true;
+      }
+    }
+  }
+
+  tabButtons.forEach((button, index) => {
+    // Set initial tabindex: only the active tab is focusable
+    button.setAttribute("tabindex", index === 0 ? "0" : "-1");
+
+    button.addEventListener("click", () => activateTab(button));
+
+    // Arrow-key navigation between tabs
+    button.addEventListener("keydown", (e) => {
+      const buttons = [...tabButtons];
+      const currentIndex = buttons.indexOf(button);
+      let newIndex = -1;
+
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        newIndex = (currentIndex + 1) % buttons.length;
+      } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        newIndex = (currentIndex - 1 + buttons.length) % buttons.length;
+      } else if (e.key === "Home") {
+        e.preventDefault();
+        newIndex = 0;
+      } else if (e.key === "End") {
+        e.preventDefault();
+        newIndex = buttons.length - 1;
+      }
+
+      if (newIndex >= 0) {
+        buttons[newIndex].focus();
+        activateTab(buttons[newIndex]);
       }
     });
   });
@@ -51,22 +93,57 @@ export function showScannerMode() {
   $("#scannerUI").style.display = "block";
   initTabs();
   showError("✅ Scanner erfolgreich geladen!");
-  setTimeout(() => {
-    $("#hits").innerHTML =
-      "<li class='text-secondary'>Gib einen Wert ein und klicke 'Erster Scan'</li>";
-  }, 2000);
+  setTimeout(() => showEmptyState(), 2000);
   setTimeout(() => $("#value")?.focus(), 100);
   showInitialScanState();
 }
 
 export function showInitialScanState() {
   $("#initialScanGroup").style.display = "block";
-  $("#refineScanGroup").style.display = "none";
+  $("#refineScanGroup").classList.add("hidden");
 }
 
 export function showRefineScanState() {
   $("#initialScanGroup").style.display = "none";
-  $("#refineScanGroup").style.display = "block";
+  $("#refineScanGroup").classList.remove("hidden");
+}
+
+/**
+ * Show a loading spinner in the hits list.
+ * @param {string} [message="Scanne..."]
+ */
+export function showLoading(message = "Scanne...") {
+  const hitsUl = $("#hits");
+  hitsUl.innerHTML = "";
+  const container = document.createElement("li");
+  container.className = "loading-container";
+  container.innerHTML = `<div class="spinner"></div><span class="loading-text">${escapeHtml(message)}</span>`;
+  hitsUl.appendChild(container);
+}
+
+/**
+ * Show the empty state placeholder before any scan.
+ */
+export function showEmptyState() {
+  const hitsUl = $("#hits");
+  hitsUl.innerHTML = "";
+  const li = document.createElement("li");
+  li.className = "empty-state";
+  li.innerHTML =
+    '<div class="empty-state-icon">🔍</div>' +
+    '<div class="empty-state-text">Gib einen Wert ein und starte den ersten Scan</div>';
+  hitsUl.appendChild(li);
+}
+
+/**
+ * Disable/enable the scan action buttons during a scan.
+ * @param {boolean} disabled
+ */
+export function setScanButtonsDisabled(disabled) {
+  ["#start", "#refine", "#newSearch"].forEach((sel) => {
+    const btn = $(sel);
+    if (btn) btn.disabled = disabled;
+  });
 }
 
 export async function updateList() {
@@ -100,7 +177,12 @@ export function renderHits(list) {
     const displayPath = h.path.replace(/^window\.globalThis\./, "");
     li.textContent = `[${i}] ${displayPath} = ${safeStringify(h.value)}`;
     li.onclick = async () => {
-      const value = prompt(`Neuer Wert für ${h.path}:`, h.value);
+      const value = await showDialog({
+        type: "prompt",
+        title: "Wert ändern",
+        message: `Neuer Wert für ${h.path}:`,
+        defaultValue: String(h.value),
+      });
       if (value !== null) {
         const success = await send("poke", { idx: i, value: tryParse(value) });
         if (success) updateList();
@@ -129,6 +211,7 @@ export function renderHitsWithSaveButtons(list) {
     saveBtn.className = "save-btn";
     saveBtn.innerHTML = "💾";
     saveBtn.title = "Als Favorit speichern";
+    saveBtn.setAttribute("aria-label", `${displayPath} als Favorit speichern`);
     saveBtn.onclick = (e) => {
       e.stopPropagation();
       saveFavorite(h.path, h.value);
@@ -138,17 +221,32 @@ export function renderHitsWithSaveButtons(list) {
     freezeBtn.className = "freeze-btn";
     freezeBtn.innerHTML = "❄️";
     freezeBtn.title = "Wert einfrieren";
+    freezeBtn.setAttribute("aria-label", `${displayPath} einfrieren`);
     freezeBtn.onclick = (e) => {
       e.stopPropagation();
       if (freezeBtn.classList.toggle("active")) {
+        freezeBtn.innerHTML = "🔥";
+        freezeBtn.title = "Einfrieren aufheben";
+        freezeBtn.setAttribute(
+          "aria-label",
+          `${displayPath} Einfrieren aufheben`,
+        );
         send("freeze", { path: h.path, value: h.value });
       } else {
+        freezeBtn.innerHTML = "❄️";
+        freezeBtn.title = "Wert einfrieren";
+        freezeBtn.setAttribute("aria-label", `${displayPath} einfrieren`);
         send("unfreeze", { path: h.path });
       }
     };
 
     hitInfo.onclick = async () => {
-      const value = prompt(`Neuer Wert für ${h.path}:`, h.value);
+      const value = await showDialog({
+        type: "prompt",
+        title: "Wert ändern",
+        message: `Neuer Wert für ${displayPath}:`,
+        defaultValue: String(h.value),
+      });
       if (value !== null) {
         const success = await send("poke", { idx: i, value: tryParse(value) });
         if (success) updateList();

@@ -1,5 +1,6 @@
 import { escapeHtml } from "./utils.js";
 import { send } from "./communication.js";
+import { showDialog } from "./dialog.js";
 
 export function renderFavorites(favorites, inputs) {
   const favoritesContent = document.getElementById("favoritesContent");
@@ -32,25 +33,23 @@ export function renderFavorites(favorites, inputs) {
           (fav) => `
         <tr>
           <td class="favorite-name" data-id="${fav.id}" title="${escapeHtml(
-            fav.path
-          )}" style="max-width: 80px; overflow: hidden; text-overflow: ellipsis; cursor: pointer;">${escapeHtml(
-            fav.name
-          )}</td>
-          <td style="font-weight: bold;">${escapeHtml(
-            JSON.stringify(fav.value)
+            fav.path,
+          )}">${escapeHtml(fav.name)}</td>
+          <td class="favorite-value">${escapeHtml(
+            JSON.stringify(fav.value),
           )}</td>
           <td><input type="text" id="newValue_${fav.id}" placeholder="Neuer Wert..." value="${
             inputs[fav.id] || ""
           }" /></td>
           <td>
             <div class="action-buttons">
-              <button class="freeze-btn" data-id="${fav.id}" title="Einfrieren">❄️</button>
-              <button class="update-btn" data-id="${fav.id}" title="Wert ändern">✏️</button>
-              <button class="delete-btn" data-id="${fav.id}" title="Favorit löschen">🗑️</button>
+              <button class="freeze-btn" data-id="${fav.id}" title="Einfrieren" aria-label="${escapeHtml(fav.name)} einfrieren">❄️</button>
+              <button class="update-btn" data-id="${fav.id}" title="Wert ändern" aria-label="${escapeHtml(fav.name)} Wert ändern">✏️</button>
+              <button class="delete-btn" data-id="${fav.id}" title="Favorit löschen" aria-label="${escapeHtml(fav.name)} löschen">🗑️</button>
             </div>
           </td>
         </tr>
-      `
+      `,
         )
         .join("")}
     </tbody>
@@ -89,7 +88,12 @@ export function setupFavoritesEventListeners({
     const favorites = await getFavorites();
     const favorite = favorites[id];
     if (!favorite) return;
-    if (confirm(`Favorit "${favorite.name}" wirklich löschen?`)) {
+    const confirmed = await showDialog({
+      type: "confirm",
+      title: "Favorit löschen",
+      message: `Favorit "${favorite.name}" wirklich löschen?`,
+    });
+    if (confirmed) {
       deleteFavorite(id);
     }
   }
@@ -123,7 +127,12 @@ export function setupFavoritesEventListeners({
       const favorites = await getFavorites();
       const fav = favorites[id];
       if (!fav) return;
-      const newName = prompt("Neuer Name:", fav.name);
+      const newName = await showDialog({
+        type: "prompt",
+        title: "Favorit umbenennen",
+        message: "Neuer Name:",
+        defaultValue: fav.name,
+      });
       if (newName && newName.trim()) {
         renameFavorite(id, newName.trim());
       }

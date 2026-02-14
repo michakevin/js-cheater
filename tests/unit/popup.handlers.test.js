@@ -14,6 +14,9 @@ jest.mock("../../src/popup/ui.js", () => ({
   showScannerMode: jest.fn(),
   showInitialScanState: jest.fn(),
   showRefineScanState: jest.fn(),
+  showLoading: jest.fn(),
+  showEmptyState: jest.fn(),
+  setScanButtonsDisabled: jest.fn(),
   updateList: jest.fn(),
 }));
 
@@ -21,7 +24,20 @@ jest.mock("../../src/popup/messages.js", () => ({
   showError: jest.fn(),
 }));
 
-let send, queryTabs, showError, showRefineScanState, showInitialScanState, updateList;
+jest.mock("../../src/popup/dialog.js", () => ({
+  showDialog: jest.fn(),
+}));
+
+let send,
+  queryTabs,
+  showError,
+  showRefineScanState,
+  showInitialScanState,
+  updateList,
+  showLoading,
+  setScanButtonsDisabled,
+  showEmptyState,
+  showDialog;
 
 let onInject, onStart, onRefine, onNewSearch, startPolling;
 
@@ -30,18 +46,27 @@ beforeEach(async () => {
   jest.resetModules();
   ({ send, queryTabs } = await import("../../src/popup/communication.js"));
   ({ showError } = await import("../../src/popup/messages.js"));
-  ({ showRefineScanState, showInitialScanState, updateList } = await import("../../src/popup/ui.js"));
+  ({
+    showRefineScanState,
+    showInitialScanState,
+    updateList,
+    showLoading,
+    setScanButtonsDisabled,
+    showEmptyState,
+  } = await import("../../src/popup/ui.js"));
+  ({ showDialog } = await import("../../src/popup/dialog.js"));
   document.body.innerHTML = `
     <input id="value" />
     <select id="searchType"><option value="value">value</option><option value="name">name</option></select>
     <div id="initialScanGroup"></div>
-    <div id="refineScanGroup"></div>
+    <div id="refineScanGroup" class="hidden"></div>
+    <div id="statusBar" class="status-bar hidden"></div>
     <ul id="hits"></ul>
-    <button id="inject"></button>
+    <button id="inject">📋 Scanner-Code kopieren</button>
     <button id="start"></button>
     <button id="refine"></button>
     <button id="newSearch"></button>
-    <div id="instructions"></div>
+    <div id="instructions" class="hidden"></div>
     <div id="scannerUI"></div>
     <div id="setupSection"></div>
   `;
@@ -61,7 +86,9 @@ beforeEach(async () => {
   jest.spyOn(popup, "startPolling").mockImplementation(jest.fn());
   startPolling = popup.startPolling;
 
-  const { checkScannerStatus } = await import("../../src/popup/communication.js");
+  const { checkScannerStatus } = await import(
+    "../../src/popup/communication.js"
+  );
   queryTabs.mockResolvedValue([{ id: 1 }]);
   checkScannerStatus.mockResolvedValue(false);
 
@@ -83,17 +110,23 @@ describe("popup handlers", () => {
     await onInject();
     expect(navigator.clipboard.writeText).toHaveBeenCalled();
     expect(globalThis.chrome.scripting.executeScript).toHaveBeenCalled();
+    // Should show copy feedback
+    expect(document.getElementById("inject").textContent).toBe("✅ Kopiert!");
   });
 
   test("onInject falls back to tabs.executeScript", async () => {
     globalThis.chrome.scripting.executeScript = undefined;
 
     await onInject();
-    expect(globalThis.chrome.tabs.executeScript).toHaveBeenCalledWith(1, {
-      file: "/src/content.js",
-      allFrames: true,
-      matchAboutBlank: true,
-    }, expect.any(Function));
+    expect(globalThis.chrome.tabs.executeScript).toHaveBeenCalledWith(
+      1,
+      {
+        file: "/src/content.js",
+        allFrames: true,
+        matchAboutBlank: true,
+      },
+      expect.any(Function),
+    );
   });
 
   test("onInject falls back to execCommand when clipboard API fails", async () => {
@@ -105,13 +138,14 @@ describe("popup handlers", () => {
     expect(global.alert).not.toHaveBeenCalled();
   });
 
-  test("onInject shows alert when all clipboard paths fail", async () => {
+  test("onInject shows dialog when all clipboard paths fail", async () => {
     navigator.clipboard.writeText.mockRejectedValueOnce(new Error("denied"));
     document.execCommand.mockReturnValue(false);
+    showDialog.mockResolvedValue(true);
 
     await onInject();
-    expect(global.alert).toHaveBeenCalledWith(
-      "Kopieren fehlgeschlagen - Bitte manuell kopieren",
+    expect(showDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "alert" }),
     );
     expect(startPolling).not.toHaveBeenCalled();
   });
@@ -123,9 +157,11 @@ describe("popup handlers", () => {
 
     await onStart();
     expect(send).toHaveBeenCalledWith("start", { value: 42 });
-    expect(showError).toHaveBeenCalledWith("Scanne...");
+    expect(showLoading).toHaveBeenCalledWith("Scanne...");
+    expect(setScanButtonsDisabled).toHaveBeenCalledWith(true);
     await Promise.resolve();
     expect(showError).toHaveBeenCalledWith("✅ 3 Treffer gefunden");
+    expect(setScanButtonsDisabled).toHaveBeenCalledWith(false);
     expect(showRefineScanState).toHaveBeenCalled();
     jest.runOnlyPendingTimers();
     expect(updateList).toHaveBeenCalled();
@@ -152,7 +188,7 @@ describe("popup handlers", () => {
     expect(send.mock.calls[0][0]).toBe("start");
     expect(send.mock.calls[0][1].value).toMatch(/^__RESET_SCAN__/);
     expect(showInitialScanState).toHaveBeenCalled();
-    expect(document.getElementById("hits").innerHTML).toContain("Erster Scan");
+    expect(showEmptyState).toHaveBeenCalled();
   });
 
   test("onStart ohne Eingabe", async () => {

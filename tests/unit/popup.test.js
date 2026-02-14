@@ -29,7 +29,7 @@ import { showError } from "../../src/popup/messages.js";
 describe("startPolling", () => {
   beforeEach(() => {
     document.body.innerHTML =
-      '<div id="instructions" style="display:none"></div><ul id="hits"></ul>';
+      '<div id="instructions" class="hidden"></div><ul id="hits"></ul><div id="statusBar" class="status-bar hidden"></div>';
     jest.useFakeTimers();
     jest.clearAllMocks();
   });
@@ -48,10 +48,12 @@ describe("startPolling", () => {
     await Promise.resolve();
 
     expect(showError).toHaveBeenCalledWith(
-      "Scanner nicht gefunden – Code korrekt eingefügt?"
+      "Scanner nicht gefunden – Code korrekt eingefügt?",
     );
     expect(showScannerMode).not.toHaveBeenCalled();
-    expect(document.getElementById("instructions").style.display).toBe("block");
+    expect(
+      document.getElementById("instructions").classList.contains("hidden"),
+    ).toBe(false);
   });
 
   test("scanner found quickly", async () => {
@@ -86,7 +88,7 @@ describe("connection monitoring", () => {
     await Promise.resolve();
 
     expect(showError).toHaveBeenCalledWith(
-      "Scanner-Verbindung verloren – bitte Code erneut einfügen"
+      "Scanner-Verbindung verloren – bitte Code erneut einfügen",
     );
     expect(showSetupMode).toHaveBeenCalled();
   });

@@ -1,6 +1,10 @@
 /* global describe, test, expect, beforeEach */
 import { jest } from "@jest/globals";
 
+jest.mock("../../src/popup/dialog.js", () => ({
+  showDialog: jest.fn(),
+}));
+
 async function loadModule(url) {
   jest.resetModules();
   globalThis.chrome = {
@@ -26,11 +30,11 @@ describe("domain isolated favorites", () => {
     const favsB = { 2: { id: "2", name: "favB", path: "b", value: 2 } };
     localStorage.setItem(
       "cheat_favorites_https://a.com",
-      JSON.stringify(favsA)
+      JSON.stringify(favsA),
     );
     localStorage.setItem(
       "cheat_favorites_https://b.com",
-      JSON.stringify(favsB)
+      JSON.stringify(favsB),
     );
 
     const { loadFavorites } = await loadModule("https://a.com/x");
@@ -46,11 +50,11 @@ describe("domain isolated favorites", () => {
     const favsB = { 2: { id: "2", name: "favB", path: "b", value: 2 } };
     localStorage.setItem(
       "cheat_favorites_https://a.com",
-      JSON.stringify(favsA)
+      JSON.stringify(favsA),
     );
     localStorage.setItem(
       "cheat_favorites_https://b.com",
-      JSON.stringify(favsB)
+      JSON.stringify(favsB),
     );
 
     let mod = await loadModule("https://a.com/home");

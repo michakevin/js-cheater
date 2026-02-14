@@ -1,5 +1,10 @@
 /* global describe, test, expect, beforeEach, jest */
 import { parsePath } from "../../src/parse-path.js";
+
+jest.mock("../../src/popup/dialog.js", () => ({
+  showDialog: jest.fn(),
+}));
+
 import {
   loadFavorites,
   importFavoritesFromText,
@@ -40,7 +45,8 @@ describe("parsePath", () => {
 
 describe("loadFavorites", () => {
   beforeEach(() => {
-    document.body.innerHTML = '<div id="favoritesContent"></div>';
+    document.body.innerHTML =
+      '<div id="favoritesContent"></div><div id="statusBar" class="status-bar hidden"></div><div id="searchTab" class="tab-panel active"></div>';
     localStorage.clear();
     globalThis.chrome = {
       tabs: {
@@ -65,7 +71,8 @@ describe("loadFavorites", () => {
 
 describe("import/export favorites", () => {
   beforeEach(() => {
-    document.body.innerHTML = '<div id="favoritesContent"></div>';
+    document.body.innerHTML =
+      '<div id="favoritesContent"></div><div id="statusBar" class="status-bar hidden"></div><div id="searchTab" class="tab-panel active"></div>';
     localStorage.clear();
     globalThis.chrome = {
       tabs: {
@@ -88,7 +95,7 @@ describe("import/export favorites", () => {
     const key = "cheat_favorites_https://example.com";
     localStorage.setItem(
       key,
-      JSON.stringify({ a: { id: "a", name: "n", path: "p", value: 1 } })
+      JSON.stringify({ a: { id: "a", name: "n", path: "p", value: 1 } }),
     );
 
     let createUrlMock;
@@ -132,7 +139,8 @@ describe("import/export favorites", () => {
 
 describe("renameFavorite", () => {
   beforeEach(() => {
-    document.body.innerHTML = '<div id="favoritesContent"></div>';
+    document.body.innerHTML =
+      '<div id="favoritesContent"></div><div id="statusBar" class="status-bar hidden"></div><div id="searchTab" class="tab-panel active"></div>';
     localStorage.clear();
     globalThis.chrome = {
       tabs: {

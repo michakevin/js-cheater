@@ -1,17 +1,74 @@
-import { $, escapeHtml } from "./utils.js";
+import { $ } from "./utils.js";
 import { DEBUG } from "../debug.js";
 
+let statusTimeout = null;
+
+/**
+ * Show an error/warning message in the status bar (does NOT overwrite hits).
+ */
 export function showError(message) {
-  const hitsUl = $("#hits");
-  hitsUl.innerHTML = `<li style='color: #e74c3c;'>${escapeHtml(message)}</li>`;
+  showStatus(message, "error");
 }
 
+/**
+ * Show a success message in the status bar.
+ */
 export function showSuccess(message) {
-  const hitsUl = $("#hits");
   const activeTab = document.querySelector(".tab-panel.active");
   if (activeTab && activeTab.id === "searchTab") {
-    hitsUl.innerHTML = `<li style='color: #27ae60;'>${escapeHtml(message)}</li>`;
+    showStatus(message, "success");
   } else {
     if (DEBUG) console.log("✅", message);
+  }
+}
+
+/**
+ * Show an informational status message (e.g. scan in progress).
+ */
+export function showInfo(message) {
+  showStatus(message, "info", false);
+}
+
+/**
+ * Clear the status bar.
+ */
+export function clearStatus() {
+  const bar = $("#statusBar");
+  if (!bar) return;
+  bar.classList.add("hidden");
+  bar.classList.remove("status-success", "status-error", "status-info");
+  bar.textContent = "";
+  if (statusTimeout) {
+    clearTimeout(statusTimeout);
+    statusTimeout = null;
+  }
+}
+
+/**
+ * Internal helper – render a status message into #statusBar.
+ * @param {string} message
+ * @param {"success"|"error"|"info"} type
+ * @param {boolean} autoHide – auto-hide after 5s (default true)
+ */
+function showStatus(message, type, autoHide = true) {
+  const bar = $("#statusBar");
+  if (!bar) return;
+
+  if (statusTimeout) {
+    clearTimeout(statusTimeout);
+    statusTimeout = null;
+  }
+
+  bar.classList.remove(
+    "hidden",
+    "status-success",
+    "status-error",
+    "status-info",
+  );
+  bar.classList.add(`status-${type}`);
+  bar.textContent = message;
+
+  if (autoHide) {
+    statusTimeout = setTimeout(() => clearStatus(), 5000);
   }
 }

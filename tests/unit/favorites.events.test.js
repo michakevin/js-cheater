@@ -6,6 +6,10 @@ jest.mock("../../src/popup/communication.js", () => ({
   queryTabs: jest.fn(),
 }));
 
+jest.mock("../../src/popup/dialog.js", () => ({
+  showDialog: jest.fn(),
+}));
+
 import * as fav from "../../src/popup/favorites.js";
 const {
   saveFavorite,
@@ -15,6 +19,7 @@ const {
   setupFavoritesEventListeners,
 } = fav;
 import { send, queryTabs } from "../../src/popup/communication.js";
+import { showDialog } from "../../src/popup/dialog.js";
 
 let favoritesKey;
 
@@ -22,6 +27,8 @@ beforeEach(() => {
   jest.clearAllMocks();
   document.body.innerHTML = `
     <div id="favoritesContent"></div>
+    <div id="statusBar" class="status-bar hidden"></div>
+    <div id="searchTab" class="tab-panel active"></div>
     <button class="tab-button active" data-tab="favorites"></button>
   `;
   localStorage.clear();
@@ -52,14 +59,13 @@ async function waitTick() {
 
 describe("favorite events", () => {
   test("saveFavorite stores new favorite and reloads list", async () => {
-    jest.spyOn(window, "prompt").mockReturnValue("hpFav");
+    showDialog.mockResolvedValue("hpFav");
     await saveFavorite("player.hp", 10);
     await waitTick();
     const stored = getStoredFavorites();
     expect(Object.keys(stored).length).toBe(1);
     expect(Object.values(stored)[0].name).toBe("hpFav");
     expect(document.querySelector(".favorites-table")).not.toBeNull();
-    window.prompt.mockRestore();
   });
 
   test("updateFavorite updates value on success", async () => {
@@ -71,7 +77,7 @@ describe("favorite events", () => {
     expect(stored["1"].value).toBe(2);
     expect(send).toHaveBeenCalledWith("poke", { path: "player.hp", value: 2 });
     expect(
-      document.querySelector(".favorites-table tbody").textContent
+      document.querySelector(".favorites-table tbody").textContent,
     ).toContain("2");
   });
 
@@ -107,7 +113,10 @@ describe("favorite events", () => {
     expect(btn).not.toBeNull();
     btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await waitTick();
-    expect(send).toHaveBeenCalledWith("freeze", { path: "player.hp", value: 1 });
+    expect(send).toHaveBeenCalledWith("freeze", {
+      path: "player.hp",
+      value: 1,
+    });
     expect(btn.classList.contains("active")).toBe(true);
     btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await waitTick();

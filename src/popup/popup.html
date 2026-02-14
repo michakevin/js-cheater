@@ -3,42 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <title>Cheat-Scanner</title>
-    <link rel="stylesheet" href="popup.css">
+    <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
     <!-- Setup Section: Nur sichtbar bis Scanner geladen ist -->
     <div id="setupSection">
-      <div style="padding: 12px">
+      <div class="setup-inner">
         <h3>🎮 JS-Cheater Setup</h3>
-        <p class="text-secondary" style="font-size: 12px; margin-bottom: 15px">
+        <p class="text-secondary setup-description">
           Zuerst muss der Scanner-Code in die Browser-Konsole geladen werden.
         </p>
 
-        <button
-          id="inject"
-          style="
-            background: #e74c3c;
-            color: white;
-            font-size: 16px;
-            padding: 12px;
-          "
-        >
-          📋 Scanner-Code kopieren
-        </button>
+        <button id="inject" class="btn-inject">📋 Scanner-Code kopieren</button>
 
-        <div
-          id="instructions"
-          style="
-            display: none;
-            margin: 15px 0;
-            padding: 10px;
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 4px;
-            font-size: 11px;
-            text-align: left;
-          "
-        >
+        <div id="instructions" class="instructions-box hidden">
           <strong>Anleitung:</strong><br />
           1. Öffne Developer Tools (F12)<br />
           2. Gehe zur "Console" / "Konsole"<br />
@@ -52,22 +30,58 @@
     <!-- Main UI: Tab-System -->
     <div id="scannerUI">
       <!-- Tab Navigation -->
-      <div class="tab-nav">
-        <button class="tab-button active" data-tab="search">🔍 Suche</button>
-        <button class="tab-button" data-tab="favorites">⭐ Favoriten</button>
-        <button class="tab-button" data-tab="tools">🛠 Tools</button>
+      <div class="tab-nav" role="tablist" aria-label="Hauptnavigation">
+        <button
+          class="tab-button active"
+          data-tab="search"
+          role="tab"
+          aria-selected="true"
+          aria-controls="searchTab"
+          id="tab-search"
+        >
+          🔍 Suche
+        </button>
+        <button
+          class="tab-button"
+          data-tab="favorites"
+          role="tab"
+          aria-selected="false"
+          aria-controls="favoritesTab"
+          id="tab-favorites"
+        >
+          ⭐ Favoriten
+        </button>
+        <button
+          class="tab-button"
+          data-tab="tools"
+          role="tab"
+          aria-selected="false"
+          aria-controls="toolsTab"
+          id="tab-tools"
+        >
+          🛠 Tools
+        </button>
       </div>
 
       <!-- Tab Content -->
       <div class="tab-content">
         <!-- Search Tab -->
-        <div id="searchTab" class="tab-panel active">
-          <label>Wert suchen / verfeinern:</label>
+        <div
+          id="searchTab"
+          class="tab-panel active"
+          role="tabpanel"
+          aria-labelledby="tab-search"
+        >
+          <label for="searchType">Wert suchen / verfeinern:</label>
           <select id="searchType">
             <option value="value">Nach Wert</option>
             <option value="name">Nach Name</option>
           </select>
-          <input id="value" placeholder='z. B. 123 oder "gold"' />
+          <input
+            id="value"
+            placeholder='z. B. 123 oder "gold"'
+            aria-label="Suchwert"
+          />
 
           <!-- Initial State: Nur erster Scan -->
           <div id="initialScanGroup">
@@ -75,31 +89,36 @@
           </div>
 
           <!-- After Scan State: Verfeinern + Neue Suche -->
-          <div id="refineScanGroup" style="display: none">
-            <button id="refine" style="background: #27ae60; color: white">
-              🔬 Verfeinern
-            </button>
-            <button id="newSearch" style="background: #3498db; color: white">
-              🆕 Neue Suche
-            </button>
+          <div id="refineScanGroup" class="hidden">
+            <button id="refine" class="btn-refine">🔬 Verfeinern</button>
+            <button id="newSearch" class="btn-new-search">🆕 Neue Suche</button>
           </div>
+
+          <!-- Status bar for feedback messages -->
+          <div
+            id="statusBar"
+            class="status-bar hidden"
+            aria-live="polite"
+          ></div>
 
           <ul id="hits"></ul>
         </div>
 
         <!-- Favorites Tab -->
-        <div id="favoritesTab" class="tab-panel">
-          <div
-            class="favorites-actions"
-            style="display: flex; gap: 6px; margin-bottom: 8px"
-          >
-            <button id="exportFavorites" style="width: 50%">📤 Export</button>
-            <button id="importFavorites" style="width: 50%">📥 Import</button>
+        <div
+          id="favoritesTab"
+          class="tab-panel"
+          role="tabpanel"
+          aria-labelledby="tab-favorites"
+        >
+          <div class="favorites-actions">
+            <button id="exportFavorites" class="btn-half">📤 Export</button>
+            <button id="importFavorites" class="btn-half">📥 Import</button>
             <input
               id="importFavoritesFile"
               type="file"
               accept="application/json"
-              style="display: none"
+              class="hidden"
             />
           </div>
           <div id="favoritesContent">
@@ -111,32 +130,27 @@
         </div>
 
         <!-- Tools Tab -->
-        <div id="toolsTab" class="tab-panel">
+        <div
+          id="toolsTab"
+          class="tab-panel"
+          role="tabpanel"
+          aria-labelledby="tab-tools"
+        >
           <!-- Speicherstände Group -->
-          <div style="margin-bottom: 20px">
-            <h3
-              style="
-                margin: 0 0 8px 0;
-                font-size: 14px;
-                font-weight: 600;
-                border-bottom: 1px solid #e0e0e0;
-                padding-bottom: 4px;
-              "
-            >
-              💾 Speicherstände
-            </h3>
-            <div style="display: flex; gap: 6px">
-              <button id="exportLocalStorage" style="width: 50%">
+          <div class="tool-group">
+            <h3 class="tool-group-title">💾 Speicherstände</h3>
+            <div class="tool-group-buttons">
+              <button id="exportLocalStorage" class="btn-half">
                 📤 Export
               </button>
-              <button id="importLocalStorage" style="width: 50%">
+              <button id="importLocalStorage" class="btn-half">
                 📥 Import
               </button>
               <input
                 id="importLocalStorageFile"
                 type="file"
                 accept="application/json"
-                style="display: none"
+                class="hidden"
               />
             </div>
           </div>

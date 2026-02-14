@@ -10,6 +10,10 @@ jest.mock("../../src/popup/messages.js", () => ({
   showSuccess: jest.fn(),
 }));
 
+jest.mock("../../src/popup/dialog.js", () => ({
+  showDialog: jest.fn(),
+}));
+
 import {
   exportLocalStorage,
   importLocalStorageFromText,

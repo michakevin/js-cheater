@@ -1,13 +1,21 @@
 import { $, tryParse } from "./utils.js";
-import { send, checkScannerStatus, setActiveTab, queryTabs } from "./communication.js";
+import {
+  send,
+  checkScannerStatus,
+  setActiveTab,
+  queryTabs,
+} from "./communication.js";
 import {
   showSetupMode,
   showScannerMode,
   showInitialScanState,
   showRefineScanState,
+  showLoading,
+  setScanButtonsDisabled,
   updateList,
 } from "./ui.js";
 import { showError } from "./messages.js";
+import { showDialog } from "./dialog.js";
 import { SCANNER_CODE } from "./scanner-code.js";
 import * as popupSelf from "./popup.js";
 
@@ -45,7 +53,7 @@ export function stopConnectionMonitor() {
 }
 
 export function startPolling() {
-  $("#instructions").style.display = "block";
+  $("#instructions").classList.remove("hidden");
   let scannerFound = false;
   let checkInFlight = false;
   const checkInterval = setInterval(async () => {
@@ -130,15 +138,28 @@ async function copyScannerCode(text) {
 document.addEventListener("DOMContentLoaded", async () => {
   const valueInput = $("#value");
   const searchTypeSelect = $("#searchType");
-  const hitsUl = $("#hits");
 
   const [tab] = await queryTabs({ active: true, currentWindow: true });
   if (tab) setActiveTab(tab.id);
 
   async function onInjectHandler() {
+    const injectBtn = $("#inject");
     const copied = await copyScannerCode(SCANNER_CODE);
     if (!copied) {
-      alert("Kopieren fehlgeschlagen - Bitte manuell kopieren");
+      await showDialog({
+        type: "alert",
+        title: "Kopieren fehlgeschlagen",
+        message: "Bitte manuell kopieren.",
+      });
+    } else {
+      // Visual copy feedback
+      const originalText = injectBtn.textContent;
+      injectBtn.textContent = "✅ Kopiert!";
+      injectBtn.classList.add("copied");
+      setTimeout(() => {
+        injectBtn.textContent = originalText;
+        injectBtn.classList.remove("copied");
+      }, 2000);
     }
     let contentScriptReady = true;
     try {
@@ -169,11 +190,17 @@ document.addEventListener("DOMContentLoaded", async () => {
             try {
               const maybePromise = chrome.tabs.executeScript(
                 currTab.id,
-                { file: "/src/content.js", allFrames: true, matchAboutBlank: true },
+                {
+                  file: "/src/content.js",
+                  allFrames: true,
+                  matchAboutBlank: true,
+                },
                 () => settle(chrome.runtime?.lastError ?? null),
               );
               if (maybePromise && typeof maybePromise.then === "function") {
-                maybePromise.then(() => settle()).catch((error) => settle(error));
+                maybePromise
+                  .then(() => settle())
+                  .catch((error) => settle(error));
               }
             } catch (error) {
               settle(error);
@@ -190,7 +217,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (copied && contentScriptReady) {
       startPolling();
     } else if (copied && !contentScriptReady) {
-      alert("Content Script konnte nicht geladen werden. Seite neu laden und erneut versuchen.");
+      await showDialog({
+        type: "alert",
+        title: "Fehler",
+        message:
+          "Content Script konnte nicht geladen werden. Seite neu laden und erneut versuchen.",
+      });
     }
   }
   onInject = onInjectHandler;
@@ -203,9 +235,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       showError("Bitte einen Wert eingeben");
       return;
     }
-    showError("Scanne...");
+    showLoading("Scanne...");
+    setScanButtonsDisabled(true);
     const cmd = type === "value" ? "start" : "scanByName";
     const result = await runSearch({ cmd, value: val });
+    setScanButtonsDisabled(false);
     if (result !== null) {
       showError(`✅ ${result} Treffer gefunden`);
       showRefineScanState();
@@ -222,9 +256,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       showError("Bitte einen Wert eingeben");
       return;
     }
-    showError("Verfeinere...");
+    showLoading("Verfeinere...");
+    setScanButtonsDisabled(true);
     const cmd = type === "value" ? "refine" : "refineByName";
     const result = await runSearch({ cmd, value: val });
+    setScanButtonsDisabled(false);
     if (result !== null) {
       showError(`🔬 ${result} Treffer nach Verfeinerung`);
       setTimeout(updateList, 100);
@@ -237,9 +273,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const raw = valueInput.value;
     const currentValue = type === "value" ? tryParse(raw) : raw.trim();
     if (currentValue !== "") {
-      showError("Neue Suche wird gestartet...");
+      showLoading("Neue Suche...");
+      setScanButtonsDisabled(true);
       const cmd = type === "value" ? "start" : "scanByName";
       const result = await runSearch({ cmd, value: currentValue });
+      setScanButtonsDisabled(false);
       if (result !== null) {
         showError(`✅ ${result} Treffer gefunden`);
         showRefineScanState();
@@ -248,12 +286,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     } else {
       await send("start", { value: "__RESET_SCAN__" + Math.random() });
       showInitialScanState();
-      hitsUl.innerHTML =
-        "<li class='text-secondary'>Gib einen Wert ein und klicke 'Erster Scan'</li>";
+      const { showEmptyState } = await import("./ui.js");
+      showEmptyState();
       valueInput.focus();
     }
   }
   onNewSearch = onNewSearchHandler;
+
+  // Enter-key triggers the active scan action
+  valueInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      // If refineScanGroup is visible, refine; otherwise start
+      const refineGroup = $("#refineScanGroup");
+      if (refineGroup && !refineGroup.classList.contains("hidden")) {
+        onRefineHandler();
+      } else {
+        onStartHandler();
+      }
+    }
+  });
 
   // ensure old listeners are removed before adding new ones
   $("#inject").removeEventListener("click", onInject);

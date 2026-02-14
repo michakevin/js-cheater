@@ -1,6 +1,7 @@
 // Storage tools for managing localStorage export/import
 import { send, queryTabs } from "./communication.js";
 import { showSuccess } from "./messages.js";
+import { showDialog } from "./dialog.js";
 
 export async function exportLocalStorage() {
   const data = await send("getLocalStorage");
@@ -29,7 +30,11 @@ export async function importLocalStorageFromText(text) {
     showSuccess("Lokaler Speicher importiert!");
   } catch (e) {
     console.error("Import failed", e);
-    alert("Import fehlgeschlagen: " + e.message);
+    await showDialog({
+      type: "alert",
+      title: "Import fehlgeschlagen",
+      message: e.message,
+    });
   }
 }
 

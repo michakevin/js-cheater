@@ -1,31 +1,49 @@
 /* global describe, test, expect, beforeEach */
 jest.mock("../../src/debug.js", () => ({ DEBUG: true }));
-import { showError, showSuccess } from "../../src/popup/messages.js";
+import {
+  showError,
+  showSuccess,
+  showInfo,
+  clearStatus,
+} from "../../src/popup/messages.js";
 
 describe("messages", () => {
-  let hits;
+  let statusBar;
   let searchTab;
   beforeEach(() => {
     document.body.innerHTML = `
+      <div id="statusBar" class="status-bar hidden"></div>
       <ul id="hits"></ul>
       <div id="searchTab" class="tab-panel active"></div>
     `;
-    hits = document.getElementById("hits");
+    statusBar = document.getElementById("statusBar");
     searchTab = document.getElementById("searchTab");
+    jest.useFakeTimers();
   });
 
-  test("showError adds red list item", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test("showError displays message in statusBar with error class", () => {
     showError("Fehler");
-    const li = hits.querySelector("li");
-    expect(li.textContent).toBe("Fehler");
-    expect(li.style.color).toBe("rgb(231, 76, 60)");
+    expect(statusBar.textContent).toBe("Fehler");
+    expect(statusBar.classList.contains("status-error")).toBe(true);
+    expect(statusBar.classList.contains("hidden")).toBe(false);
+  });
+
+  test("showError does not overwrite hits list", () => {
+    const hits = document.getElementById("hits");
+    hits.innerHTML = "<li>existing</li>";
+    showError("Fehler");
+    expect(hits.innerHTML).toBe("<li>existing</li>");
   });
 
   test("showSuccess shows message in active search tab", () => {
     showSuccess("Erfolg");
-    const li = hits.querySelector("li");
-    expect(li.textContent).toBe("Erfolg");
-    expect(li.style.color).toBe("rgb(39, 174, 96)");
+    expect(statusBar.textContent).toBe("Erfolg");
+    expect(statusBar.classList.contains("status-success")).toBe(true);
+    expect(statusBar.classList.contains("hidden")).toBe(false);
   });
 
   test("showSuccess logs message when search tab inactive", () => {
@@ -34,5 +52,33 @@ describe("messages", () => {
     showSuccess("Hallo");
     expect(logSpy).toHaveBeenCalledWith("✅", "Hallo");
     logSpy.mockRestore();
+  });
+
+  test("showInfo displays message with info class", () => {
+    showInfo("Loading...");
+    expect(statusBar.textContent).toBe("Loading...");
+    expect(statusBar.classList.contains("status-info")).toBe(true);
+  });
+
+  test("showError auto-hides after 5 seconds", () => {
+    showError("Fehler");
+    expect(statusBar.classList.contains("hidden")).toBe(false);
+    jest.advanceTimersByTime(5000);
+    expect(statusBar.classList.contains("hidden")).toBe(true);
+  });
+
+  test("showInfo does not auto-hide", () => {
+    showInfo("Loading...");
+    expect(statusBar.classList.contains("hidden")).toBe(false);
+    jest.advanceTimersByTime(10000);
+    expect(statusBar.classList.contains("hidden")).toBe(false);
+  });
+
+  test("clearStatus hides and resets statusBar", () => {
+    showError("Fehler");
+    clearStatus();
+    expect(statusBar.classList.contains("hidden")).toBe(true);
+    expect(statusBar.textContent).toBe("");
+    expect(statusBar.classList.contains("status-error")).toBe(false);
   });
 });

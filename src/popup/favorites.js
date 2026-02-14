@@ -9,7 +9,11 @@ import {
   saveFavoriteInputValue,
   clearFavoriteInputValue,
 } from "./favorites-storage.js";
-import { renderFavorites, setupFavoritesEventListeners as setupUI } from "./favorites-ui.js";
+import {
+  renderFavorites,
+  setupFavoritesEventListeners as setupUI,
+} from "./favorites-ui.js";
+import { showDialog } from "./dialog.js";
 
 export { getDomainKey } from "./favorites-storage.js";
 
@@ -52,7 +56,11 @@ export async function importFavoritesFromText(text) {
     showSuccess("Favoriten importiert!");
   } catch (e) {
     console.error("Import failed", e);
-    alert("Import fehlgeschlagen: " + e.message);
+    await showDialog({
+      type: "alert",
+      title: "Import fehlgeschlagen",
+      message: e.message,
+    });
   }
 }
 
@@ -69,7 +77,11 @@ async function updateFavorite(id, newValue) {
   const favorite = favorites[id];
   if (!favorite) {
     console.error("❌ Favorite not found for ID:", id);
-    alert("Fehler: Favorit nicht gefunden!");
+    await showDialog({
+      type: "alert",
+      title: "Fehler",
+      message: "Favorit nicht gefunden!",
+    });
     return;
   }
 
@@ -81,8 +93,11 @@ async function updateFavorite(id, newValue) {
         await saveFavorites(favorites);
         await loadFavorites();
       } else {
-        const errorMsg = result?.error || result?.message || "Unbekannter Fehler";
-        console.error(`❌ Fehler beim Ändern von ${favorite.name}: ${errorMsg}`);
+        const errorMsg =
+          result?.error || result?.message || "Unbekannter Fehler";
+        console.error(
+          `❌ Fehler beim Ändern von ${favorite.name}: ${errorMsg}`,
+        );
       }
     })
     .catch((err) => {
@@ -104,10 +119,12 @@ export async function renameFavorite(id, newName) {
 
 export async function saveFavorite(path, value) {
   const favorites = await getFavorites();
-  const name = prompt(
-    "Name für diese Variable:",
-    parsePath(path).pop() || "variable"
-  );
+  const name = await showDialog({
+    type: "prompt",
+    title: "Favorit speichern",
+    message: "Name für diese Variable:",
+    defaultValue: parsePath(path).pop() || "variable",
+  });
   if (!name) return;
 
   const id = Date.now().toString();
