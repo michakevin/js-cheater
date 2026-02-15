@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach */
 import { jest } from "@jest/globals";
 
 jest.mock("../../src/popup/dialog.js", () => ({
@@ -167,7 +166,9 @@ describe("domain isolated favorites", () => {
     select.dispatchEvent(new Event("change", { bubbles: true }));
     await waitTick();
 
-    const importButton = document.getElementById("adoptFavoritesForCurrentDomain");
+    const importButton = document.getElementById(
+      "adoptFavoritesForCurrentDomain",
+    );
     expect(importButton.classList.contains("hidden")).toBe(false);
     importButton.click();
     await waitTick();

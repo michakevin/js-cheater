@@ -1,4 +1,3 @@
-/* global console */
 import { readFile, writeFile } from "fs/promises";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -20,28 +19,24 @@ parsePath = parsePath.replace(/\\/g, "\\\\");
 // remove import line referencing parse-path.js in core
 coreCode = coreCode.replace(
   /^import\s+\{\s*parsePath\s*\}\s+from\s+"\.\/parse-path\.js";\r?\n/m,
-  ""
+  "",
 );
 
 // insert parsePath function after the utility comment in core
 const insertMarker = /(^\s*\/\/ Path parsing utility function)/m;
-const indentedParsePath =
-  parsePath
-    .split("\n")
-    .map((l) => "  " + l)
-    .join("\n");
+const indentedParsePath = parsePath
+  .split("\n")
+  .map((l) => "  " + l)
+  .join("\n");
 coreCode = coreCode.replace(insertMarker, `$1\n${indentedParsePath}`);
 
 // make createScanner a regular function in the bundled code
-coreCode = coreCode.replace(
-  /^export\s+(function\s+createScanner)/m,
-  '$1'
-);
+coreCode = coreCode.replace(/^export\s+(function\s+createScanner)/m, "$1");
 
 // remove import line referencing scanner-core.js in source
 sourceCode = sourceCode.replace(
   /^import\s+\{\s*createScanner\s*\}\s+from\s+"\.\/scanner-core\.js";\r?\n/m,
-  ""
+  "",
 );
 
 const combined = coreCode + "\n" + sourceCode;

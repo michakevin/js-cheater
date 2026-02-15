@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach, afterEach, jest */
 import { SCANNER_CODE } from "../../src/popup/scanner-code.js";
 import {
   ENGINE_PRESETS,

@@ -1,5 +1,7 @@
-/* global describe, test, expect, beforeEach */
-import { loadFromStorage, saveToStorage } from "../../src/popup/storage-utils.js";
+import {
+  loadFromStorage,
+  saveToStorage,
+} from "../../src/popup/storage-utils.js";
 
 describe("storage utils", () => {
   const key = "_test_key_";

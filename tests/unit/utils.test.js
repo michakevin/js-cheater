@@ -1,4 +1,3 @@
-/* global describe, test, expect */
 import { tryParse, escapeHtml, safeStringify } from "../../src/popup/utils.js";
 
 describe("tryParse", () => {

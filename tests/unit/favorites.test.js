@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach, jest */
 import { parsePath } from "../../src/parse-path.js";
 
 jest.mock("../../src/popup/dialog.js", () => ({

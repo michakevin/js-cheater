@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach, afterEach, jest */
 import { jest } from "@jest/globals";
 
 describe("content message handler", () => {

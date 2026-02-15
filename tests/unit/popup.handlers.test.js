@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach, afterEach */
 import { jest } from "@jest/globals";
 
 // Mock dependencies used by popup handlers
@@ -37,7 +36,6 @@ let send,
   updateList,
   showLoading,
   setScanButtonsDisabled,
-  showEmptyState,
   showDialog;
 
 let onInject, onStart, onRefine, onNewSearch;
@@ -55,7 +53,6 @@ async function initializePopup({ firefoxMode = false } = {}) {
     updateList,
     showLoading,
     setScanButtonsDisabled,
-    showEmptyState,
   } = await import("../../src/popup/ui.js"));
   ({ showDialog } = await import("../../src/popup/dialog.js"));
 

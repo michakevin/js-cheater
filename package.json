@@ -5,7 +5,9 @@
   "private": true,
   "scripts": {
     "lint": "eslint src/**/*.js",
+    "lint:all": "eslint .",
     "format": "prettier --write .",
+    "check": "node scripts/check-all.mjs",
     "check:ai-instructions": "node scripts/check-ai-instructions.mjs",
     "build": "node scripts/build-scanner.mjs",
     "dev": "node scripts/dev-server.mjs",

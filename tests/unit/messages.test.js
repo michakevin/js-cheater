@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach */
 jest.mock("../../src/debug.js", () => ({ DEBUG: true }));
 import {
   showError,

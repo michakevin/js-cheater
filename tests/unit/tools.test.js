@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach */
 import { jest } from "@jest/globals";
 
 jest.mock("../../src/popup/engine-detect.js", () => ({

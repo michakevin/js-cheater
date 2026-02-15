@@ -1,4 +1,3 @@
-/* global console */
 import { dirname, resolve, basename } from "path";
 import { fileURLToPath } from "url";
 import {
@@ -48,7 +47,7 @@ async function copyDirectory(source, destination) {
 async function writeManifest(targetDir, manifest) {
   await writeFile(
     resolve(targetDir, "manifest.json"),
-    JSON.stringify(manifest, null, 2)
+    JSON.stringify(manifest, null, 2),
   );
 }
 
@@ -65,7 +64,7 @@ function transformToMv2Manifest(baseManifest) {
 
   if (manifest.permissions) {
     manifest.permissions = manifest.permissions.filter(
-      (permission) => permission !== "sidePanel" && permission !== "scripting"
+      (permission) => permission !== "sidePanel" && permission !== "scripting",
     );
   }
 
@@ -75,7 +74,7 @@ function transformToMv2Manifest(baseManifest) {
 
   if (Array.isArray(manifest.host_permissions)) {
     manifest.permissions = Array.from(
-      new Set([...manifest.permissions, ...manifest.host_permissions])
+      new Set([...manifest.permissions, ...manifest.host_permissions]),
     );
     delete manifest.host_permissions;
   }
@@ -104,7 +103,10 @@ function transformToMv2Manifest(baseManifest) {
 async function buildMv3(manifest) {
   const targetDir = resolve(distDir, "mv3");
   await mkdir(targetDir, { recursive: true });
-  await copyDirectory(resolve(projectRoot, "icons"), resolve(targetDir, "icons"));
+  await copyDirectory(
+    resolve(projectRoot, "icons"),
+    resolve(targetDir, "icons"),
+  );
   await copyDirectory(resolve(projectRoot, "src"), resolve(targetDir, "src"));
   await copyOptionalFile(resolve(projectRoot, "favicon.ico"), targetDir);
   await copyOptionalFile(resolve(projectRoot, "test.html"), targetDir);
@@ -115,7 +117,10 @@ async function buildMv3(manifest) {
 async function buildMv2(baseManifest, debugValue) {
   const targetDir = resolve(distDir, "mv2");
   await mkdir(targetDir, { recursive: true });
-  await copyDirectory(resolve(projectRoot, "icons"), resolve(targetDir, "icons"));
+  await copyDirectory(
+    resolve(projectRoot, "icons"),
+    resolve(targetDir, "icons"),
+  );
   await copyDirectory(resolve(projectRoot, "src"), resolve(targetDir, "src"));
   await copyOptionalFile(resolve(projectRoot, "favicon.ico"), targetDir);
   await copyOptionalFile(resolve(projectRoot, "test.html"), targetDir);

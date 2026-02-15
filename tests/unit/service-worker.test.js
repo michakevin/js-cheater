@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach */
 import { jest } from "@jest/globals";
 
 describe("service worker panel behavior", () => {
@@ -37,7 +36,7 @@ describe("service worker panel behavior", () => {
       expect(globalThis.chrome.sidePanel.setPanelBehavior).toHaveBeenCalledWith(
         {
           openPanelOnActionClick: true,
-        }
+        },
       );
     });
 
@@ -50,7 +49,7 @@ describe("service worker panel behavior", () => {
       expect(globalThis.chrome.sidePanel.setPanelBehavior).toHaveBeenCalledWith(
         {
           openPanelOnActionClick: true,
-        }
+        },
       );
     });
 

@@ -1,5 +1,3 @@
-/* global describe, test, expect */
-
 import {
   detectSaveSlots,
   decodeSaveData,

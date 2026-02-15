@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach */
 import { jest } from "@jest/globals";
 
 jest.mock("../../src/popup/communication.js", () => ({
@@ -31,7 +30,6 @@ import {
 import { send } from "../../src/popup/communication.js";
 import { saveFavorite } from "../../src/popup/favorites.js";
 import { showError } from "../../src/popup/messages.js";
-import { showDialog } from "../../src/popup/dialog.js";
 
 describe("ui rendering", () => {
   beforeEach(() => {

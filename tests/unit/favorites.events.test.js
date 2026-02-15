@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach, afterEach, jest */
 import { jest } from "@jest/globals";
 
 jest.mock("../../src/popup/communication.js", () => ({
@@ -19,7 +18,11 @@ const {
   loadFavorites,
   setupFavoritesEventListeners,
 } = fav;
-import { send, queryTabs, getActiveTab } from "../../src/popup/communication.js";
+import {
+  send,
+  queryTabs,
+  getActiveTab,
+} from "../../src/popup/communication.js";
 import { showDialog } from "../../src/popup/dialog.js";
 
 let favoritesKey;

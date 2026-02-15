@@ -1,4 +1,3 @@
-/* global describe, test, expect, beforeEach, afterEach */
 import { jest } from "@jest/globals";
 
 // Mock dependencies before importing the module
