@@ -16,6 +16,7 @@ import {
 } from "./ui.js";
 import { showError } from "./messages.js";
 import { showDialog } from "./dialog.js";
+import { detectAndShowPresets } from "./engine-detect.js";
 import { SCANNER_CODE } from "./scanner-code.js";
 import * as popupSelf from "./popup.js";
 
@@ -76,6 +77,7 @@ export function startPolling(options = {}) {
         clearInterval(checkInterval);
         showScannerMode();
         popupSelf.startConnectionMonitor();
+        detectAndShowPresets();
       }
     } finally {
       checkInFlight = false;
@@ -515,6 +517,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   if (scannerReady) {
     showScannerMode();
     popupSelf.startConnectionMonitor();
+    detectAndShowPresets();
     await updateList();
   } else {
     showSetupMode();

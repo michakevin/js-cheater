@@ -714,6 +714,114 @@ export function createScanner(DEBUG = false) {
       });
     },
 
+    detectEngine: function () {
+      const checks = [
+        {
+          id: "rpgmaker-mz-effekseer",
+          name: "RPG Maker MZ (Effekseer)",
+          test: () =>
+            typeof window.$gameParty !== "undefined" &&
+            typeof window.$gameActors !== "undefined" &&
+            typeof window.effekseer !== "undefined",
+        },
+        {
+          id: "rpgmaker-mv-mz",
+          name: "RPG Maker MV / MZ",
+          test: () =>
+            typeof window.$gameParty !== "undefined" &&
+            typeof window.$gameActors !== "undefined" &&
+            typeof window.SceneManager !== "undefined" &&
+            typeof window.$dataSystem !== "undefined",
+        },
+        {
+          id: "twine",
+          name: "Twine / SugarCube",
+          test: () =>
+            typeof window.SugarCube !== "undefined" ||
+            (typeof window.State !== "undefined" &&
+              typeof window.State.variables === "object"),
+        },
+        {
+          id: "renpy",
+          name: "Ren'Py Web",
+          test: () =>
+            typeof window.renpy !== "undefined" ||
+            (typeof document !== "undefined" &&
+              !!document.getElementById("renpy-canvas")),
+        },
+        {
+          id: "bitsy",
+          name: "Bitsy",
+          test: () => typeof window.bitsy !== "undefined",
+        },
+        {
+          id: "godot",
+          name: "Godot (HTML5)",
+          test: () =>
+            typeof window.Engine !== "undefined" &&
+            typeof window.GODOT_CONFIG !== "undefined",
+        },
+        {
+          id: "construct",
+          name: "Construct 2/3",
+          test: () =>
+            typeof window.cr_getC2Runtime === "function" ||
+            typeof window.C3 !== "undefined" ||
+            typeof window.c3_runtimeInterface !== "undefined",
+        },
+        {
+          id: "phaser",
+          name: "Phaser",
+          test: () =>
+            typeof window.Phaser !== "undefined" &&
+            typeof window.Phaser.VERSION === "string",
+        },
+        {
+          id: "unity",
+          name: "Unity WebGL",
+          test: () =>
+            typeof window.unityInstance !== "undefined" ||
+            typeof window.UnityLoader !== "undefined" ||
+            typeof window.createUnityInstance === "function",
+        },
+        {
+          id: "pixi",
+          name: "PixiJS",
+          test: () =>
+            typeof window.PIXI !== "undefined" &&
+            typeof window.PIXI.VERSION === "string",
+        },
+      ];
+
+      for (const check of checks) {
+        try {
+          if (check.test()) {
+            if (DEBUG) console.log("🎮 Engine erkannt:", check.name);
+            return { id: check.id, name: check.name };
+          }
+        } catch {
+          // skip failing detection
+        }
+      }
+      return null;
+    },
+
+    readPath: function (path) {
+      try {
+        const pathParts = parsePath(path);
+        let obj = window;
+        for (let i = 0; i < pathParts.length; i++) {
+          if (obj === undefined || obj === null) {
+            return { error: "Path not found at: " + pathParts[i] };
+          }
+          obj = obj[pathParts[i]];
+        }
+        return { value: obj };
+      } catch (error) {
+        return { error: error.message };
+      }
+    },
+
     test: function () {
       return {
         scannerLoaded: true,

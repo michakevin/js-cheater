@@ -59,6 +59,12 @@ import { createScanner } from "./scanner-core.js";
           case "unfreeze":
             result = window.__cheatScanner__.unfreezeByPath(data.path);
             break;
+          case "detectEngine":
+            result = window.__cheatScanner__.detectEngine();
+            break;
+          case "readPath":
+            result = window.__cheatScanner__.readPath(data.path);
+            break;
           case "test":
             result = window.__cheatScanner__.test();
             break;

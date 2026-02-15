@@ -446,6 +446,75 @@
         display: none !important;
       }
 
+      /* ---- Engine Presets ---- */
+      .engine-presets {
+        margin: 8px 0;
+        padding: 10px;
+        border: 1px solid #d4edda;
+        border-radius: 6px;
+        background: #f0faf3;
+      }
+
+      .engine-header {
+        font-size: 13px;
+        margin-bottom: 4px;
+        color: #155724;
+      }
+
+      .engine-icon {
+        font-size: 16px;
+      }
+
+      .engine-description {
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 8px;
+        line-height: 1.3;
+      }
+
+      .engine-preset-group {
+        margin-bottom: 6px;
+      }
+
+      .engine-preset-category {
+        font-size: 11px;
+        font-weight: 600;
+        color: #888;
+        margin-bottom: 3px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .engine-preset-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .engine-preset-btn {
+        background: #e8f5e9;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+        padding: 4px 8px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        margin-top: 0;
+        width: auto;
+        white-space: nowrap;
+        transition: all 0.15s;
+      }
+
+      .engine-preset-btn:hover {
+        background: #c8e6c9;
+        border-color: #a5d6a7;
+        color: #1b5e20;
+      }
+
+      .engine-preset-btn:active {
+        background: #a5d6a7;
+      }
+
       #scannerUI {
         display: none;
       }
@@ -777,5 +846,39 @@
 
         .dialog-btn-confirm:hover {
           background: #3d9be7;
+        }
+
+        /* Engine Presets */
+        .engine-presets {
+          background: #1e3a1e;
+          border-color: #2d5a2d;
+        }
+
+        .engine-header {
+          color: #7ddf7d;
+        }
+
+        .engine-description {
+          color: #aaa;
+        }
+
+        .engine-preset-category {
+          color: #999;
+        }
+
+        .engine-preset-btn {
+          background: #2d4a2d;
+          color: #7ddf7d;
+          border-color: #3a6a3a;
+        }
+
+        .engine-preset-btn:hover {
+          background: #3a6a3a;
+          border-color: #4a8a4a;
+          color: #a0f0a0;
+        }
+
+        .engine-preset-btn:active {
+          background: #4a8a4a;
         }
       }

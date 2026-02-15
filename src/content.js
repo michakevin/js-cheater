@@ -74,6 +74,14 @@
       return this.sendCommand("unfreeze", { path });
     },
 
+    async detectEngine() {
+      return this.sendCommand("detectEngine");
+    },
+
+    async readPath(path) {
+      return this.sendCommand("readPath", { path });
+    },
+
     async test() {
       // Short timeout for setup polling, but not too short for slower pages.
       return this.sendCommand("test", {}, 1500);
@@ -96,6 +104,8 @@
         : API.poke(msg.idx, msg.value),
     freeze: (msg) => API.freezeByPath(msg.path, msg.value),
     unfreeze: (msg) => API.unfreezeByPath(msg.path),
+    detectEngine: () => API.detectEngine(),
+    readPath: (msg) => API.readPath(msg.path),
     getLocalStorage: () => {
       const data = {};
       for (let i = 0; i < localStorage.length; i++) {
