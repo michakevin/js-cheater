@@ -1,4 +1,9 @@
-export function detectEngine(...args: any[]): any;
-export function getLastRawResult(...args: any[]): any;
-export function getLastDetection(...args: any[]): any;
-export function detectAndShowPresets(...args: any[]): any;
+import type { ScannerEngineDetection } from "../scanner-core.js";
+
+export function detectEngine(): Promise<ScannerEngineDetection | null>;
+
+export function getLastRawResult(): unknown;
+
+export function getLastDetection(): ScannerEngineDetection | null;
+
+export function detectAndShowPresets(containerId?: string): Promise<void>;

@@ -1,11 +1,28 @@
-export function initTabs(...args: any[]): any;
-export function showSetupMode(...args: any[]): any;
-export function showScannerMode(...args: any[]): any;
-export function showInitialScanState(...args: any[]): any;
-export function showRefineScanState(...args: any[]): any;
-export function showLoading(...args: any[]): any;
-export function showEmptyState(...args: any[]): any;
-export function setScanButtonsDisabled(...args: any[]): any;
-export function updateList(...args: any[]): any;
-export function renderHits(...args: any[]): any;
-export function renderHitsWithSaveButtons(...args: any[]): any;
+export interface HitListEntry {
+  path: string;
+  value: unknown;
+}
+
+export function initTabs(): void;
+
+export function showSetupMode(): void;
+
+export function showScannerMode(): void;
+
+export function showInitialScanState(): void;
+
+export function showRefineScanState(): void;
+
+export function showLoading(message?: string): void;
+
+export function showEmptyState(): void;
+
+export function setScanButtonsDisabled(disabled: boolean): void;
+
+export function updateList(): Promise<void>;
+
+export function renderHits(list: ReadonlyArray<HitListEntry> | null | undefined): void;
+
+export function renderHitsWithSaveButtons(
+  list: ReadonlyArray<HitListEntry> | null | undefined,
+): void;

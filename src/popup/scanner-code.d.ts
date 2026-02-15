@@ -1,1 +1,1 @@
-export const SCANNER_CODE: any;
+export const SCANNER_CODE: string;

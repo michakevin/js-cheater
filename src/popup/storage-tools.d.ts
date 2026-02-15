@@ -1,3 +1,5 @@
-export function exportLocalStorage(...args: any[]): any;
-export function importLocalStorageFromText(...args: any[]): any;
-export function setupStorageToolsEventListeners(...args: any[]): any;
+export function exportLocalStorage(): Promise<void>;
+
+export function importLocalStorageFromText(text: string): Promise<void>;
+
+export function setupStorageToolsEventListeners(): void;

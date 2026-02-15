@@ -1,4 +1,7 @@
-export function showError(...args: any[]): any;
-export function showSuccess(...args: any[]): any;
-export function showInfo(...args: any[]): any;
-export function clearStatus(...args: any[]): any;
+export function showError(message: string): void;
+
+export function showSuccess(message: string): void;
+
+export function showInfo(message: string): void;
+
+export function clearStatus(): void;

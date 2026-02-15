@@ -1,2 +1,5 @@
-export function loadFromStorage(...args: any[]): any;
-export function saveToStorage(...args: any[]): any;
+export function loadFromStorage<
+  T extends Record<string, unknown> = Record<string, unknown>,
+>(key: string): T;
+
+export function saveToStorage(key: string, obj: unknown): void;

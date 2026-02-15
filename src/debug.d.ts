@@ -1,1 +1,1 @@
-export const DEBUG: any;
+export const DEBUG: boolean;
