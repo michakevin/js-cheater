@@ -8,6 +8,7 @@
     "format": "prettier --write .",
     "check:ai-instructions": "node scripts/check-ai-instructions.mjs",
     "build": "node scripts/build-scanner.mjs",
+    "dev": "node scripts/dev-server.mjs",
     "use:firefox": "node scripts/use-manifest.mjs firefox",
     "use:chrome": "node scripts/use-manifest.mjs chrome",
     "build:extensions": "node scripts/build-extensions.mjs",
