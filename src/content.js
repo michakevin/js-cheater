@@ -1,6 +1,7 @@
 (() => {
   const DEBUG = false;
-  if (DEBUG) console.log("[js-cheater] Content script loaded (postMessage Mode)");
+  if (DEBUG)
+    console.log("[js-cheater] Content script loaded (postMessage Mode)");
 
   const REQ = "__jsCheaterRequest";
   const RES = "__jsCheaterResponse";
@@ -86,10 +87,13 @@
     refine: (msg) => API.refine(msg.value),
     refineByName: (msg) => API.refineByName(msg.value),
     scanByNameAndValue: (msg) => API.scanByNameAndValue(msg.name, msg.value),
-    refineByNameAndValue: (msg) => API.refineByNameAndValue(msg.name, msg.value),
+    refineByNameAndValue: (msg) =>
+      API.refineByNameAndValue(msg.name, msg.value),
     list: () => API.list(),
     poke: (msg) =>
-      msg.path ? API.pokeByPath(msg.path, msg.value) : API.poke(msg.idx, msg.value),
+      msg.path
+        ? API.pokeByPath(msg.path, msg.value)
+        : API.poke(msg.idx, msg.value),
     freeze: (msg) => API.freezeByPath(msg.path, msg.value),
     unfreeze: (msg) => API.unfreezeByPath(msg.path),
     getLocalStorage: () => {
@@ -136,7 +140,10 @@
             sendResponse(res);
           })
           .catch((error) => {
-            console.error(`[js-cheater] Async handler for ${msg.cmd} failed:`, error);
+            console.error(
+              `[js-cheater] Async handler for ${msg.cmd} failed:`,
+              error,
+            );
             sendResponse({ error: error?.message || String(error) });
           });
         return true;

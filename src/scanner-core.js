@@ -40,7 +40,9 @@ export function createScanner(DEBUG = false) {
         typeof opts.keyHint === "string" ? opts.keyHint.toLowerCase() : "";
       const priorityPatterns = Array.isArray(opts.priorityPatterns)
         ? opts.priorityPatterns
-            .filter((pattern) => typeof pattern === "string" && pattern.trim() !== "")
+            .filter(
+              (pattern) => typeof pattern === "string" && pattern.trim() !== "",
+            )
             .map((pattern) => pattern.toLowerCase())
         : [];
 
@@ -97,7 +99,7 @@ export function createScanner(DEBUG = false) {
       seen = new WeakSet(),
       path = "window",
       maxDepth = 5,
-      opts = {}
+      opts = {},
     ) {
       let out = [];
       if (maxDepth <= 0) return out;
@@ -119,7 +121,8 @@ export function createScanner(DEBUG = false) {
       if (!opts.startTime) opts.startTime = performance.now();
       const start = opts.startTime;
       const maxTime = opts.maxTime || 3000;
-      const allowGetters = opts.allowGetters && !this.shouldAvoidGetterEvaluation();
+      const allowGetters =
+        opts.allowGetters && !this.shouldAvoidGetterEvaluation();
       if (!opts.traversalState) {
         opts.traversalState = { hitCount: 0 };
       }
@@ -171,7 +174,7 @@ export function createScanner(DEBUG = false) {
           }
           try {
             out = out.concat(
-              this.findAll(val, predicate, seen, cur, maxDepth - 1, opts)
+              this.findAll(val, predicate, seen, cur, maxDepth - 1, opts),
             );
           } catch {
             continue;
@@ -204,7 +207,8 @@ export function createScanner(DEBUG = false) {
         "score",
       ];
       const exactMatch = (v) => v === value;
-      const isNumericTarget = typeof value === "number" && Number.isFinite(value);
+      const isNumericTarget =
+        typeof value === "number" && Number.isFinite(value);
       const isStringTarget = typeof value === "string";
       const conservativeMode = this.shouldAvoidGetterEvaluation();
       const looseNumericMatch = (v) => {
@@ -284,7 +288,7 @@ export function createScanner(DEBUG = false) {
           new WeakSet(),
           "window",
           pass.depth,
-          pass.opts
+          pass.opts,
         );
         if (this.hits.length > 0) {
           break;
@@ -305,7 +309,8 @@ export function createScanner(DEBUG = false) {
           return false;
         }
       });
-      if (DEBUG) console.log(`🔬 Refined from ${oldCount} to ${this.hits.length} hits`);
+      if (DEBUG)
+        console.log(`🔬 Refined from ${oldCount} to ${this.hits.length} hits`);
       return this.hits.length;
     },
     scanByName: function (name) {
@@ -389,7 +394,7 @@ export function createScanner(DEBUG = false) {
           new WeakSet(),
           "window",
           pass.depth,
-          pass.opts
+          pass.opts,
         );
         if (this.hits.length > 0) {
           break;
@@ -419,7 +424,7 @@ export function createScanner(DEBUG = false) {
       });
       if (DEBUG)
         console.log(
-          `🔬 Refined by name from ${oldCount} to ${this.hits.length} hits`
+          `🔬 Refined by name from ${oldCount} to ${this.hits.length} hits`,
         );
       return this.hits.length;
     },
@@ -452,13 +457,18 @@ export function createScanner(DEBUG = false) {
         return nameMatches && val === value;
       };
 
-      const isNumericTarget = typeof value === "number" && Number.isFinite(value);
+      const isNumericTarget =
+        typeof value === "number" && Number.isFinite(value);
       const looseMatchByNameAndValue = (val, k) => {
         const nameMatches = k.toLowerCase().includes(loweredName);
         if (!nameMatches) return false;
         if (val === value) return true;
         if (!isNumericTarget) return false;
-        if (typeof val === "string" && val.trim() !== "" && Number(val) === value) {
+        if (
+          typeof val === "string" &&
+          val.trim() !== "" &&
+          Number(val) === value
+        ) {
           return true;
         }
         if (typeof val === "bigint") {
@@ -536,7 +546,7 @@ export function createScanner(DEBUG = false) {
           new WeakSet(),
           "window",
           pass.depth,
-          pass.opts
+          pass.opts,
         );
         if (this.hits.length > 0) {
           break;
@@ -563,7 +573,7 @@ export function createScanner(DEBUG = false) {
       });
       if (DEBUG)
         console.log(
-          `🔬 Refined by name+value from ${oldCount} to ${this.hits.length} hits`
+          `🔬 Refined by name+value from ${oldCount} to ${this.hits.length} hits`,
         );
       return this.hits.length;
     },
@@ -598,7 +608,8 @@ export function createScanner(DEBUG = false) {
 
     pokeByPath: function (path, value) {
       try {
-        if (DEBUG) console.log("🎯 pokeByPath called with:", path, "value:", value);
+        if (DEBUG)
+          console.log("🎯 pokeByPath called with:", path, "value:", value);
 
         const pathParts = parsePath(path);
         if (DEBUG) console.log("🎯 Path parts:", pathParts);
@@ -632,7 +643,7 @@ export function createScanner(DEBUG = false) {
 
         if (DEBUG)
           console.log(
-            "🎯 Successfully changed " + path + ": " + oldVal + " → " + value
+            "🎯 Successfully changed " + path + ": " + oldVal + " → " + value,
           );
         if (DEBUG) console.log("🎯 Verification - new value:", obj[key]);
 
@@ -697,7 +708,9 @@ export function createScanner(DEBUG = false) {
       if (DEBUG) console.log(`📋 ${this.hits.length} hits:`);
       this.hits.forEach((hit, i) => {
         if (DEBUG)
-          console.log(`[${i}] ${hit.path} = ${JSON.stringify(hit.obj[hit.key])}`);
+          console.log(
+            `[${i}] ${hit.path} = ${JSON.stringify(hit.obj[hit.key])}`,
+          );
       });
     },
 
@@ -711,8 +724,5 @@ export function createScanner(DEBUG = false) {
           .slice(0, 10),
       };
     },
-    };
+  };
 }
-
-
-

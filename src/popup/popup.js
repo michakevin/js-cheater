@@ -199,10 +199,8 @@ async function executeTabsScript(tabId, details) {
     };
 
     try {
-      const maybePromise = chrome.tabs.executeScript(
-        tabId,
-        details,
-        () => settle(chrome.runtime?.lastError ?? null),
+      const maybePromise = chrome.tabs.executeScript(tabId, details, () =>
+        settle(chrome.runtime?.lastError ?? null),
       );
       if (maybePromise && typeof maybePromise.then === "function") {
         maybePromise.then(() => settle()).catch((error) => settle(error));
@@ -361,7 +359,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       showLoading("Scanne...");
       setScanButtonsDisabled(true);
-      const result = await runSearch({ cmd: "scanByNameAndValue", value: val, name });
+      const result = await runSearch({
+        cmd: "scanByNameAndValue",
+        value: val,
+        name,
+      });
       setScanButtonsDisabled(false);
       if (result !== null) {
         showError(`✅ ${result} Treffer gefunden`);
@@ -400,7 +402,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
       showLoading("Verfeinere...");
       setScanButtonsDisabled(true);
-      const result = await runSearch({ cmd: "refineByNameAndValue", value: val, name });
+      const result = await runSearch({
+        cmd: "refineByNameAndValue",
+        value: val,
+        name,
+      });
       setScanButtonsDisabled(false);
       if (result !== null) {
         showError(`🔬 ${result} Treffer nach Verfeinerung`);
@@ -434,7 +440,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (currentValue !== "" && name !== "") {
         showLoading("Neue Suche...");
         setScanButtonsDisabled(true);
-        const result = await runSearch({ cmd: "scanByNameAndValue", value: currentValue, name });
+        const result = await runSearch({
+          cmd: "scanByNameAndValue",
+          value: currentValue,
+          name,
+        });
         setScanButtonsDisabled(false);
         if (result !== null) {
           showError(`✅ ${result} Treffer gefunden`);

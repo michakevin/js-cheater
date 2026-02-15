@@ -31,10 +31,16 @@ import { createScanner } from "./scanner-core.js";
             result = window.__cheatScanner__.refineByName(data.name);
             break;
           case "scanByNameAndValue":
-            result = window.__cheatScanner__.scanByNameAndValue(data.name, data.value);
+            result = window.__cheatScanner__.scanByNameAndValue(
+              data.name,
+              data.value,
+            );
             break;
           case "refineByNameAndValue":
-            result = window.__cheatScanner__.refineByNameAndValue(data.name, data.value);
+            result = window.__cheatScanner__.refineByNameAndValue(
+              data.name,
+              data.value,
+            );
             break;
           case "list":
             result = window.__cheatScanner__.list();
@@ -47,7 +53,7 @@ import { createScanner } from "./scanner-core.js";
           case "freeze":
             result = window.__cheatScanner__.freezeByPath(
               data.path,
-              data.value
+              data.value,
             );
             break;
           case "unfreeze":
@@ -64,11 +70,11 @@ import { createScanner } from "./scanner-core.js";
       }
       window.postMessage({ type: RES, id, result }, "*");
     },
-    false
+    false,
   );
 
   if (DEBUG)
     console.log(
-      "🎮 JS-Cheater Scanner bereit! Verwende window.__cheatScanner__.scan(wert)"
+      "🎮 JS-Cheater Scanner bereit! Verwende window.__cheatScanner__.scan(wert)",
     );
 })();
