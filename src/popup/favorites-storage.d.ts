@@ -1,0 +1,9 @@
+export function getDomainKey(...args: any[]): any;
+export function getFavoritesKey(...args: any[]): any;
+export function getInputsKey(...args: any[]): any;
+export function getFavorites(...args: any[]): any;
+export function saveFavorites(...args: any[]): any;
+export function getInputs(...args: any[]): any;
+export function saveInputs(...args: any[]): any;
+export function saveFavoriteInputValue(...args: any[]): any;
+export function clearFavoriteInputValue(...args: any[]): any;
