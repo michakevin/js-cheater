@@ -5,6 +5,17 @@ jest.mock("../../src/popup/dialog.js", () => ({
   showDialog: jest.fn(),
 }));
 
+function renderFavoritesDom() {
+  document.body.innerHTML = `
+    <select id="favoritesDomainSelect"></select>
+    <button id="adoptFavoritesForCurrentDomain" class="hidden"></button>
+    <button id="exportFavorites"></button>
+    <button id="importFavorites"></button>
+    <input id="importFavoritesFile" type="file" />
+    <div id="favoritesContent"></div>
+  `;
+}
+
 async function loadModule(url) {
   jest.resetModules();
   globalThis.chrome = {
@@ -15,9 +26,13 @@ async function loadModule(url) {
   return await import("../../src/popup/favorites.js");
 }
 
+async function waitTick() {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 describe("domain isolated favorites", () => {
   beforeEach(() => {
-    document.body.innerHTML = '<div id="favoritesContent"></div>';
+    renderFavoritesDom();
     localStorage.clear();
   });
 
@@ -63,7 +78,7 @@ describe("domain isolated favorites", () => {
     expect(html).toContain("favA");
     expect(html).not.toContain("favB");
 
-    document.body.innerHTML = '<div id="favoritesContent"></div>';
+    renderFavoritesDom();
     mod = await loadModule("https://b.com/home");
     await mod.loadFavorites();
     html = document.getElementById("favoritesContent").innerHTML;
@@ -78,8 +93,6 @@ describe("domain isolated favorites", () => {
         query: jest
           .fn()
           .mockResolvedValueOnce([{ id: 1, url: "https://a.com/home" }])
-          .mockResolvedValueOnce([{ id: 1, url: "https://a.com/home" }])
-          .mockResolvedValueOnce([{ id: 2, url: "https://b.com/home" }])
           .mockResolvedValueOnce([{ id: 2, url: "https://b.com/home" }]),
       },
     };
@@ -105,5 +118,67 @@ describe("domain isolated favorites", () => {
     html = document.getElementById("favoritesContent").innerHTML;
     expect(html).toContain("favB");
     expect(html).not.toContain("favA");
+  });
+
+  test("domain selector lists saved domains and preselects active domain", async () => {
+    const favsA = { 1: { id: "1", name: "favA", path: "a", value: 1 } };
+    const favsB = { 2: { id: "2", name: "favB", path: "b", value: 2 } };
+    localStorage.setItem(
+      "cheat_favorites_https://a.com",
+      JSON.stringify(favsA),
+    );
+    localStorage.setItem(
+      "cheat_favorites_https://b.com",
+      JSON.stringify(favsB),
+    );
+
+    const { loadFavorites } = await loadModule("https://b.com/home");
+    await loadFavorites();
+
+    const select = document.getElementById("favoritesDomainSelect");
+    const values = [...select.options].map((option) => option.value);
+    expect(values).toContain("https://a.com");
+    expect(values).toContain("https://b.com");
+    expect(select.value).toBe("https://b.com");
+  });
+
+  test("can copy selected domain favorites to the current domain", async () => {
+    const favsA = {
+      1: { id: "1", name: "favA", path: "player.hp", value: 99 },
+      2: { id: "2", name: "favB", path: "player.gold", value: 1337 },
+    };
+    const favsB = {
+      9: { id: "9", name: "already", path: "player.hp", value: 1 },
+    };
+    localStorage.setItem(
+      "cheat_favorites_https://a.com",
+      JSON.stringify(favsA),
+    );
+    localStorage.setItem(
+      "cheat_favorites_https://b.com",
+      JSON.stringify(favsB),
+    );
+
+    const mod = await loadModule("https://b.com/home");
+    await mod.loadFavorites();
+
+    const select = document.getElementById("favoritesDomainSelect");
+    select.value = "https://a.com";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await waitTick();
+
+    const importButton = document.getElementById("adoptFavoritesForCurrentDomain");
+    expect(importButton.classList.contains("hidden")).toBe(false);
+    importButton.click();
+    await waitTick();
+
+    const storedCurrent = JSON.parse(
+      localStorage.getItem("cheat_favorites_https://b.com") || "{}",
+    );
+    const storedPaths = Object.values(storedCurrent).map((fav) => fav.path);
+    expect(storedPaths).toContain("player.hp");
+    expect(storedPaths).toContain("player.gold");
+    expect(storedPaths.filter((path) => path === "player.hp")).toHaveLength(1);
+    expect(select.value).toBe("https://b.com");
   });
 });

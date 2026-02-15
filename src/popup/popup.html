@@ -123,6 +123,16 @@
           role="tabpanel"
           aria-labelledby="tab-favorites"
         >
+          <div class="favorites-domain-controls">
+            <label for="favoritesDomainSelect">Domain</label>
+            <select
+              id="favoritesDomainSelect"
+              aria-label="Domain für Favoriten auswählen"
+            ></select>
+            <button id="adoptFavoritesForCurrentDomain" class="hidden">
+              Für aktuelle Domain übernehmen
+            </button>
+          </div>
           <div class="favorites-actions">
             <button id="exportFavorites" class="btn-half">📤 Export</button>
             <button id="importFavorites" class="btn-half">📥 Import</button>

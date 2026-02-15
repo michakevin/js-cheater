@@ -12,18 +12,37 @@ export type FavoriteInputsMap = Record<string, string>;
 
 export function getDomainKey(): Promise<string>;
 
-export function getFavoritesKey(): Promise<string>;
+export function getDomainFromKey(key: string): string;
 
-export function getInputsKey(): Promise<string>;
+export function buildFavoritesKey(domain: string): string;
 
-export function getFavorites(): Promise<FavoritesMap>;
+export function listStoredFavoriteDomains(): string[];
 
-export function saveFavorites(favorites: FavoritesMap): Promise<void>;
+export function getFavoritesKey(domain?: string): Promise<string>;
 
-export function getInputs(): Promise<FavoriteInputsMap>;
+export function getInputsKey(domain?: string): Promise<string>;
 
-export function saveInputs(inputs: FavoriteInputsMap): Promise<void>;
+export function getFavorites(domain?: string): Promise<FavoritesMap>;
 
-export function saveFavoriteInputValue(id: string, value: string): Promise<void>;
+export function saveFavorites(
+  favorites: FavoritesMap,
+  domain?: string,
+): Promise<void>;
 
-export function clearFavoriteInputValue(id: string): Promise<void>;
+export function getInputs(domain?: string): Promise<FavoriteInputsMap>;
+
+export function saveInputs(
+  inputs: FavoriteInputsMap,
+  domain?: string,
+): Promise<void>;
+
+export function saveFavoriteInputValue(
+  id: string,
+  value: string,
+  domain?: string,
+): Promise<void>;
+
+export function clearFavoriteInputValue(
+  id: string,
+  domain?: string,
+): Promise<void>;

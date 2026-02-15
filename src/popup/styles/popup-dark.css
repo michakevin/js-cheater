@@ -137,6 +137,19 @@
           border-color: #4dabf7;
         }
 
+        .favorites-domain-controls label {
+          color: #bbb;
+        }
+
+        #adoptFavoritesForCurrentDomain {
+          background: #1e7a42;
+          color: #f0f0f0;
+        }
+
+        #adoptFavoritesForCurrentDomain:hover:not(:disabled) {
+          background: #1b8a42;
+        }
+
         .no-favorites {
           color: #999;
         }

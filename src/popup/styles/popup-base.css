@@ -174,6 +174,31 @@
         width: 50%;
       }
 
+      .favorites-domain-controls {
+        margin-bottom: 8px;
+      }
+
+      .favorites-domain-controls label {
+        display: block;
+        margin-bottom: 2px;
+        font-size: 12px;
+        color: #666;
+      }
+
+      #favoritesDomainSelect {
+        margin-top: 0;
+      }
+
+      #adoptFavoritesForCurrentDomain {
+        margin-top: 6px;
+        background: #27ae60;
+        color: white;
+      }
+
+      #adoptFavoritesForCurrentDomain:hover:not(:disabled) {
+        background: #219a52;
+      }
+
       .favorites-actions,
       .tool-group-buttons {
         display: flex;
