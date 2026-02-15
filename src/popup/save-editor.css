@@ -1,0 +1,523 @@
+/* ---- Save Editor Styles ---- */
+
+/* Inherit base dark/light theming from system preference */
+body {
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  color: #333;
+  min-width: 500px;
+}
+
+/* ---- Header ---- */
+.editor-header {
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.editor-header h1 {
+  margin: 0 0 2px;
+  font-size: 16px;
+}
+
+.editor-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* ---- Toolbar ---- */
+.editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.slot-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.slot-controls label {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.slot-controls select {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+  min-width: 160px;
+}
+
+.slot-controls button {
+  padding: 4px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.slot-controls button:hover {
+  background: #e9ecef;
+}
+
+.toolbar-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.btn-small {
+  padding: 4px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.btn-small:hover {
+  background: #e9ecef;
+}
+
+.btn-save {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 4px;
+  background: #27ae60;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.btn-save:hover:not(:disabled) {
+  background: #219a52;
+}
+
+.btn-save:disabled {
+  background: #95a5a6;
+  cursor: not-allowed;
+}
+
+/* ---- Search Bar ---- */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.search-bar input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.search-count {
+  font-size: 12px;
+  color: #888;
+  white-space: nowrap;
+}
+
+/* ---- Status Message ---- */
+.status-message {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.status-message.status-success {
+  background: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.status-message.status-error {
+  background: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+
+.status-message.status-info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border-color: #bee5eb;
+}
+
+/* ---- Editor Content ---- */
+.editor-content {
+  padding: 8px 12px;
+  overflow-y: auto;
+  max-height: calc(100vh - 160px);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 16px;
+  color: #888;
+}
+
+.empty-state p {
+  margin: 4px 0;
+}
+
+.text-secondary {
+  color: #888;
+  font-size: 12px;
+}
+
+/* ---- JSON Tree ---- */
+.json-tree {
+  font-family: "Consolas", "Monaco", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.json-node {
+  margin-left: 16px;
+  border-left: 1px solid #e0e0e0;
+  padding-left: 8px;
+}
+
+.json-node.top-level {
+  margin-left: 0;
+  border-left: none;
+  padding-left: 0;
+}
+
+.json-key-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  cursor: default;
+  min-height: 24px;
+}
+
+.json-key-row:hover {
+  background: #f0f4f8;
+}
+
+.json-toggle {
+  cursor: pointer;
+  user-select: none;
+  width: 14px;
+  text-align: center;
+  font-size: 10px;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.json-toggle:hover {
+  color: #333;
+}
+
+.json-key {
+  color: #881391;
+  font-weight: 500;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+.json-separator {
+  color: #888;
+  margin-right: 4px;
+}
+
+.json-value {
+  flex: 1;
+  min-width: 0;
+}
+
+.json-value-string {
+  color: #c41a16;
+}
+
+.json-value-number {
+  color: #1c00cf;
+}
+
+.json-value-boolean {
+  color: #0d49c1;
+  font-weight: bold;
+}
+
+.json-value-null {
+  color: #808080;
+  font-style: italic;
+}
+
+.json-bracket {
+  color: #888;
+}
+
+.json-summary {
+  color: #888;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.json-children {
+  overflow: hidden;
+}
+
+.json-children.collapsed {
+  display: none;
+}
+
+/* Editable value input */
+.json-edit-input {
+  font-family: "Consolas", "Monaco", "Courier New", monospace;
+  font-size: 13px;
+  border: 1px solid #3498db;
+  border-radius: 3px;
+  padding: 1px 4px;
+  background: #fff;
+  color: #333;
+  min-width: 80px;
+  max-width: 300px;
+}
+
+.json-edit-input:focus {
+  outline: 2px solid #3498db;
+  outline-offset: -1px;
+}
+
+.json-value.modified {
+  background: #fffde7;
+  border-radius: 2px;
+  padding: 0 3px;
+}
+
+/* ---- Category Headers (top-level grouping) ---- */
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 6px;
+  margin: 4px 0;
+  background: #f0f4f8;
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.category-header:hover {
+  background: #e3eaf2;
+}
+
+.category-toggle {
+  font-size: 10px;
+  color: #888;
+  width: 14px;
+  text-align: center;
+}
+
+.category-icon {
+  font-size: 14px;
+}
+
+.category-name {
+  flex: 1;
+}
+
+.category-count {
+  font-size: 11px;
+  color: #888;
+  font-weight: 400;
+}
+
+.category-children {
+  overflow: hidden;
+}
+
+.category-children.collapsed {
+  display: none;
+}
+
+/* Search highlight */
+.search-highlight {
+  background: #fff59d;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---- Dark Mode ---- */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #1e1e1e;
+    color: #f0f0f0;
+  }
+
+  .editor-header {
+    border-bottom-color: #444;
+  }
+
+  .editor-subtitle {
+    color: #aaa;
+  }
+
+  .editor-toolbar {
+    background: #2b2b2b;
+    border-bottom-color: #444;
+  }
+
+  .slot-controls select,
+  .slot-controls button,
+  .btn-small {
+    background: #3a3a3a;
+    border-color: #555;
+    color: #f0f0f0;
+  }
+
+  .slot-controls select:hover,
+  .slot-controls button:hover,
+  .btn-small:hover {
+    background: #4a4a4a;
+  }
+
+  .search-bar {
+    border-bottom-color: #444;
+  }
+
+  .search-bar input {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #f0f0f0;
+  }
+
+  .search-count {
+    color: #aaa;
+  }
+
+  .status-message {
+    border-bottom-color: #444;
+  }
+
+  .status-message.status-success {
+    background: #1e3a1e;
+    color: #7ddf7d;
+    border-color: #2d5a2d;
+  }
+
+  .status-message.status-error {
+    background: #3a1e1e;
+    color: #df7d7d;
+    border-color: #5a2d2d;
+  }
+
+  .status-message.status-info {
+    background: #1e2e3a;
+    color: #7dbfdf;
+    border-color: #2d4a5a;
+  }
+
+  .empty-state {
+    color: #888;
+  }
+
+  .json-node {
+    border-left-color: #444;
+  }
+
+  .json-key-row:hover {
+    background: #2a2e33;
+  }
+
+  .json-toggle {
+    color: #aaa;
+  }
+
+  .json-toggle:hover {
+    color: #f0f0f0;
+  }
+
+  .json-key {
+    color: #c586c0;
+  }
+
+  .json-separator {
+    color: #aaa;
+  }
+
+  .json-value-string {
+    color: #ce9178;
+  }
+
+  .json-value-number {
+    color: #b5cea8;
+  }
+
+  .json-value-boolean {
+    color: #569cd6;
+  }
+
+  .json-value-null {
+    color: #808080;
+  }
+
+  .json-bracket {
+    color: #aaa;
+  }
+
+  .json-summary {
+    color: #888;
+  }
+
+  .json-edit-input {
+    background: #2a2a2a;
+    border-color: #4dabf7;
+    color: #f0f0f0;
+  }
+
+  .json-edit-input:focus {
+    outline-color: #4dabf7;
+  }
+
+  .json-value.modified {
+    background: #3a3520;
+  }
+
+  .category-header {
+    background: #2a2e33;
+  }
+
+  .category-header:hover {
+    background: #333840;
+  }
+
+  .category-toggle {
+    color: #aaa;
+  }
+
+  .category-count {
+    color: #888;
+  }
+
+  .search-highlight {
+    background: #5a5020;
+  }
+}

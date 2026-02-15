@@ -124,8 +124,204 @@
       });
       return { success: true };
     },
+    /**
+     * Enumerate RPG Maker save slots from both localStorage and IndexedDB.
+     * Returns { slots: Array<{key, source, raw}> } where source is
+     * "localStorage" or "indexedDB".
+     */
+    getRpgMakerSaves: async () => {
+      const slots = [];
+
+      // 1) localStorage: RPG Maker MV keys ("RPG File1", "RPG Global")
+      //    and MZ-style keys ("rmmzsave.*")
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (/^RPG\s+(File\d+|Global)$/i.test(key) || /^rmmzsave\b/i.test(key)) {
+          slots.push({
+            key,
+            source: "localStorage",
+            raw: localStorage.getItem(key),
+          });
+        }
+      }
+
+      // 2) IndexedDB: RPG Maker MZ via localforage
+      try {
+        const forageSlots = await readLocalForage();
+        for (const s of forageSlots) {
+          slots.push(s);
+        }
+      } catch (e) {
+        if (DEBUG) console.log("[js-cheater] IndexedDB forage read failed:", e);
+      }
+
+      return { slots };
+    },
+    /**
+     * Write a single RPG Maker save slot back.
+     * @param {{key: string, source: string, raw: string}} msg
+     */
+    setRpgMakerSave: async (msg) => {
+      const { key, source, raw } = msg;
+      if (source === "localStorage") {
+        localStorage.setItem(key, raw);
+        return { success: true };
+      }
+      if (source === "indexedDB") {
+        try {
+          await writeLocalForage(key, raw);
+          return { success: true };
+        } catch (e) {
+          return { error: e.message };
+        }
+      }
+      return { error: "Unknown source: " + source };
+    },
     test: () => API.test(),
   };
+
+  /**
+   * Read all RPG Maker MZ save entries from IndexedDB (localforage).
+   * localforage uses DB "localforage" with store "keyvaluepairs".
+   * @returns {Promise<Array<{key: string, source: string, raw: string}>>}
+   */
+  function readLocalForage() {
+    return new Promise((resolve, reject) => {
+      const results = [];
+      // Try common localforage DB names
+      const dbNames = ["localforage", "RPG Maker MZ"];
+      let tried = 0;
+
+      function tryNextDB() {
+        if (tried >= dbNames.length) {
+          resolve(results);
+          return;
+        }
+        const dbName = dbNames[tried++];
+        try {
+          const openReq = indexedDB.open(dbName);
+          openReq.onerror = () => tryNextDB();
+          openReq.onupgradeneeded = (ev) => {
+            // DB didn't exist, close and delete it
+            ev.target.transaction.abort();
+            tryNextDB();
+          };
+          openReq.onsuccess = (ev) => {
+            const db = ev.target.result;
+            const storeNames = [...db.objectStoreNames];
+            if (storeNames.length === 0) {
+              db.close();
+              tryNextDB();
+              return;
+            }
+            // Read from the first store (usually "keyvaluepairs")
+            const storeName = storeNames.includes("keyvaluepairs")
+              ? "keyvaluepairs"
+              : storeNames[0];
+            try {
+              const tx = db.transaction(storeName, "readonly");
+              const store = tx.objectStore(storeName);
+              const cursorReq = store.openCursor();
+              cursorReq.onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                  const k = cursor.key;
+                  const v = cursor.value;
+                  // Include entries that look like RPG Maker save data
+                  if (
+                    typeof k === "string" &&
+                    (/rmmzsave/i.test(k) ||
+                      /^RPG\s+(File|Global)/i.test(k) ||
+                      /^(file|save)\d+$/i.test(k) ||
+                      /^(config|global)$/i.test(k))
+                  ) {
+                    const raw = typeof v === "string" ? v : JSON.stringify(v);
+                    results.push({ key: k, source: "indexedDB", raw });
+                  }
+                  cursor.continue();
+                } else {
+                  db.close();
+                  tryNextDB();
+                }
+              };
+              cursorReq.onerror = () => {
+                db.close();
+                tryNextDB();
+              };
+            } catch {
+              db.close();
+              tryNextDB();
+            }
+          };
+        } catch {
+          tryNextDB();
+        }
+      }
+      tryNextDB();
+
+      // Safety timeout
+      setTimeout(() => {
+        if (results.length === 0) reject(new Error("IndexedDB timeout"));
+        else resolve(results);
+      }, 5000);
+    });
+  }
+
+  /**
+   * Write a value back to localforage IndexedDB.
+   * @param {string} key
+   * @param {string} raw
+   * @returns {Promise<void>}
+   */
+  function writeLocalForage(key, raw) {
+    return new Promise((resolve, reject) => {
+      const dbNames = ["localforage", "RPG Maker MZ"];
+      let tried = 0;
+
+      function tryNextDB() {
+        if (tried >= dbNames.length) {
+          reject(new Error("Save-DB not found"));
+          return;
+        }
+        const dbName = dbNames[tried++];
+        try {
+          const openReq = indexedDB.open(dbName);
+          openReq.onerror = () => tryNextDB();
+          openReq.onsuccess = (ev) => {
+            const db = ev.target.result;
+            const storeNames = [...db.objectStoreNames];
+            const storeName = storeNames.includes("keyvaluepairs")
+              ? "keyvaluepairs"
+              : storeNames[0];
+            if (!storeName) {
+              db.close();
+              tryNextDB();
+              return;
+            }
+            try {
+              const tx = db.transaction(storeName, "readwrite");
+              const store = tx.objectStore(storeName);
+              const putReq = store.put(raw, key);
+              putReq.onsuccess = () => {
+                db.close();
+                resolve();
+              };
+              putReq.onerror = () => {
+                db.close();
+                tryNextDB();
+              };
+            } catch {
+              db.close();
+              tryNextDB();
+            }
+          };
+        } catch {
+          tryNextDB();
+        }
+      }
+      tryNextDB();
+    });
+  }
 
   // Message Handler
   chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {

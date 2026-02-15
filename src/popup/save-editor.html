@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Save-Game-Editor – JS-Cheater</title>
+    <link rel="stylesheet" href="save-editor.css" />
+  </head>
+  <body>
+    <header class="editor-header">
+      <h1>🎮 Save-Game-Editor</h1>
+      <p class="editor-subtitle">RPG Maker MV / MZ Speicherstände bearbeiten</p>
+    </header>
+
+    <div class="editor-toolbar">
+      <div class="slot-controls">
+        <label for="slotSelect">Speicherslot:</label>
+        <select id="slotSelect">
+          <option value="">– Wird geladen… –</option>
+        </select>
+        <button id="refreshSlots" title="Slots neu laden">🔄</button>
+      </div>
+      <div class="toolbar-actions">
+        <button id="expandAll" class="btn-small">▼ Alle öffnen</button>
+        <button id="collapseAll" class="btn-small">▶ Alle schließen</button>
+        <button id="saveChanges" class="btn-save" disabled>
+          💾 Änderungen speichern
+        </button>
+      </div>
+    </div>
+
+    <div id="searchBar" class="search-bar hidden">
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="🔍 Schlüssel oder Wert suchen…"
+        aria-label="Suche in Speicherdaten"
+      />
+      <span id="searchCount" class="search-count"></span>
+    </div>
+
+    <div id="statusMessage" class="status-message hidden"></div>
+
+    <div id="editorContent" class="editor-content">
+      <div class="empty-state">
+        <p>📂 Kein Speicherslot ausgewählt.</p>
+        <p class="text-secondary">
+          Wähle oben einen Slot aus, um die Speicherdaten zu bearbeiten.
+        </p>
+      </div>
+    </div>
+
+    <script type="module" src="save-editor.js"></script>
+  </body>
+</html>

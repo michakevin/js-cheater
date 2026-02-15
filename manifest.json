@@ -54,5 +54,11 @@
       "128": "icons/icon128.png"
     }
   },
-  "web_accessible_resources": ["src/content.js"]
+  "web_accessible_resources": [
+    "src/content.js",
+    "src/popup/save-editor.html",
+    "src/popup/save-editor.js",
+    "src/popup/save-editor.css",
+    "src/popup/lz-string.js"
+  ]
 }

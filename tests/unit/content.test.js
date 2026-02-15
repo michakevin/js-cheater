@@ -170,6 +170,42 @@ describe("content message handler", () => {
     });
   });
 
+  test("getRpgMakerSaves finds MV localStorage keys", async () => {
+    localStorage.setItem("RPG File1", "save1data");
+    localStorage.setItem("RPG Global", "globaldata");
+    localStorage.setItem("unrelated", "value");
+    const sendResponse = jest.fn();
+    const ret = listener({ cmd: "getRpgMakerSaves" }, null, sendResponse);
+    expect(ret).toBe(true); // async
+    await new Promise((r) => setTimeout(r, 100));
+    expect(sendResponse).toHaveBeenCalled();
+    const result = sendResponse.mock.calls[0][0];
+    expect(result.slots).toBeDefined();
+    const keys = result.slots.map((s) => s.key).sort();
+    expect(keys).toContain("RPG File1");
+    expect(keys).toContain("RPG Global");
+    expect(keys).not.toContain("unrelated");
+    expect(result.slots[0].source).toBe("localStorage");
+  });
+
+  test("setRpgMakerSave writes to localStorage", async () => {
+    const sendResponse = jest.fn();
+    const ret = listener(
+      {
+        cmd: "setRpgMakerSave",
+        key: "RPG File1",
+        source: "localStorage",
+        raw: "newdata",
+      },
+      null,
+      sendResponse,
+    );
+    expect(ret).toBe(true); // async
+    await new Promise((r) => setTimeout(r, 100));
+    expect(localStorage.getItem("RPG File1")).toBe("newdata");
+    expect(sendResponse).toHaveBeenCalledWith({ success: true });
+  });
+
   test("sendCommand timeout returns indicator", async () => {
     jest.useFakeTimers();
     window.postMessage = jest.fn();
