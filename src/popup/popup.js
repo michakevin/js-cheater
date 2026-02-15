@@ -1,23 +1,15 @@
-import { $, tryParse } from "./utils.js";
-import {
-  send,
-  checkScannerStatus,
-  setActiveTab,
-  queryTabs,
-} from "./communication.js";
-import {
-  showSetupMode,
-  showScannerMode,
-  showInitialScanState,
-  showRefineScanState,
-  showLoading,
-  setScanButtonsDisabled,
-  updateList,
-} from "./ui.js";
+import { $ } from "./utils.js";
+import { checkScannerStatus } from "./communication.js";
+import { showSetupMode, showScannerMode } from "./ui.js";
 import { showError } from "./messages.js";
-import { showDialog } from "./dialog.js";
 import { detectAndShowPresets } from "./engine-detect.js";
-import { SCANNER_CODE } from "./scanner-code.js";
+import {
+  configureSetupMode,
+  createInjectHandler,
+  shouldInjectScannerDirectly,
+} from "./popup-injection.js";
+import { createSearchHandlers, setupSearchTypeUI } from "./popup-search.js";
+import { createTabContextController } from "./popup-tab-context.js";
 import * as popupSelf from "./popup.js";
 
 let statusInterval;
@@ -92,535 +84,48 @@ export function startPolling(options = {}) {
   }, 30000);
 }
 
-async function runSearch({ cmd, value, name }) {
-  const extra = { value };
-  if (name !== undefined) extra.name = name;
-  const result = await send(cmd, extra);
-  if (result !== null) {
-    if (typeof result === "object") {
-      if (result.error) {
-        showError(`❌ ${result.error}`);
-      } else {
-        showError(`⚠️ Unerwartete Antwort: ${JSON.stringify(result)}`);
-      }
-      return null;
-    }
-    return result;
-  }
-  return null;
-}
-
-function fallbackCopyText(text) {
-  if (typeof document.execCommand !== "function") {
-    return false;
-  }
-
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.setAttribute("readonly", "");
-  textarea.style.position = "fixed";
-  textarea.style.left = "-9999px";
-  textarea.style.top = "0";
-  textarea.style.opacity = "0";
-  document.body.appendChild(textarea);
-
-  try {
-    textarea.focus();
-    textarea.select();
-    textarea.setSelectionRange(0, textarea.value.length);
-    return document.execCommand("copy") === true;
-  } catch (error) {
-    console.error("Fallback copy failed:", error);
-    return false;
-  } finally {
-    textarea.remove();
-  }
-}
-
-async function copyScannerCode(text) {
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text);
-      return true;
-    } catch (error) {
-      console.error("Copy failed:", error);
-    }
-  }
-
-  return fallbackCopyText(text);
-}
-
-function shouldInjectScannerDirectly() {
-  return !chrome.scripting?.executeScript && !!chrome.tabs?.executeScript;
-}
-
-function configureSetupMode() {
-  if (!directScannerInjection) {
-    return;
-  }
-
-  const setupDescription = document.querySelector(".setup-description");
-  if (setupDescription) {
-    setupDescription.textContent =
-      "Firefox kann den Scanner direkt laden. Die Konsole wird nur als Fallback benötigt.";
-  }
-
-  const injectBtn = $("#inject");
-  if (injectBtn) {
-    injectBtn.textContent = "⚡ Scanner direkt laden";
-  }
-}
-
-function showInjectFeedback(injectBtn, label) {
-  if (!injectBtn) return;
-
-  const originalText = injectBtn.textContent;
-  injectBtn.textContent = label;
-  injectBtn.classList.add("copied");
-  setTimeout(() => {
-    injectBtn.textContent = originalText;
-    injectBtn.classList.remove("copied");
-  }, 2000);
-}
-
-async function executeTabsScript(tabId, details) {
-  if (!chrome.tabs?.executeScript) {
-    throw new Error("tabs.executeScript ist nicht verfügbar");
-  }
-
-  return await new Promise((resolve, reject) => {
-    let settled = false;
-    const settle = (error = null) => {
-      if (settled) return;
-      settled = true;
-      if (error) {
-        reject(error);
-      } else {
-        resolve();
-      }
-    };
-
-    try {
-      const maybePromise = chrome.tabs.executeScript(tabId, details, () =>
-        settle(chrome.runtime?.lastError ?? null),
-      );
-      if (maybePromise && typeof maybePromise.then === "function") {
-        maybePromise.then(() => settle()).catch((error) => settle(error));
-      }
-    } catch (error) {
-      settle(error);
-    }
-  });
-}
-
-async function injectContentScript(tabId) {
-  if (chrome.scripting?.executeScript) {
-    await chrome.scripting.executeScript({
-      target: { tabId, allFrames: true },
-      files: ["src/content.js"],
-    });
-    return;
-  }
-
-  await executeTabsScript(tabId, {
-    file: "/src/content.js",
-    allFrames: true,
-    matchAboutBlank: true,
-  });
-}
-
-async function injectScannerIntoTab(tabId) {
-  // Inject via <script> element so the scanner runs in the PAGE context
-  // (not the content-script sandbox) and can see page-defined globals.
-  const injector = `(function(){
-    var s = document.createElement('script');
-    s.textContent = ${JSON.stringify(SCANNER_CODE)};
-    (document.head || document.documentElement).appendChild(s);
-    s.remove();
-  })();`;
-
-  await executeTabsScript(tabId, {
-    code: injector,
-    allFrames: false,
-    matchAboutBlank: true,
-  });
-}
-
 document.addEventListener("DOMContentLoaded", async () => {
   const valueInput = $("#value");
   const searchTypeSelect = $("#searchType");
   const nameInputGroup = $("#nameInputGroup");
   const nameInput = $("#nameInput");
+
+  if (!valueInput || !searchTypeSelect || !nameInputGroup || !nameInput) {
+    console.error("Popup initialization failed: missing required controls.");
+    return;
+  }
+
   directScannerInjection = shouldInjectScannerDirectly();
-  configureSetupMode();
-
-  function updateSearchTypeUI() {
-    const type = searchTypeSelect.value;
-    if (type === "nameAndValue") {
-      nameInputGroup.classList.remove("hidden");
-      valueInput.placeholder = 'z. B. 123 oder "gold"';
-    } else {
-      nameInputGroup.classList.add("hidden");
-      if (type === "name") {
-        valueInput.placeholder = 'z. B. "hp" oder "score"';
-      } else {
-        valueInput.placeholder = 'z. B. 123 oder "gold"';
-      }
-    }
-  }
-  searchTypeSelect.addEventListener("change", updateSearchTypeUI);
-  updateSearchTypeUI();
-
-  let activeTabSignature = "";
-  let tabContextRefreshInFlight = false;
-  let queuedTabContextRefresh = null;
-
-  function queueTabContextRefresh(force) {
-    if (queuedTabContextRefresh === null) {
-      queuedTabContextRefresh = force;
-    } else if (force) {
-      queuedTabContextRefresh = true;
-    }
-  }
-
-  async function refreshVisibleTabContext({ force = false } = {}) {
-    if (tabContextRefreshInFlight) {
-      queueTabContextRefresh(force);
-      return;
-    }
-
-    tabContextRefreshInFlight = true;
-
-    try {
-      const [tab] = await queryTabs({ active: true, currentWindow: true });
-      const tabId = tab?.id;
-      if (tabId === undefined || tabId === null) {
-        showSetupMode();
-        stopConnectionMonitor();
-        return;
-      }
-
-      setActiveTab(tabId);
-
-      const tabSignature = `${tabId}|${tab?.url || ""}`;
-      const tabChanged = tabSignature !== activeTabSignature;
-      const scannerReady = await checkScannerStatus();
-
-      if (!scannerReady) {
-        activeTabSignature = tabSignature;
-        showSetupMode();
-        stopConnectionMonitor();
-        return;
-      }
-
-      if ($("#scannerUI").style.display === "none") {
-        showScannerMode();
-      }
-
-      if (tabChanged || !statusInterval) {
-        popupSelf.startConnectionMonitor();
-      }
-
-      detectAndShowPresets();
-
-      if (force || tabChanged) {
-        await updateList();
-
-        const favoritesTabButton = document.querySelector(
-          '.tab-button[data-tab="favorites"]',
-        );
-        if (favoritesTabButton?.classList.contains("active")) {
-          const { loadFavorites } = await import("./favorites.js");
-          await loadFavorites();
-        }
-      }
-
-      activeTabSignature = tabSignature;
-    } catch (error) {
-      console.error("Aktiven Tab konnte nicht synchronisiert werden:", error);
-    } finally {
-      tabContextRefreshInFlight = false;
-      if (queuedTabContextRefresh !== null) {
-        const forceQueued = queuedTabContextRefresh;
-        queuedTabContextRefresh = null;
-        void refreshVisibleTabContext({ force: forceQueued });
-      }
-    }
-  }
-
-  function scheduleTabContextRefresh(options = {}) {
-    const force = options.force === true;
-    if (tabContextRefreshInFlight) {
-      queueTabContextRefresh(force);
-      return;
-    }
-    void refreshVisibleTabContext({ force });
-  }
-
-  if (chrome?.tabs?.onActivated?.addListener) {
-    chrome.tabs.onActivated.addListener(() => {
-      scheduleTabContextRefresh();
-    });
-  }
-
-  if (chrome?.tabs?.onUpdated?.addListener) {
-    chrome.tabs.onUpdated.addListener((updatedTabId, changeInfo) => {
-      if (!changeInfo?.url && changeInfo?.status !== "complete") {
-        return;
-      }
-      if (typeof updatedTabId !== "number") {
-        return;
-      }
-      scheduleTabContextRefresh();
-    });
-  }
-
-  if (chrome?.windows?.onFocusChanged?.addListener) {
-    chrome.windows.onFocusChanged.addListener(() => {
-      scheduleTabContextRefresh();
-    });
-  }
-
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") {
-      scheduleTabContextRefresh();
-    }
+  configureSetupMode({ directScannerInjection });
+  setupSearchTypeUI({
+    searchTypeSelect,
+    nameInputGroup,
+    valueInput,
   });
 
-  async function onInjectHandler() {
-    const injectBtn = $("#inject");
-    let scannerReady = false;
-    let contentScriptReady = false;
-    let showManualInstructions = !directScannerInjection;
-    let timeoutMessage = "Scanner nicht gefunden – Code korrekt eingefügt?";
+  const tabContextController = createTabContextController({
+    startConnectionMonitor: () => popupSelf.startConnectionMonitor(),
+    stopConnectionMonitor,
+    isConnectionMonitorRunning: () => Boolean(statusInterval),
+  });
+  tabContextController.attachListeners();
 
-    try {
-      const [currTab] = await queryTabs({
-        active: true,
-        currentWindow: true,
-      });
-      if (currTab) {
-        setActiveTab(currTab.id);
-        await injectContentScript(currTab.id);
-        contentScriptReady = true;
+  onInject = createInjectHandler({
+    directScannerInjection,
+    startPolling,
+  });
 
-        if (directScannerInjection) {
-          try {
-            await injectScannerIntoTab(currTab.id);
-            scannerReady = true;
-            showInjectFeedback(injectBtn, "✅ Direkt geladen!");
-            showManualInstructions = false;
-            timeoutMessage =
-              "Scanner nicht gefunden – Seite neu laden und erneut versuchen.";
-          } catch (directError) {
-            console.error("Direct scanner injection failed", directError);
-            const copied = await copyScannerCode(SCANNER_CODE);
-            scannerReady = copied;
-            showManualInstructions = copied;
+  const searchHandlers = createSearchHandlers({
+    searchTypeSelect,
+    valueInput,
+    nameInput,
+  });
+  onStart = searchHandlers.onStart;
+  onRefine = searchHandlers.onRefine;
+  onNewSearch = searchHandlers.onNewSearch;
 
-            if (!copied) {
-              await showDialog({
-                type: "alert",
-                title: "Direktladen fehlgeschlagen",
-                message:
-                  "Scanner konnte nicht direkt geladen oder kopiert werden. Bitte Seite neu laden und erneut versuchen.",
-              });
-            } else {
-              showInjectFeedback(injectBtn, "✅ Kopiert!");
-              await showDialog({
-                type: "alert",
-                title: "Direktladen fehlgeschlagen",
-                message:
-                  "Der Scanner-Code wurde kopiert. Bitte in der Konsole einfügen und mit Enter ausführen.",
-              });
-            }
-          }
-        } else {
-          scannerReady = await copyScannerCode(SCANNER_CODE);
-          if (!scannerReady) {
-            await showDialog({
-              type: "alert",
-              title: "Kopieren fehlgeschlagen",
-              message: "Bitte manuell kopieren.",
-            });
-          } else {
-            showInjectFeedback(injectBtn, "✅ Kopiert!");
-          }
-        }
-      } else {
-        contentScriptReady = false;
-      }
-    } catch (err) {
-      contentScriptReady = false;
-      console.error("Content-script injection failed", err);
-    }
-
-    if (scannerReady && contentScriptReady) {
-      startPolling({
-        showInstructions: showManualInstructions,
-        timeoutMessage,
-      });
-    } else if (scannerReady && !contentScriptReady) {
-      await showDialog({
-        type: "alert",
-        title: "Fehler",
-        message:
-          "Content Script konnte nicht geladen werden. Seite neu laden und erneut versuchen.",
-      });
-    }
-  }
-  onInject = onInjectHandler;
-
-  async function onStartHandler() {
-    const type = searchTypeSelect.value;
-    const raw = valueInput.value;
-    if (type === "nameAndValue") {
-      const val = tryParse(raw);
-      const name = nameInput.value.trim();
-      if (val === "" || name === "") {
-        showError("Bitte Wert und Name eingeben");
-        return;
-      }
-      showLoading("Scanne...");
-      setScanButtonsDisabled(true);
-      const result = await runSearch({
-        cmd: "scanByNameAndValue",
-        value: val,
-        name,
-      });
-      setScanButtonsDisabled(false);
-      if (result !== null) {
-        showError(`✅ ${result} Treffer gefunden`);
-        showRefineScanState();
-        setTimeout(updateList, 100);
-      }
-    } else {
-      const val = type === "value" ? tryParse(raw) : raw.trim();
-      if (val === "") {
-        showError("Bitte einen Wert eingeben");
-        return;
-      }
-      showLoading("Scanne...");
-      setScanButtonsDisabled(true);
-      const cmd = type === "value" ? "start" : "scanByName";
-      const result = await runSearch({ cmd, value: val });
-      setScanButtonsDisabled(false);
-      if (result !== null) {
-        showError(`✅ ${result} Treffer gefunden`);
-        showRefineScanState();
-        setTimeout(updateList, 100);
-      }
-    }
-  }
-  onStart = onStartHandler;
-
-  async function onRefineHandler() {
-    const type = searchTypeSelect.value;
-    const raw = valueInput.value;
-    if (type === "nameAndValue") {
-      const val = tryParse(raw);
-      const name = nameInput.value.trim();
-      if (val === "" || name === "") {
-        showError("Bitte Wert und Name eingeben");
-        return;
-      }
-      showLoading("Verfeinere...");
-      setScanButtonsDisabled(true);
-      const result = await runSearch({
-        cmd: "refineByNameAndValue",
-        value: val,
-        name,
-      });
-      setScanButtonsDisabled(false);
-      if (result !== null) {
-        showError(`🔬 ${result} Treffer nach Verfeinerung`);
-        setTimeout(updateList, 100);
-      }
-    } else {
-      const val = type === "value" ? tryParse(raw) : raw.trim();
-      if (val === "") {
-        showError("Bitte einen Wert eingeben");
-        return;
-      }
-      showLoading("Verfeinere...");
-      setScanButtonsDisabled(true);
-      const cmd = type === "value" ? "refine" : "refineByName";
-      const result = await runSearch({ cmd, value: val });
-      setScanButtonsDisabled(false);
-      if (result !== null) {
-        showError(`🔬 ${result} Treffer nach Verfeinerung`);
-        setTimeout(updateList, 100);
-      }
-    }
-  }
-  onRefine = onRefineHandler;
-
-  async function onNewSearchHandler() {
-    const type = searchTypeSelect.value;
-    const raw = valueInput.value;
-    if (type === "nameAndValue") {
-      const currentValue = tryParse(raw);
-      const name = nameInput.value.trim();
-      if (currentValue !== "" && name !== "") {
-        showLoading("Neue Suche...");
-        setScanButtonsDisabled(true);
-        const result = await runSearch({
-          cmd: "scanByNameAndValue",
-          value: currentValue,
-          name,
-        });
-        setScanButtonsDisabled(false);
-        if (result !== null) {
-          showError(`✅ ${result} Treffer gefunden`);
-          showRefineScanState();
-          setTimeout(updateList, 100);
-        }
-      } else {
-        await send("start", { value: "__RESET_SCAN__" + Math.random() });
-        showInitialScanState();
-        const { showEmptyState } = await import("./ui.js");
-        showEmptyState();
-        valueInput.focus();
-      }
-    } else {
-      const currentValue = type === "value" ? tryParse(raw) : raw.trim();
-      if (currentValue !== "") {
-        showLoading("Neue Suche...");
-        setScanButtonsDisabled(true);
-        const cmd = type === "value" ? "start" : "scanByName";
-        const result = await runSearch({ cmd, value: currentValue });
-        setScanButtonsDisabled(false);
-        if (result !== null) {
-          showError(`✅ ${result} Treffer gefunden`);
-          showRefineScanState();
-          setTimeout(updateList, 100);
-        }
-      } else {
-        await send("start", { value: "__RESET_SCAN__" + Math.random() });
-        showInitialScanState();
-        const { showEmptyState } = await import("./ui.js");
-        showEmptyState();
-        valueInput.focus();
-      }
-    }
-  }
-  onNewSearch = onNewSearchHandler;
-
-  // Enter-key triggers the active scan action
-  function handleEnterKey(e) {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      // If refineScanGroup is visible, refine; otherwise start
-      const refineGroup = $("#refineScanGroup");
-      if (refineGroup && !refineGroup.classList.contains("hidden")) {
-        onRefineHandler();
-      } else {
-        onStartHandler();
-      }
-    }
-  }
-  valueInput.addEventListener("keydown", handleEnterKey);
-  nameInput.addEventListener("keydown", handleEnterKey);
+  valueInput.addEventListener("keydown", searchHandlers.handleEnterKey);
+  nameInput.addEventListener("keydown", searchHandlers.handleEnterKey);
 
   // ensure old listeners are removed before adding new ones
   $("#inject").removeEventListener("click", onInject);
@@ -635,5 +140,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#newSearch").removeEventListener("click", onNewSearch);
   $("#newSearch").addEventListener("click", onNewSearch);
 
-  await refreshVisibleTabContext({ force: true });
+  await tabContextController.refreshVisibleTabContext({ force: true });
 });
