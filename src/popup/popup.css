@@ -687,6 +687,50 @@
           color: #999;
         }
 
+        /* Action buttons – darken backgrounds for emoji contrast */
+        .freeze-btn {
+          background: #1a5276;
+        }
+
+        .freeze-btn:hover {
+          background: #1c6ea4;
+        }
+
+        .freeze-btn.active {
+          background: #922b21;
+        }
+
+        .save-btn {
+          background: #7d6608;
+        }
+
+        .save-btn:hover {
+          background: #9a7d0a;
+        }
+
+        .update-btn {
+          background: #1e7a42;
+        }
+
+        .update-btn:hover {
+          background: #1b8a42;
+        }
+
+        .delete-btn {
+          background: #922b21;
+        }
+
+        .delete-btn:hover {
+          background: #a93226;
+        }
+
+        .freeze-btn,
+        .save-btn,
+        .update-btn,
+        .delete-btn {
+          filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.3));
+        }
+
         /* Tool groups */
         .tool-group-title {
           border-bottom-color: #555;
