@@ -45,6 +45,14 @@
       return this.sendCommand("refineByName", { name });
     },
 
+    async scanByNameAndValue(name, value) {
+      return this.sendCommand("scanByNameAndValue", { name, value });
+    },
+
+    async refineByNameAndValue(name, value) {
+      return this.sendCommand("refineByNameAndValue", { name, value });
+    },
+
     async list() {
       return this.sendCommand("list");
     },
@@ -77,6 +85,8 @@
     scanByName: (msg) => API.scanByName(msg.value),
     refine: (msg) => API.refine(msg.value),
     refineByName: (msg) => API.refineByName(msg.value),
+    scanByNameAndValue: (msg) => API.scanByNameAndValue(msg.name, msg.value),
+    refineByNameAndValue: (msg) => API.refineByNameAndValue(msg.name, msg.value),
     list: () => API.list(),
     poke: (msg) =>
       msg.path ? API.pokeByPath(msg.path, msg.value) : API.poke(msg.idx, msg.value),

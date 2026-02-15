@@ -30,6 +30,12 @@ import { createScanner } from "./scanner-core.js";
           case "refineByName":
             result = window.__cheatScanner__.refineByName(data.name);
             break;
+          case "scanByNameAndValue":
+            result = window.__cheatScanner__.scanByNameAndValue(data.name, data.value);
+            break;
+          case "refineByNameAndValue":
+            result = window.__cheatScanner__.refineByNameAndValue(data.name, data.value);
+            break;
           case "list":
             result = window.__cheatScanner__.list();
             break;

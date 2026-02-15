@@ -90,8 +90,10 @@ export function startPolling(options = {}) {
   }, 30000);
 }
 
-async function runSearch({ cmd, value }) {
-  const result = await send(cmd, { value });
+async function runSearch({ cmd, value, name }) {
+  const extra = { value };
+  if (name !== undefined) extra.name = name;
+  const result = await send(cmd, extra);
   if (result !== null) {
     if (typeof result === "object") {
       if (result.error) {
@@ -238,8 +240,27 @@ async function injectScannerIntoTab(tabId) {
 document.addEventListener("DOMContentLoaded", async () => {
   const valueInput = $("#value");
   const searchTypeSelect = $("#searchType");
+  const nameInputGroup = $("#nameInputGroup");
+  const nameInput = $("#nameInput");
   directScannerInjection = shouldInjectScannerDirectly();
   configureSetupMode();
+
+  function updateSearchTypeUI() {
+    const type = searchTypeSelect.value;
+    if (type === "nameAndValue") {
+      nameInputGroup.classList.remove("hidden");
+      valueInput.placeholder = 'z. B. 123 oder "gold"';
+    } else {
+      nameInputGroup.classList.add("hidden");
+      if (type === "name") {
+        valueInput.placeholder = 'z. B. "hp" oder "score"';
+      } else {
+        valueInput.placeholder = 'z. B. 123 oder "gold"';
+      }
+    }
+  }
+  searchTypeSelect.addEventListener("change", updateSearchTypeUI);
+  updateSearchTypeUI();
 
   const [tab] = await queryTabs({ active: true, currentWindow: true });
   if (tab) setActiveTab(tab.id);
@@ -331,53 +352,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function onStartHandler() {
     const type = searchTypeSelect.value;
     const raw = valueInput.value;
-    const val = type === "value" ? tryParse(raw) : raw.trim();
-    if (val === "") {
-      showError("Bitte einen Wert eingeben");
-      return;
-    }
-    showLoading("Scanne...");
-    setScanButtonsDisabled(true);
-    const cmd = type === "value" ? "start" : "scanByName";
-    const result = await runSearch({ cmd, value: val });
-    setScanButtonsDisabled(false);
-    if (result !== null) {
-      showError(`✅ ${result} Treffer gefunden`);
-      showRefineScanState();
-      setTimeout(updateList, 100);
-    }
-  }
-  onStart = onStartHandler;
-
-  async function onRefineHandler() {
-    const type = searchTypeSelect.value;
-    const raw = valueInput.value;
-    const val = type === "value" ? tryParse(raw) : raw.trim();
-    if (val === "") {
-      showError("Bitte einen Wert eingeben");
-      return;
-    }
-    showLoading("Verfeinere...");
-    setScanButtonsDisabled(true);
-    const cmd = type === "value" ? "refine" : "refineByName";
-    const result = await runSearch({ cmd, value: val });
-    setScanButtonsDisabled(false);
-    if (result !== null) {
-      showError(`🔬 ${result} Treffer nach Verfeinerung`);
-      setTimeout(updateList, 100);
-    }
-  }
-  onRefine = onRefineHandler;
-
-  async function onNewSearchHandler() {
-    const type = searchTypeSelect.value;
-    const raw = valueInput.value;
-    const currentValue = type === "value" ? tryParse(raw) : raw.trim();
-    if (currentValue !== "") {
-      showLoading("Neue Suche...");
+    if (type === "nameAndValue") {
+      const val = tryParse(raw);
+      const name = nameInput.value.trim();
+      if (val === "" || name === "") {
+        showError("Bitte Wert und Name eingeben");
+        return;
+      }
+      showLoading("Scanne...");
       setScanButtonsDisabled(true);
-      const cmd = type === "value" ? "start" : "scanByName";
-      const result = await runSearch({ cmd, value: currentValue });
+      const result = await runSearch({ cmd: "scanByNameAndValue", value: val, name });
       setScanButtonsDisabled(false);
       if (result !== null) {
         showError(`✅ ${result} Treffer gefunden`);
@@ -385,17 +369,111 @@ document.addEventListener("DOMContentLoaded", async () => {
         setTimeout(updateList, 100);
       }
     } else {
-      await send("start", { value: "__RESET_SCAN__" + Math.random() });
-      showInitialScanState();
-      const { showEmptyState } = await import("./ui.js");
-      showEmptyState();
-      valueInput.focus();
+      const val = type === "value" ? tryParse(raw) : raw.trim();
+      if (val === "") {
+        showError("Bitte einen Wert eingeben");
+        return;
+      }
+      showLoading("Scanne...");
+      setScanButtonsDisabled(true);
+      const cmd = type === "value" ? "start" : "scanByName";
+      const result = await runSearch({ cmd, value: val });
+      setScanButtonsDisabled(false);
+      if (result !== null) {
+        showError(`✅ ${result} Treffer gefunden`);
+        showRefineScanState();
+        setTimeout(updateList, 100);
+      }
+    }
+  }
+  onStart = onStartHandler;
+
+  async function onRefineHandler() {
+    const type = searchTypeSelect.value;
+    const raw = valueInput.value;
+    if (type === "nameAndValue") {
+      const val = tryParse(raw);
+      const name = nameInput.value.trim();
+      if (val === "" || name === "") {
+        showError("Bitte Wert und Name eingeben");
+        return;
+      }
+      showLoading("Verfeinere...");
+      setScanButtonsDisabled(true);
+      const result = await runSearch({ cmd: "refineByNameAndValue", value: val, name });
+      setScanButtonsDisabled(false);
+      if (result !== null) {
+        showError(`🔬 ${result} Treffer nach Verfeinerung`);
+        setTimeout(updateList, 100);
+      }
+    } else {
+      const val = type === "value" ? tryParse(raw) : raw.trim();
+      if (val === "") {
+        showError("Bitte einen Wert eingeben");
+        return;
+      }
+      showLoading("Verfeinere...");
+      setScanButtonsDisabled(true);
+      const cmd = type === "value" ? "refine" : "refineByName";
+      const result = await runSearch({ cmd, value: val });
+      setScanButtonsDisabled(false);
+      if (result !== null) {
+        showError(`🔬 ${result} Treffer nach Verfeinerung`);
+        setTimeout(updateList, 100);
+      }
+    }
+  }
+  onRefine = onRefineHandler;
+
+  async function onNewSearchHandler() {
+    const type = searchTypeSelect.value;
+    const raw = valueInput.value;
+    if (type === "nameAndValue") {
+      const currentValue = tryParse(raw);
+      const name = nameInput.value.trim();
+      if (currentValue !== "" && name !== "") {
+        showLoading("Neue Suche...");
+        setScanButtonsDisabled(true);
+        const result = await runSearch({ cmd: "scanByNameAndValue", value: currentValue, name });
+        setScanButtonsDisabled(false);
+        if (result !== null) {
+          showError(`✅ ${result} Treffer gefunden`);
+          showRefineScanState();
+          setTimeout(updateList, 100);
+        }
+      } else {
+        await send("start", { value: "__RESET_SCAN__" + Math.random() });
+        showInitialScanState();
+        const { showEmptyState } = await import("./ui.js");
+        showEmptyState();
+        valueInput.focus();
+      }
+    } else {
+      const currentValue = type === "value" ? tryParse(raw) : raw.trim();
+      if (currentValue !== "") {
+        showLoading("Neue Suche...");
+        setScanButtonsDisabled(true);
+        const cmd = type === "value" ? "start" : "scanByName";
+        const result = await runSearch({ cmd, value: currentValue });
+        setScanButtonsDisabled(false);
+        if (result !== null) {
+          showError(`✅ ${result} Treffer gefunden`);
+          showRefineScanState();
+          setTimeout(updateList, 100);
+        }
+      } else {
+        await send("start", { value: "__RESET_SCAN__" + Math.random() });
+        showInitialScanState();
+        const { showEmptyState } = await import("./ui.js");
+        showEmptyState();
+        valueInput.focus();
+      }
     }
   }
   onNewSearch = onNewSearchHandler;
 
   // Enter-key triggers the active scan action
-  valueInput.addEventListener("keydown", (e) => {
+  function handleEnterKey(e) {
     if (e.key === "Enter") {
       e.preventDefault();
       // If refineScanGroup is visible, refine; otherwise start
@@ -406,7 +484,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         onStartHandler();
       }
     }
-  });
+  }
+  valueInput.addEventListener("keydown", handleEnterKey);
+  nameInput.addEventListener("keydown", handleEnterKey);
 
   // ensure old listeners are removed before adding new ones
   $("#inject").removeEventListener("click", onInject);

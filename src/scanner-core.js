@@ -424,6 +424,150 @@ export function createScanner(DEBUG = false) {
       return this.hits.length;
     },
 
+    scanByNameAndValue: function (name, value) {
+      if (DEBUG) console.log("🔍 Scanning by name+value:", name, value);
+      const loweredName = name.toLowerCase();
+      const conservativeMode = this.shouldAvoidGetterEvaluation();
+      const priorityPatterns = [
+        loweredName,
+        "game",
+        "player",
+        "party",
+        "actor",
+        "character",
+        "unit",
+        "hero",
+        "hp",
+        "sp",
+        "mp",
+        "health",
+        "mana",
+        "stamina",
+        "state",
+        "stats",
+        "data",
+      ];
+      const matchByNameAndValue = (val, k) => {
+        const nameMatches = k.toLowerCase().includes(loweredName);
+        return nameMatches && val === value;
+      };
+
+      const isNumericTarget = typeof value === "number" && Number.isFinite(value);
+      const looseMatchByNameAndValue = (val, k) => {
+        const nameMatches = k.toLowerCase().includes(loweredName);
+        if (!nameMatches) return false;
+        if (val === value) return true;
+        if (!isNumericTarget) return false;
+        if (typeof val === "string" && val.trim() !== "" && Number(val) === value) {
+          return true;
+        }
+        if (typeof val === "bigint") {
+          return Number(val) === value;
+        }
+        return false;
+      };
+
+      const passes = [
+        {
+          predicate: matchByNameAndValue,
+          depth: 5,
+          opts: {
+            maxTime: 1200,
+            allowGetters: false,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: 350,
+            maxHits: 800,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        },
+        {
+          predicate: matchByNameAndValue,
+          depth: 8,
+          opts: {
+            maxTime: 2800,
+            allowGetters: true,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: 700,
+            maxHits: 1200,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        },
+      ];
+
+      if (!conservativeMode) {
+        passes.push({
+          predicate: matchByNameAndValue,
+          depth: 10,
+          opts: {
+            maxTime: 3500,
+            allowGetters: true,
+            includeNonEnumerableKeys: true,
+            maxKeysPerObject: 1000,
+            maxHits: 1500,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        });
+      }
+
+      if (isNumericTarget && !conservativeMode) {
+        passes.push({
+          predicate: looseMatchByNameAndValue,
+          depth: 9,
+          opts: {
+            maxTime: 3200,
+            allowGetters: true,
+            includeNonEnumerableKeys: true,
+            maxKeysPerObject: 1000,
+            maxHits: 1000,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        });
+      }
+
+      this.hits = [];
+      for (const pass of passes) {
+        this.hits = this.findAll(
+          window,
+          pass.predicate,
+          new WeakSet(),
+          "window",
+          pass.depth,
+          pass.opts
+        );
+        if (this.hits.length > 0) {
+          break;
+        }
+      }
+      if (DEBUG) console.log("✅ Found hits:", this.hits.length);
+      if (DEBUG && this.hits.length > 0) {
+        console.log("📍 First few hits:", this.hits.slice(0, 5));
+      }
+      return this.hits.length;
+    },
+
+    refineByNameAndValue: function (name, value) {
+      const oldCount = this.hits.length;
+      const loweredName = name.toLowerCase();
+      this.hits = this.hits.filter(({ obj, key }) => {
+        const nameMatches = key.toLowerCase().includes(loweredName);
+        if (!nameMatches) return false;
+        try {
+          return obj[key] === value;
+        } catch {
+          return false;
+        }
+      });
+      if (DEBUG)
+        console.log(
+          `🔬 Refined by name+value from ${oldCount} to ${this.hits.length} hits`
+        );
+      return this.hits.length;
+    },
+
     list: function () {
       const result = this.hits.map(({ obj, key, path }) => {
         let rawValue;

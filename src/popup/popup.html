@@ -76,12 +76,20 @@
           <select id="searchType">
             <option value="value">Nach Wert</option>
             <option value="name">Nach Name</option>
+            <option value="nameAndValue">Nach Wert + Name</option>
           </select>
           <input
             id="value"
             placeholder='z. B. 123 oder "gold"'
             aria-label="Suchwert"
           />
+          <div id="nameInputGroup" class="hidden">
+            <input
+              id="nameInput"
+              placeholder='z. B. "hp" oder "score"'
+              aria-label="Namensfilter"
+            />
+          </div>
 
           <!-- Initial State: Nur erster Scan -->
           <div id="initialScanGroup">
