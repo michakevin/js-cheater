@@ -93,7 +93,6 @@ export function showScannerMode() {
   $("#scannerUI").style.display = "block";
   initTabs();
   showError("✅ Scanner erfolgreich geladen!");
-  setTimeout(() => showEmptyState(), 2000);
   setTimeout(() => $("#value")?.focus(), 100);
   showInitialScanState();
 }
@@ -122,17 +121,11 @@ export function showLoading(message = "Scanne...") {
 }
 
 /**
- * Show the empty state placeholder before any scan.
+ * Empty state placeholder – intentionally a no-op.
+ * Kept as export for backward compatibility.
  */
 export function showEmptyState() {
-  const hitsUl = $("#hits");
-  hitsUl.innerHTML = "";
-  const li = document.createElement("li");
-  li.className = "empty-state";
-  li.innerHTML =
-    '<div class="empty-state-icon">🔍</div>' +
-    '<div class="empty-state-text">Gib einen Wert ein und starte den ersten Scan</div>';
-  hitsUl.appendChild(li);
+  // No-op: hint component removed by design.
 }
 
 /**

@@ -201,7 +201,6 @@ describe("popup handlers (Chrome mode)", () => {
     expect(send.mock.calls[0][0]).toBe("start");
     expect(send.mock.calls[0][1].value).toMatch(/^__RESET_SCAN__/);
     expect(showInitialScanState).toHaveBeenCalled();
-    expect(showEmptyState).toHaveBeenCalled();
   });
 
   test("onStart ohne Eingabe", async () => {

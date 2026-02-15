@@ -4,7 +4,6 @@ import {
   showInitialScanState,
   showRefineScanState,
   showLoading,
-  showEmptyState,
   setScanButtonsDisabled,
   updateList,
 } from "./ui.js";
@@ -53,7 +52,8 @@ async function executeSearch({
 async function resetSearch(valueInput) {
   await send("start", { value: "__RESET_SCAN__" + Math.random() });
   showInitialScanState();
-  showEmptyState();
+  const hitsUl = document.getElementById("hits");
+  if (hitsUl) hitsUl.innerHTML = "";
   valueInput.focus();
 }
 
@@ -106,7 +106,11 @@ export function setupSearchTypeUI({
   updateSearchTypeUI();
 }
 
-export function createSearchHandlers({ searchTypeSelect, valueInput, nameInput }) {
+export function createSearchHandlers({
+  searchTypeSelect,
+  valueInput,
+  nameInput,
+}) {
   async function onStart() {
     const type = searchTypeSelect.value;
     const input = getSearchInput({

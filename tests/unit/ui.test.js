@@ -144,14 +144,10 @@ describe("ui rendering", () => {
     );
   });
 
-  test("showEmptyState renders empty state placeholder", () => {
+  test("showEmptyState is a no-op", () => {
     showEmptyState();
     const state = document.querySelector("#hits .empty-state");
-    expect(state).not.toBeNull();
-    expect(state.querySelector(".empty-state-icon").textContent).toBe("🔍");
-    expect(state.querySelector(".empty-state-text").textContent).toContain(
-      "Gib einen Wert ein",
-    );
+    expect(state).toBeNull();
   });
 
   test("setScanButtonsDisabled disables scan buttons", () => {

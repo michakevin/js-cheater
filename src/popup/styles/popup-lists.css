@@ -192,6 +192,28 @@
         color: #155724;
       }
 
+      .engine-header-toggle {
+        cursor: pointer;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .engine-header-toggle:hover {
+        opacity: 0.8;
+      }
+
+      .engine-toggle-arrow {
+        font-size: 10px;
+        transition: transform 0.15s;
+        flex-shrink: 0;
+      }
+
+      .engine-body.collapsed {
+        display: none;
+      }
+
       .engine-icon {
         font-size: 16px;
       }

@@ -6,11 +6,13 @@
  * to either fill the search form or directly poke known paths.
  */
 
-import { send } from "./communication.js";
+import { send, getActiveTab } from "./communication.js";
 import { $ } from "./utils.js";
 import { getPresetsForEngine } from "./engine-presets.js";
 import { showError } from "./messages.js";
 import { showDialog } from "./dialog.js";
+
+const ENGINE_COLLAPSE_KEY_PREFIX = "engine_collapsed_";
 
 let lastDetectedEngine = null;
 
@@ -60,19 +62,7 @@ export async function detectAndShowPresets(containerId = "enginePresets") {
 
   const engine = await detectEngine();
   if (!engine) {
-    container.classList.remove("hidden");
-    const raw = getLastRawResult();
-    let hint = "";
-    if (raw === null || raw === undefined) {
-      hint = "Scanner antwortet nicht – Extension & Seite neu laden.";
-    } else if (raw && raw.error) {
-      hint = raw.error;
-    } else if (raw && raw.timeout) {
-      hint = "Timeout – Scanner evtl. nicht geladen.";
-    } else {
-      hint = "Keine bekannten Muster gefunden.";
-    }
-    container.innerHTML = `<div class="engine-not-found">❌ Keine Engine erkannt.<br><small>${hint}</small></div>`;
+    // No engine detected – keep container hidden, show nothing
     return;
   }
 
@@ -84,20 +74,72 @@ export async function detectAndShowPresets(containerId = "enginePresets") {
 }
 
 /**
- * Build the preset UI inside the given container element.
+ * Get the domain key for collapse state storage.
+ * @returns {Promise<string>}
  */
+async function getCollapseKey() {
+  try {
+    const tab = await getActiveTab();
+    if (tab?.url) {
+      const origin = new URL(tab.url).origin;
+      if (origin && origin !== "null") {
+        return ENGINE_COLLAPSE_KEY_PREFIX + origin;
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return ENGINE_COLLAPSE_KEY_PREFIX + "unknown";
+}
+
+/**
+ * Check whether engine panel is collapsed for current domain.
+ * @returns {Promise<boolean>}
+ */
+async function isCollapsedForDomain() {
+  const key = await getCollapseKey();
+  try {
+    return localStorage.getItem(key) === "1";
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Save collapse state for current domain.
+ * @param {boolean} collapsed
+ */
+async function setCollapsedForDomain(collapsed) {
+  const key = await getCollapseKey();
+  try {
+    if (collapsed) {
+      localStorage.setItem(key, "1");
+    } else {
+      localStorage.removeItem(key);
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
 function renderPresetPanel(container, preset) {
-  // Header
+  // Collapsible header
   const header = document.createElement("div");
-  header.className = "engine-header";
-  header.innerHTML = `<span class="engine-icon">${preset.icon}</span> <strong>${preset.name}</strong> erkannt`;
+  header.className = "engine-header engine-header-toggle";
+  header.setAttribute("role", "button");
+  header.setAttribute("tabindex", "0");
+  header.innerHTML = `<span class="engine-toggle-arrow">▼</span> <span class="engine-icon">${preset.icon}</span> <strong>${preset.name}</strong> erkannt`;
   container.appendChild(header);
+
+  // Collapsible body wrapping description + presets
+  const body = document.createElement("div");
+  body.className = "engine-body";
 
   // Description
   const desc = document.createElement("div");
   desc.className = "engine-description";
   desc.textContent = preset.description;
-  container.appendChild(desc);
+  body.appendChild(desc);
 
   // Group presets by category
   const groups = groupBy(preset.presets, "category");
@@ -131,8 +173,35 @@ function renderPresetPanel(container, preset) {
     }
 
     groupEl.appendChild(btnRow);
-    container.appendChild(groupEl);
+    body.appendChild(groupEl);
   }
+
+  container.appendChild(body);
+
+  // Toggle logic
+  function toggleCollapse() {
+    const collapsed = body.classList.toggle("collapsed");
+    header.querySelector(".engine-toggle-arrow").textContent = collapsed
+      ? "▶"
+      : "▼";
+    setCollapsedForDomain(collapsed);
+  }
+
+  header.addEventListener("click", toggleCollapse);
+  header.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleCollapse();
+    }
+  });
+
+  // Restore saved collapse state
+  isCollapsedForDomain().then((collapsed) => {
+    if (collapsed) {
+      body.classList.add("collapsed");
+      header.querySelector(".engine-toggle-arrow").textContent = "▶";
+    }
+  });
 }
 
 /**
