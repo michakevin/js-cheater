@@ -2,7 +2,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { resolve, extname } from "node:path";
 
-const PORT = 3000;
+const PORT = 8080;
 const ROOT = resolve(import.meta.dirname, "..");
 
 const MIME_TYPES = {

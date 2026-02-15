@@ -429,6 +429,70 @@ export const ENGINE_PRESETS = [
       },
     ],
   },
+  {
+    id: "js-cheater-testpage",
+    name: "JS-Cheater Testseite",
+    icon: "🧪",
+    description:
+      "Die eingebaute Testseite wurde erkannt. Alle Spielwerte sind direkt zugänglich.",
+    presets: [
+      {
+        label: "🏆 Score",
+        path: "gameScore",
+        category: "Direkt",
+      },
+      {
+        label: "❤️ Health",
+        path: "playerHealth",
+        category: "Direkt",
+      },
+      {
+        label: "🔵 Mana",
+        path: "playerMana",
+        category: "Direkt",
+      },
+      {
+        label: "💰 Gold",
+        path: "playerGold",
+        category: "Direkt",
+      },
+      {
+        label: "💚 Lives",
+        path: "playerLives",
+        category: "Direkt",
+      },
+      {
+        label: "📊 Level",
+        path: "gameLevel",
+        category: "Direkt",
+      },
+      {
+        label: "🎲 Random",
+        path: "randomValue",
+        category: "Direkt",
+      },
+      {
+        label: "🏆 Nested Score",
+        path: "gameState.player.stats.score",
+        category: "Nested",
+      },
+      {
+        label: "❤️ Nested Health",
+        path: "gameState.player.stats.health",
+        category: "Nested",
+      },
+      {
+        label: "💎 Gems",
+        path: "gameState.player.inventory.gems",
+        category: "Nested",
+      },
+      {
+        label: "🪙 Coins",
+        path: "gameState.player.inventory.coins",
+        category: "Nested",
+      },
+    ],
+  },
 ];
 
 /**

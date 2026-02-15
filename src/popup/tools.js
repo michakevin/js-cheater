@@ -1,6 +1,17 @@
-// This file will contain other tools in the future
-// LocalStorage tools have been moved to storage-tools.js
+import { detectAndShowPresets } from "./engine-detect.js";
 
 export function setupToolsEventListeners() {
-  // Future tools event listeners will be added here
+  const detectBtn = document.getElementById("detectEngine");
+  if (detectBtn) {
+    detectBtn.addEventListener("click", async () => {
+      detectBtn.disabled = true;
+      detectBtn.textContent = "⏳ Erkenne...";
+      try {
+        await detectAndShowPresets("enginePresetsTools");
+      } finally {
+        detectBtn.disabled = false;
+        detectBtn.textContent = "🔍 Engine erkennen";
+      }
+    });
+  }
 }

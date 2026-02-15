@@ -230,8 +230,17 @@ async function injectContentScript(tabId) {
 }
 
 async function injectScannerIntoTab(tabId) {
+  // Inject via <script> element so the scanner runs in the PAGE context
+  // (not the content-script sandbox) and can see page-defined globals.
+  const injector = `(function(){
+    var s = document.createElement('script');
+    s.textContent = ${JSON.stringify(SCANNER_CODE)};
+    (document.head || document.documentElement).appendChild(s);
+    s.remove();
+  })();`;
+
   await executeTabsScript(tabId, {
-    code: SCANNER_CODE,
+    code: injector,
     allFrames: false,
     matchAboutBlank: true,
   });

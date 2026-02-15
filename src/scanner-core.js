@@ -791,6 +791,17 @@ export function createScanner(DEBUG = false) {
             typeof window.PIXI !== "undefined" &&
             typeof window.PIXI.VERSION === "string",
         },
+        {
+          id: "js-cheater-testpage",
+          name: "JS-Cheater Testseite",
+          test: () =>
+            typeof window.gameScore === "number" &&
+            typeof window.playerLives === "number" &&
+            typeof window.playerGold === "number" &&
+            typeof window.gameState === "object" &&
+            window.gameState !== null &&
+            typeof window.gameState.player === "object",
+        },
       ];
 
       for (const check of checks) {

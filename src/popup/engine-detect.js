@@ -24,7 +24,19 @@ export async function detectEngine() {
     lastDetectedEngine = result;
     return result;
   }
+  // Store raw result for debugging
+  lastDetectedEngine = null;
+  lastRawResult = result;
   return null;
+}
+
+let lastRawResult = null;
+
+/**
+ * @returns {*} The raw result from last detection attempt (for debugging).
+ */
+export function getLastRawResult() {
+  return lastRawResult;
 }
 
 /**
@@ -35,18 +47,34 @@ export function getLastDetection() {
 }
 
 /**
- * Run detection and render the preset panel into #enginePresets.
+ * Run detection and render the preset panel.
+ * @param {string} [containerId="enginePresets"] – DOM id of the target container
  * Safe to call multiple times – rebuilds the UI each time.
  */
-export async function detectAndShowPresets() {
-  const container = $("#enginePresets");
+export async function detectAndShowPresets(containerId = "enginePresets") {
+  const container = document.getElementById(containerId);
   if (!container) return;
 
   container.innerHTML = "";
   container.classList.add("hidden");
 
   const engine = await detectEngine();
-  if (!engine) return;
+  if (!engine) {
+    container.classList.remove("hidden");
+    const raw = getLastRawResult();
+    let hint = "";
+    if (raw === null || raw === undefined) {
+      hint = "Scanner antwortet nicht – Extension & Seite neu laden.";
+    } else if (raw && raw.error) {
+      hint = raw.error;
+    } else if (raw && raw.timeout) {
+      hint = "Timeout – Scanner evtl. nicht geladen.";
+    } else {
+      hint = "Keine bekannten Muster gefunden.";
+    }
+    container.innerHTML = `<div class="engine-not-found">❌ Keine Engine erkannt.<br><small>${hint}</small></div>`;
+    return;
+  }
 
   const preset = getPresetsForEngine(engine.id);
   if (!preset) return;

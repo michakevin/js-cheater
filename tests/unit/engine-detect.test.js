@@ -33,6 +33,10 @@ describe("detectEngine", () => {
     delete window.unityInstance;
     delete window.UnityLoader;
     delete window.createUnityInstance;
+    delete window.gameScore;
+    delete window.playerLives;
+    delete window.playerGold;
+    delete window.gameState;
   });
 
   afterEach(() => {
@@ -54,6 +58,10 @@ describe("detectEngine", () => {
     delete window.unityInstance;
     delete window.UnityLoader;
     delete window.createUnityInstance;
+    delete window.gameScore;
+    delete window.playerLives;
+    delete window.playerGold;
+    delete window.gameState;
   });
 
   test("returns null when no engine detected", () => {
@@ -154,6 +162,21 @@ describe("detectEngine", () => {
     const result = window.__cheatScanner__.detectEngine();
     expect(result).not.toBeNull();
     expect(result.id).toBe("rpgmaker-mv-mz");
+  });
+
+  test("detects JS-Cheater test page", () => {
+    window.gameScore = 1337;
+    window.playerLives = 3;
+    window.playerGold = 999;
+    window.gameState = {
+      player: { stats: { score: 1337 }, inventory: {} },
+      level: 5,
+    };
+    loadScanner();
+    const result = window.__cheatScanner__.detectEngine();
+    expect(result).not.toBeNull();
+    expect(result.id).toBe("js-cheater-testpage");
+    expect(result.name).toContain("Testseite");
   });
 });
 
