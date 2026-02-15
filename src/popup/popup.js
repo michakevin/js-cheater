@@ -21,6 +21,7 @@ import * as popupSelf from "./popup.js";
 
 let statusInterval;
 let statusFailures = 0;
+let directScannerInjection = false;
 
 // Handlers are exported for unit testing. They are assigned once the
 // DOMContentLoaded handler runs and all required DOM elements exist.
@@ -52,8 +53,17 @@ export function stopConnectionMonitor() {
   statusFailures = 0;
 }
 
-export function startPolling() {
-  $("#instructions").classList.remove("hidden");
+export function startPolling(options = {}) {
+  const {
+    showInstructions = true,
+    timeoutMessage = "Scanner nicht gefunden – Code korrekt eingefügt?",
+  } = options;
+
+  const instructionsEl = $("#instructions");
+  if (instructionsEl) {
+    instructionsEl.classList.toggle("hidden", !showInstructions);
+  }
+
   let scannerFound = false;
   let checkInFlight = false;
   const checkInterval = setInterval(async () => {
@@ -71,10 +81,11 @@ export function startPolling() {
       checkInFlight = false;
     }
   }, 500);
+
   setTimeout(() => {
     clearInterval(checkInterval);
     if (!scannerFound) {
-      showError("Scanner nicht gefunden – Code korrekt eingefügt?");
+      showError(timeoutMessage);
     }
   }, 30000);
 }
@@ -135,33 +146,111 @@ async function copyScannerCode(text) {
   return fallbackCopyText(text);
 }
 
+function shouldInjectScannerDirectly() {
+  return !chrome.scripting?.executeScript && !!chrome.tabs?.executeScript;
+}
+
+function configureSetupMode() {
+  if (!directScannerInjection) {
+    return;
+  }
+
+  const setupDescription = document.querySelector(".setup-description");
+  if (setupDescription) {
+    setupDescription.textContent =
+      "Firefox kann den Scanner direkt laden. Die Konsole wird nur als Fallback benötigt.";
+  }
+
+  const injectBtn = $("#inject");
+  if (injectBtn) {
+    injectBtn.textContent = "⚡ Scanner direkt laden";
+  }
+}
+
+function showInjectFeedback(injectBtn, label) {
+  if (!injectBtn) return;
+
+  const originalText = injectBtn.textContent;
+  injectBtn.textContent = label;
+  injectBtn.classList.add("copied");
+  setTimeout(() => {
+    injectBtn.textContent = originalText;
+    injectBtn.classList.remove("copied");
+  }, 2000);
+}
+
+async function executeTabsScript(tabId, details) {
+  if (!chrome.tabs?.executeScript) {
+    throw new Error("tabs.executeScript ist nicht verfügbar");
+  }
+
+  return await new Promise((resolve, reject) => {
+    let settled = false;
+    const settle = (error = null) => {
+      if (settled) return;
+      settled = true;
+      if (error) {
+        reject(error);
+      } else {
+        resolve();
+      }
+    };
+
+    try {
+      const maybePromise = chrome.tabs.executeScript(
+        tabId,
+        details,
+        () => settle(chrome.runtime?.lastError ?? null),
+      );
+      if (maybePromise && typeof maybePromise.then === "function") {
+        maybePromise.then(() => settle()).catch((error) => settle(error));
+      }
+    } catch (error) {
+      settle(error);
+    }
+  });
+}
+
+async function injectContentScript(tabId) {
+  if (chrome.scripting?.executeScript) {
+    await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      files: ["src/content.js"],
+    });
+    return;
+  }
+
+  await executeTabsScript(tabId, {
+    file: "/src/content.js",
+    allFrames: true,
+    matchAboutBlank: true,
+  });
+}
+
+async function injectScannerIntoTab(tabId) {
+  await executeTabsScript(tabId, {
+    code: SCANNER_CODE,
+    allFrames: false,
+    matchAboutBlank: true,
+  });
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   const valueInput = $("#value");
   const searchTypeSelect = $("#searchType");
+  directScannerInjection = shouldInjectScannerDirectly();
+  configureSetupMode();
 
   const [tab] = await queryTabs({ active: true, currentWindow: true });
   if (tab) setActiveTab(tab.id);
 
   async function onInjectHandler() {
     const injectBtn = $("#inject");
-    const copied = await copyScannerCode(SCANNER_CODE);
-    if (!copied) {
-      await showDialog({
-        type: "alert",
-        title: "Kopieren fehlgeschlagen",
-        message: "Bitte manuell kopieren.",
-      });
-    } else {
-      // Visual copy feedback
-      const originalText = injectBtn.textContent;
-      injectBtn.textContent = "✅ Kopiert!";
-      injectBtn.classList.add("copied");
-      setTimeout(() => {
-        injectBtn.textContent = originalText;
-        injectBtn.classList.remove("copied");
-      }, 2000);
-    }
-    let contentScriptReady = true;
+    let scannerReady = false;
+    let contentScriptReady = false;
+    let showManualInstructions = !directScannerInjection;
+    let timeoutMessage = "Scanner nicht gefunden – Code korrekt eingefügt?";
+
     try {
       const [currTab] = await queryTabs({
         active: true,
@@ -169,43 +258,51 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
       if (currTab) {
         setActiveTab(currTab.id);
-        if (chrome.scripting?.executeScript) {
-          await chrome.scripting.executeScript({
-            target: { tabId: currTab.id, allFrames: true },
-            files: ["src/content.js"],
-          });
-        } else if (chrome.tabs?.executeScript) {
-          await new Promise((resolve, reject) => {
-            let settled = false;
-            const settle = (error = null) => {
-              if (settled) return;
-              settled = true;
-              if (error) {
-                reject(error);
-              } else {
-                resolve();
-              }
-            };
+        await injectContentScript(currTab.id);
+        contentScriptReady = true;
 
-            try {
-              const maybePromise = chrome.tabs.executeScript(
-                currTab.id,
-                {
-                  file: "/src/content.js",
-                  allFrames: true,
-                  matchAboutBlank: true,
-                },
-                () => settle(chrome.runtime?.lastError ?? null),
-              );
-              if (maybePromise && typeof maybePromise.then === "function") {
-                maybePromise
-                  .then(() => settle())
-                  .catch((error) => settle(error));
-              }
-            } catch (error) {
-              settle(error);
+        if (directScannerInjection) {
+          try {
+            await injectScannerIntoTab(currTab.id);
+            scannerReady = true;
+            showInjectFeedback(injectBtn, "✅ Direkt geladen!");
+            showManualInstructions = false;
+            timeoutMessage =
+              "Scanner nicht gefunden – Seite neu laden und erneut versuchen.";
+          } catch (directError) {
+            console.error("Direct scanner injection failed", directError);
+            const copied = await copyScannerCode(SCANNER_CODE);
+            scannerReady = copied;
+            showManualInstructions = copied;
+
+            if (!copied) {
+              await showDialog({
+                type: "alert",
+                title: "Direktladen fehlgeschlagen",
+                message:
+                  "Scanner konnte nicht direkt geladen oder kopiert werden. Bitte Seite neu laden und erneut versuchen.",
+              });
+            } else {
+              showInjectFeedback(injectBtn, "✅ Kopiert!");
+              await showDialog({
+                type: "alert",
+                title: "Direktladen fehlgeschlagen",
+                message:
+                  "Der Scanner-Code wurde kopiert. Bitte in der Konsole einfügen und mit Enter ausführen.",
+              });
             }
-          });
+          }
+        } else {
+          scannerReady = await copyScannerCode(SCANNER_CODE);
+          if (!scannerReady) {
+            await showDialog({
+              type: "alert",
+              title: "Kopieren fehlgeschlagen",
+              message: "Bitte manuell kopieren.",
+            });
+          } else {
+            showInjectFeedback(injectBtn, "✅ Kopiert!");
+          }
         }
       } else {
         contentScriptReady = false;
@@ -214,9 +311,13 @@ document.addEventListener("DOMContentLoaded", async () => {
       contentScriptReady = false;
       console.error("Content-script injection failed", err);
     }
-    if (copied && contentScriptReady) {
-      startPolling();
-    } else if (copied && !contentScriptReady) {
+
+    if (scannerReady && contentScriptReady) {
+      startPolling({
+        showInstructions: showManualInstructions,
+        timeoutMessage,
+      });
+    } else if (scannerReady && !contentScriptReady) {
       await showDialog({
         type: "alert",
         title: "Fehler",

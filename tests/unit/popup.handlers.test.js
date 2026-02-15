@@ -30,6 +30,7 @@ jest.mock("../../src/popup/dialog.js", () => ({
 
 let send,
   queryTabs,
+  checkScannerStatus,
   showError,
   showRefineScanState,
   showInitialScanState,
@@ -39,12 +40,14 @@ let send,
   showEmptyState,
   showDialog;
 
-let onInject, onStart, onRefine, onNewSearch, startPolling;
+let onInject, onStart, onRefine, onNewSearch;
 
-beforeEach(async () => {
-  jest.useFakeTimers();
+async function initializePopup({ firefoxMode = false } = {}) {
   jest.resetModules();
-  ({ send, queryTabs } = await import("../../src/popup/communication.js"));
+
+  ({ send, queryTabs, checkScannerStatus } = await import(
+    "../../src/popup/communication.js"
+  ));
   ({ showError } = await import("../../src/popup/messages.js"));
   ({
     showRefineScanState,
@@ -55,6 +58,7 @@ beforeEach(async () => {
     showEmptyState,
   } = await import("../../src/popup/ui.js"));
   ({ showDialog } = await import("../../src/popup/dialog.js"));
+
   document.body.innerHTML = `
     <input id="value" />
     <select id="searchType"><option value="value">value</option><option value="name">name</option></select>
@@ -62,6 +66,7 @@ beforeEach(async () => {
     <div id="refineScanGroup" class="hidden"></div>
     <div id="statusBar" class="status-bar hidden"></div>
     <ul id="hits"></ul>
+    <p class="setup-description"></p>
     <button id="inject">📋 Scanner-Code kopieren</button>
     <button id="start"></button>
     <button id="refine"></button>
@@ -74,38 +79,46 @@ beforeEach(async () => {
   global.navigator.clipboard = { writeText: jest.fn().mockResolvedValue() };
   document.execCommand = jest.fn();
   global.alert = jest.fn();
+
   globalThis.chrome = {
     tabs: {
       query: jest.fn().mockResolvedValue([{ id: 1 }]),
       executeScript: jest.fn().mockResolvedValue(),
     },
-    scripting: { executeScript: jest.fn().mockResolvedValue() },
   };
 
-  const popup = await import("../../src/popup/popup.js");
-  jest.spyOn(popup, "startPolling").mockImplementation(jest.fn());
-  startPolling = popup.startPolling;
+  if (!firefoxMode) {
+    globalThis.chrome.scripting = {
+      executeScript: jest.fn().mockResolvedValue(),
+    };
+  }
 
-  const { checkScannerStatus } = await import(
-    "../../src/popup/communication.js"
-  );
+  const popup = await import("../../src/popup/popup.js");
   queryTabs.mockResolvedValue([{ id: 1 }]);
   checkScannerStatus.mockResolvedValue(false);
 
   await document.dispatchEvent(new Event("DOMContentLoaded"));
   await Promise.resolve();
   ({ onInject, onStart, onRefine, onNewSearch } = popup);
-});
+}
 
 afterEach(() => {
-  jest.useRealTimers();
   jest.clearAllMocks();
   delete globalThis.chrome;
   delete global.navigator.clipboard;
   delete document.execCommand;
 });
 
-describe("popup handlers", () => {
+describe("popup handlers (Chrome mode)", () => {
+  beforeEach(async () => {
+    jest.useFakeTimers();
+    await initializePopup();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   test("onInject copies code", async () => {
     await onInject();
     expect(navigator.clipboard.writeText).toHaveBeenCalled();
@@ -147,7 +160,6 @@ describe("popup handlers", () => {
     expect(showDialog).toHaveBeenCalledWith(
       expect.objectContaining({ type: "alert" }),
     );
-    expect(startPolling).not.toHaveBeenCalled();
   });
 
   test("onStart sends start command and switches state", async () => {
@@ -209,5 +221,56 @@ describe("popup handlers", () => {
     await Promise.resolve();
     expect(showError).toHaveBeenCalledWith("❌ fail");
     expect(updateList).not.toHaveBeenCalled();
+  });
+});
+
+describe("popup handlers (Firefox mode)", () => {
+  beforeEach(async () => {
+    jest.useFakeTimers();
+    await initializePopup({ firefoxMode: true });
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test("onInject loads scanner directly without clipboard", async () => {
+    expect(document.getElementById("inject").textContent).toBe(
+      "⚡ Scanner direkt laden",
+    );
+
+    const checkCallsBeforeInject = checkScannerStatus.mock.calls.length;
+    await onInject();
+    jest.advanceTimersByTime(500);
+    await Promise.resolve();
+
+    expect(navigator.clipboard.writeText).not.toHaveBeenCalled();
+    expect(globalThis.chrome.tabs.executeScript).toHaveBeenCalledWith(
+      1,
+      {
+        file: "/src/content.js",
+        allFrames: true,
+        matchAboutBlank: true,
+      },
+      expect.any(Function),
+    );
+    expect(globalThis.chrome.tabs.executeScript).toHaveBeenCalledWith(
+      1,
+      expect.objectContaining({
+        code: expect.any(String),
+        allFrames: false,
+        matchAboutBlank: true,
+      }),
+      expect.any(Function),
+    );
+    expect(document.getElementById("inject").textContent).toBe(
+      "✅ Direkt geladen!",
+    );
+    expect(checkScannerStatus.mock.calls.length).toBeGreaterThan(
+      checkCallsBeforeInject,
+    );
+    expect(document.getElementById("instructions").classList.contains("hidden")).toBe(
+      true,
+    );
   });
 });

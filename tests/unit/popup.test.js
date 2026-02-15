@@ -56,6 +56,13 @@ describe("startPolling", () => {
     ).toBe(false);
   });
 
+  test("can keep instructions hidden", () => {
+    startPolling({ showInstructions: false });
+    expect(
+      document.getElementById("instructions").classList.contains("hidden"),
+    ).toBe(true);
+  });
+
   test("scanner found quickly", async () => {
     checkScannerStatus.mockResolvedValue(true);
     const monitorSpy = jest.spyOn(popup, "startConnectionMonitor");

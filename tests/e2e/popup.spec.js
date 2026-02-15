@@ -15,11 +15,15 @@ test.describe("popup", () => {
         value: { writeText: () => Promise.resolve() },
         configurable: true,
       });
-      // Basic chrome API mocks used by communication.js
+      // Basic chrome API mocks used by communication.js and popup injection flow.
       window.chrome = {
         tabs: {
           query: async () => [{ id: 1 }],
           sendMessage: async () => ({ scannerLoaded: false }),
+          executeScript: async () => {},
+        },
+        scripting: {
+          executeScript: async () => {},
         },
       };
     });
