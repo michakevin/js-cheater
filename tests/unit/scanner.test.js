@@ -93,6 +93,68 @@ describe("refineByName", () => {
   });
 });
 
+describe("scanByNameAndValue", () => {
+  beforeEach(() => {
+    window.playerHp = 100;
+    window.enemyHp = 100;
+    window.playerScore = 100;
+    delete window.__cheatScanner__;
+
+    const originalConsoleLog = console.log;
+    console.log = jest.fn();
+    eval(SCANNER_CODE);
+    console.log = originalConsoleLog;
+  });
+
+  afterEach(() => {
+    delete window.playerHp;
+    delete window.enemyHp;
+    delete window.playerScore;
+  });
+
+  test("finds hits matching both name and value", () => {
+    const count = window.__cheatScanner__.scanByNameAndValue("hp", 100);
+    expect(count).toBeGreaterThan(0);
+    const paths = window.__cheatScanner__.list().map((h) => h.path);
+    expect(paths.some((p) => p.includes("Hp") || p.includes("hp"))).toBe(true);
+    expect(paths.some((p) => p.includes("playerScore"))).toBe(false);
+  });
+
+  test("returns 0 when name matches but value does not", () => {
+    const count = window.__cheatScanner__.scanByNameAndValue("hp", 9999);
+    expect(count).toBe(0);
+  });
+});
+
+describe("refineByNameAndValue", () => {
+  beforeEach(() => {
+    window.playerHp = 100;
+    window.enemyHp = 100;
+    delete window.__cheatScanner__;
+
+    const originalConsoleLog = console.log;
+    console.log = jest.fn();
+    eval(SCANNER_CODE);
+    console.log = originalConsoleLog;
+  });
+
+  afterEach(() => {
+    delete window.playerHp;
+    delete window.enemyHp;
+  });
+
+  test("filters hits by name and value", () => {
+    const initial = window.__cheatScanner__.scanByNameAndValue("hp", 100);
+    expect(initial).toBeGreaterThan(0);
+    window.enemyHp = 50;
+    const refined = window.__cheatScanner__.refineByNameAndValue("hp", 100);
+    expect(refined).toBeLessThan(initial);
+    expect(refined).toBeGreaterThan(0);
+    const paths = window.__cheatScanner__.list().map((h) => h.path);
+    expect(paths.some((p) => p.includes("playerHp"))).toBe(true);
+  });
+});
+
 describe("getter fallback scan", () => {
   beforeEach(() => {
     delete window.__cheatScanner__;

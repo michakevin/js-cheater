@@ -69,12 +69,36 @@ describe("content message handler", () => {
     expect(sendResponse).toHaveBeenCalledWith("scan-ok");
   });
 
+  test("scanByNameAndValue triggers combined scan", async () => {
+    const sendResponse = jest.fn();
+    const ret = listener(
+      { cmd: "scanByNameAndValue", name: "hp", value: 100 },
+      null,
+      sendResponse,
+    );
+    expect(ret).toBe(true);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sendResponse).toHaveBeenCalledWith("scanByNameAndValue-ok");
+  });
+
+  test("refineByNameAndValue triggers combined refine", async () => {
+    const sendResponse = jest.fn();
+    const ret = listener(
+      { cmd: "refineByNameAndValue", name: "hp", value: 100 },
+      null,
+      sendResponse,
+    );
+    expect(ret).toBe(true);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(sendResponse).toHaveBeenCalledWith("refineByNameAndValue-ok");
+  });
+
   test("poke triggers poke command and responds asynchronously", async () => {
     const sendResponse = jest.fn();
     const ret = listener(
       { cmd: "poke", idx: 0, value: 42 },
       null,
-      sendResponse
+      sendResponse,
     );
     expect(ret).toBe(true);
     await new Promise((r) => setTimeout(r, 0));
@@ -86,7 +110,7 @@ describe("content message handler", () => {
     const ret = listener(
       { cmd: "poke", path: "window.score", value: 7 },
       null,
-      sendResponse
+      sendResponse,
     );
     expect(ret).toBe(true);
     await new Promise((r) => setTimeout(r, 0));
@@ -98,7 +122,7 @@ describe("content message handler", () => {
     const ret = listener(
       { cmd: "freeze", path: "window.score", value: 99 },
       null,
-      sendResponse
+      sendResponse,
     );
     expect(ret).toBe(true);
     await new Promise((r) => setTimeout(r, 0));
@@ -107,7 +131,11 @@ describe("content message handler", () => {
 
   test("unfreeze triggers unfreeze command and responds asynchronously", async () => {
     const sendResponse = jest.fn();
-    const ret = listener({ cmd: "unfreeze", path: "window.score" }, null, sendResponse);
+    const ret = listener(
+      { cmd: "unfreeze", path: "window.score" },
+      null,
+      sendResponse,
+    );
     expect(ret).toBe(true);
     await new Promise((r) => setTimeout(r, 0));
     expect(sendResponse).toHaveBeenCalledWith("unfreeze-ok");
@@ -127,7 +155,7 @@ describe("content message handler", () => {
     const ret = listener(
       { cmd: "setLocalStorage", data: { c: "3" } },
       null,
-      sendResponse
+      sendResponse,
     );
     expect(ret).toBeUndefined();
     expect(localStorage.getItem("c")).toBe("3");
@@ -137,7 +165,9 @@ describe("content message handler", () => {
   test("unknown command returns error", () => {
     const sendResponse = jest.fn();
     listener({ cmd: "nope" }, null, sendResponse);
-    expect(sendResponse).toHaveBeenCalledWith({ error: "Unknown command: nope" });
+    expect(sendResponse).toHaveBeenCalledWith({
+      error: "Unknown command: nope",
+    });
   });
 
   test("sendCommand timeout returns indicator", async () => {
@@ -148,7 +178,10 @@ describe("content message handler", () => {
     expect(ret).toBe(true);
     jest.advanceTimersByTime(20000);
     await jest.runOnlyPendingTimersAsync();
-    expect(sendResponse).toHaveBeenCalledWith({ error: "Timeout", timeout: true });
+    expect(sendResponse).toHaveBeenCalledWith({
+      error: "Timeout",
+      timeout: true,
+    });
     jest.useRealTimers();
   });
 });

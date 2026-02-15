@@ -61,7 +61,8 @@ async function initializePopup({ firefoxMode = false } = {}) {
 
   document.body.innerHTML = `
     <input id="value" />
-    <select id="searchType"><option value="value">value</option><option value="name">name</option></select>
+    <select id="searchType"><option value="value">value</option><option value="name">name</option><option value="nameAndValue">nameAndValue</option></select>
+    <div id="nameInputGroup" class="hidden"><input id="nameInput" /></div>
     <div id="initialScanGroup"></div>
     <div id="refineScanGroup" class="hidden"></div>
     <div id="statusBar" class="status-bar hidden"></div>
@@ -212,6 +213,52 @@ describe("popup handlers (Chrome mode)", () => {
     expect(send).not.toHaveBeenCalled();
   });
 
+  test("onStart with nameAndValue sends combined command", async () => {
+    document.getElementById("value").value = "100";
+    document.getElementById("searchType").value = "nameAndValue";
+    document.getElementById("nameInput").value = "hp";
+    send.mockResolvedValue(2);
+
+    await onStart();
+    expect(send).toHaveBeenCalledWith("scanByNameAndValue", {
+      value: 100,
+      name: "hp",
+    });
+    expect(showLoading).toHaveBeenCalledWith("Scanne...");
+    await Promise.resolve();
+    expect(showError).toHaveBeenCalledWith("✅ 2 Treffer gefunden");
+    expect(showRefineScanState).toHaveBeenCalled();
+    jest.runOnlyPendingTimers();
+    expect(updateList).toHaveBeenCalled();
+  });
+
+  test("onStart with nameAndValue shows error when name is empty", async () => {
+    document.getElementById("value").value = "100";
+    document.getElementById("searchType").value = "nameAndValue";
+    document.getElementById("nameInput").value = "";
+
+    await onStart();
+    expect(showError).toHaveBeenCalledWith("Bitte Wert und Name eingeben");
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  test("onRefine with nameAndValue sends combined refine command", async () => {
+    document.getElementById("value").value = "100";
+    document.getElementById("searchType").value = "nameAndValue";
+    document.getElementById("nameInput").value = "hp";
+    send.mockResolvedValue(1);
+
+    await onRefine();
+    expect(send).toHaveBeenCalledWith("refineByNameAndValue", {
+      value: 100,
+      name: "hp",
+    });
+    await Promise.resolve();
+    expect(showError).toHaveBeenCalledWith("🔬 1 Treffer nach Verfeinerung");
+    jest.runOnlyPendingTimers();
+    expect(updateList).toHaveBeenCalled();
+  });
+
   test("onRefine mit Fehlerantwort", async () => {
     document.getElementById("value").value = "7";
     document.getElementById("searchType").value = "value";
@@ -269,8 +316,8 @@ describe("popup handlers (Firefox mode)", () => {
     expect(checkScannerStatus.mock.calls.length).toBeGreaterThan(
       checkCallsBeforeInject,
     );
-    expect(document.getElementById("instructions").classList.contains("hidden")).toBe(
-      true,
-    );
+    expect(
+      document.getElementById("instructions").classList.contains("hidden"),
+    ).toBe(true);
   });
 });
