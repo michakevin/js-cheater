@@ -70,4 +70,40 @@ describe("domain isolated favorites", () => {
     expect(html).toContain("favB");
     expect(html).not.toContain("favA");
   });
+
+  test("updates favorites on active-tab change in same popup session", async () => {
+    jest.resetModules();
+    globalThis.chrome = {
+      tabs: {
+        query: jest
+          .fn()
+          .mockResolvedValueOnce([{ id: 1, url: "https://a.com/home" }])
+          .mockResolvedValueOnce([{ id: 1, url: "https://a.com/home" }])
+          .mockResolvedValueOnce([{ id: 2, url: "https://b.com/home" }])
+          .mockResolvedValueOnce([{ id: 2, url: "https://b.com/home" }]),
+      },
+    };
+
+    const favsA = { 1: { id: "1", name: "favA", path: "a", value: 1 } };
+    const favsB = { 2: { id: "2", name: "favB", path: "b", value: 2 } };
+    localStorage.setItem(
+      "cheat_favorites_https://a.com",
+      JSON.stringify(favsA),
+    );
+    localStorage.setItem(
+      "cheat_favorites_https://b.com",
+      JSON.stringify(favsB),
+    );
+
+    const mod = await import("../../src/popup/favorites.js");
+    await mod.loadFavorites();
+    let html = document.getElementById("favoritesContent").innerHTML;
+    expect(html).toContain("favA");
+    expect(html).not.toContain("favB");
+
+    await mod.loadFavorites();
+    html = document.getElementById("favoritesContent").innerHTML;
+    expect(html).toContain("favB");
+    expect(html).not.toContain("favA");
+  });
 });

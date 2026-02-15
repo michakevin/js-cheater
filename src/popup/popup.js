@@ -271,8 +271,121 @@ document.addEventListener("DOMContentLoaded", async () => {
   searchTypeSelect.addEventListener("change", updateSearchTypeUI);
   updateSearchTypeUI();
 
-  const [tab] = await queryTabs({ active: true, currentWindow: true });
-  if (tab) setActiveTab(tab.id);
+  let activeTabSignature = "";
+  let tabContextRefreshInFlight = false;
+  let queuedTabContextRefresh = null;
+
+  function queueTabContextRefresh(force) {
+    if (queuedTabContextRefresh === null) {
+      queuedTabContextRefresh = force;
+    } else if (force) {
+      queuedTabContextRefresh = true;
+    }
+  }
+
+  async function refreshVisibleTabContext({ force = false } = {}) {
+    if (tabContextRefreshInFlight) {
+      queueTabContextRefresh(force);
+      return;
+    }
+
+    tabContextRefreshInFlight = true;
+
+    try {
+      const [tab] = await queryTabs({ active: true, currentWindow: true });
+      const tabId = tab?.id;
+      if (tabId === undefined || tabId === null) {
+        showSetupMode();
+        stopConnectionMonitor();
+        return;
+      }
+
+      setActiveTab(tabId);
+
+      const tabSignature = `${tabId}|${tab?.url || ""}`;
+      const tabChanged = tabSignature !== activeTabSignature;
+      const scannerReady = await checkScannerStatus();
+
+      if (!scannerReady) {
+        activeTabSignature = tabSignature;
+        showSetupMode();
+        stopConnectionMonitor();
+        return;
+      }
+
+      if ($("#scannerUI").style.display === "none") {
+        showScannerMode();
+      }
+
+      if (tabChanged || !statusInterval) {
+        popupSelf.startConnectionMonitor();
+      }
+
+      detectAndShowPresets();
+
+      if (force || tabChanged) {
+        await updateList();
+
+        const favoritesTabButton = document.querySelector(
+          '.tab-button[data-tab="favorites"]',
+        );
+        if (favoritesTabButton?.classList.contains("active")) {
+          const { loadFavorites } = await import("./favorites.js");
+          await loadFavorites();
+        }
+      }
+
+      activeTabSignature = tabSignature;
+    } catch (error) {
+      console.error("Aktiven Tab konnte nicht synchronisiert werden:", error);
+    } finally {
+      tabContextRefreshInFlight = false;
+      if (queuedTabContextRefresh !== null) {
+        const forceQueued = queuedTabContextRefresh;
+        queuedTabContextRefresh = null;
+        void refreshVisibleTabContext({ force: forceQueued });
+      }
+    }
+  }
+
+  function scheduleTabContextRefresh(options = {}) {
+    const force = options.force === true;
+    if (tabContextRefreshInFlight) {
+      queueTabContextRefresh(force);
+      return;
+    }
+    void refreshVisibleTabContext({ force });
+  }
+
+  if (chrome?.tabs?.onActivated?.addListener) {
+    chrome.tabs.onActivated.addListener(() => {
+      scheduleTabContextRefresh();
+    });
+  }
+
+  if (chrome?.tabs?.onUpdated?.addListener) {
+    chrome.tabs.onUpdated.addListener((updatedTabId, changeInfo) => {
+      if (!changeInfo?.url && changeInfo?.status !== "complete") {
+        return;
+      }
+      if (typeof updatedTabId !== "number") {
+        return;
+      }
+      scheduleTabContextRefresh();
+    });
+  }
+
+  if (chrome?.windows?.onFocusChanged?.addListener) {
+    chrome.windows.onFocusChanged.addListener(() => {
+      scheduleTabContextRefresh();
+    });
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      scheduleTabContextRefresh();
+    }
+  });
 
   async function onInjectHandler() {
     const injectBtn = $("#inject");
@@ -522,14 +635,5 @@ document.addEventListener("DOMContentLoaded", async () => {
   $("#newSearch").removeEventListener("click", onNewSearch);
   $("#newSearch").addEventListener("click", onNewSearch);
 
-  const scannerReady = await checkScannerStatus();
-  if (scannerReady) {
-    showScannerMode();
-    popupSelf.startConnectionMonitor();
-    detectAndShowPresets();
-    await updateList();
-  } else {
-    showSetupMode();
-    stopConnectionMonitor();
-  }
+  await refreshVisibleTabContext({ force: true });
 });

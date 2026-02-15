@@ -31,11 +31,23 @@ describe("communication send", () => {
     );
   });
 
-  test("uses stored tab id when set", async () => {
+  test("prefers current active tab over stored tab id", async () => {
     const { send, setActiveTab } = await import("../../src/popup/communication.js");
     setActiveTab(5);
     await send("ping");
-    expect(chrome.tabs.query).not.toHaveBeenCalled();
+    expect(chrome.tabs.query).toHaveBeenCalled();
+    expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
+      1,
+      { cmd: "ping" },
+      expect.any(Function)
+    );
+  });
+
+  test("falls back to stored tab id when tab query fails", async () => {
+    chrome.tabs.query.mockRejectedValue(new Error("query failed"));
+    const { send, setActiveTab } = await import("../../src/popup/communication.js");
+    setActiveTab(5);
+    await send("ping");
     expect(chrome.tabs.sendMessage).toHaveBeenCalledWith(
       5,
       { cmd: "ping" },

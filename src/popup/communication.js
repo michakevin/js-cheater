@@ -15,6 +15,12 @@ export function setActiveTab(tabId) {
   activeTabId = tabId;
 }
 
+function rememberActiveTab(tab) {
+  if (tab && tab.id !== undefined && tab.id !== null) {
+    activeTabId = tab.id;
+  }
+}
+
 export async function queryTabs(queryInfo) {
   if (!chrome?.tabs?.query) {
     return [];
@@ -50,6 +56,31 @@ export async function queryTabs(queryInfo) {
       settle(error);
     }
   });
+}
+
+export async function getActiveTab() {
+  let queryError;
+  try {
+    const [tab] = await queryTabs({
+      active: true,
+      currentWindow: true,
+    });
+    if (tab) {
+      rememberActiveTab(tab);
+      return tab;
+    }
+  } catch (error) {
+    queryError = error;
+  }
+
+  if (activeTabId !== undefined && activeTabId !== null) {
+    return { id: activeTabId };
+  }
+
+  if (queryError) {
+    throw queryError;
+  }
+  throw new Error("Kein aktiver Tab gefunden");
 }
 
 export async function sendTabMessage(tabId, message) {
@@ -98,16 +129,10 @@ export async function send(cmd, extra = {}, options = {}) {
   } = options;
 
   try {
-    let tabId = activeTabId;
-    if (!tabId) {
-      const [tab] = await queryTabs({
-        active: true,
-        currentWindow: true,
-      });
-      if (!tab) {
-        throw new Error("Kein aktiver Tab gefunden");
-      }
-      tabId = tab.id;
+    const tab = await getActiveTab();
+    const tabId = tab?.id;
+    if (tabId === undefined || tabId === null) {
+      throw new Error("Kein aktiver Tab gefunden");
     }
     if (DEBUG) console.log("Sending message:", { cmd, ...extra });
     const response = await sendTabMessage(tabId, { cmd, ...extra });

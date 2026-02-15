@@ -1,17 +1,29 @@
 import { loadFromStorage, saveToStorage } from "./storage-utils.js";
-import { queryTabs } from "./communication.js";
+import { getActiveTab } from "./communication.js";
 
-let domainKeyPromise;
-export async function getDomainKey() {
-  if (!domainKeyPromise) {
-    domainKeyPromise = queryTabs({ active: true, currentWindow: true })
-      .then((tabs) => {
-        const url = tabs[0]?.url || "";
-        return "cheat_favorites_" + new URL(url).origin;
-      })
-      .catch(() => "cheat_favorites_unknown");
+const FAVORITES_KEY_PREFIX = "cheat_favorites_";
+const UNKNOWN_DOMAIN = "unknown";
+
+function getOriginFromUrl(url) {
+  if (!url) return UNKNOWN_DOMAIN;
+  try {
+    const parsedUrl = new URL(url);
+    if (!parsedUrl.origin || parsedUrl.origin === "null") {
+      return UNKNOWN_DOMAIN;
+    }
+    return parsedUrl.origin;
+  } catch {
+    return UNKNOWN_DOMAIN;
   }
-  return domainKeyPromise;
+}
+
+export async function getDomainKey() {
+  try {
+    const tab = await getActiveTab();
+    return FAVORITES_KEY_PREFIX + getOriginFromUrl(tab?.url);
+  } catch {
+    return FAVORITES_KEY_PREFIX + UNKNOWN_DOMAIN;
+  }
 }
 
 export async function getFavoritesKey() {
