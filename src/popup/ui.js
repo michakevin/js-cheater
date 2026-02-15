@@ -7,7 +7,7 @@ import {
 import { setupToolsEventListeners } from "./tools.js";
 import { setupStorageToolsEventListeners } from "./storage-tools.js";
 import { send } from "./communication.js";
-import { showError } from "./messages.js";
+import { showError, showSuccess } from "./messages.js";
 import { showDialog } from "./dialog.js";
 
 let favoritesListenerAdded = false;
@@ -92,7 +92,7 @@ export function showScannerMode() {
   $("#setupSection").style.display = "none";
   $("#scannerUI").style.display = "block";
   initTabs();
-  showError("✅ Scanner erfolgreich geladen!");
+  showSuccess("✅ Scanner erfolgreich geladen!");
   setTimeout(() => $("#value")?.focus(), 100);
   showInitialScanState();
 }

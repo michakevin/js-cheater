@@ -21,6 +21,7 @@ jest.mock("../../src/popup/ui.js", () => ({
 
 jest.mock("../../src/popup/messages.js", () => ({
   showError: jest.fn(),
+  showSuccess: jest.fn(),
 }));
 
 jest.mock("../../src/popup/dialog.js", () => ({
@@ -31,6 +32,7 @@ let send,
   queryTabs,
   checkScannerStatus,
   showError,
+  showSuccess,
   showRefineScanState,
   showInitialScanState,
   updateList,
@@ -46,7 +48,7 @@ async function initializePopup({ firefoxMode = false } = {}) {
   ({ send, queryTabs, checkScannerStatus } = await import(
     "../../src/popup/communication.js"
   ));
-  ({ showError } = await import("../../src/popup/messages.js"));
+  ({ showError, showSuccess } = await import("../../src/popup/messages.js"));
   ({
     showRefineScanState,
     showInitialScanState,
@@ -170,7 +172,7 @@ describe("popup handlers (Chrome mode)", () => {
     expect(showLoading).toHaveBeenCalledWith("Scanne...");
     expect(setScanButtonsDisabled).toHaveBeenCalledWith(true);
     await Promise.resolve();
-    expect(showError).toHaveBeenCalledWith("✅ 3 Treffer gefunden");
+    expect(showSuccess).toHaveBeenCalledWith("✅ 3 Treffer gefunden");
     expect(setScanButtonsDisabled).toHaveBeenCalledWith(false);
     expect(showRefineScanState).toHaveBeenCalled();
     jest.runOnlyPendingTimers();
@@ -185,7 +187,7 @@ describe("popup handlers (Chrome mode)", () => {
     await onRefine();
     expect(send).toHaveBeenCalledWith("refine", { value: 21 });
     await Promise.resolve();
-    expect(showError).toHaveBeenCalledWith("🔬 1 Treffer nach Verfeinerung");
+    expect(showSuccess).toHaveBeenCalledWith("🔬 1 Treffer nach Verfeinerung");
     jest.runOnlyPendingTimers();
     expect(updateList).toHaveBeenCalled();
   });
@@ -222,7 +224,7 @@ describe("popup handlers (Chrome mode)", () => {
     });
     expect(showLoading).toHaveBeenCalledWith("Scanne...");
     await Promise.resolve();
-    expect(showError).toHaveBeenCalledWith("✅ 2 Treffer gefunden");
+    expect(showSuccess).toHaveBeenCalledWith("✅ 2 Treffer gefunden");
     expect(showRefineScanState).toHaveBeenCalled();
     jest.runOnlyPendingTimers();
     expect(updateList).toHaveBeenCalled();
@@ -250,7 +252,7 @@ describe("popup handlers (Chrome mode)", () => {
       name: "hp",
     });
     await Promise.resolve();
-    expect(showError).toHaveBeenCalledWith("🔬 1 Treffer nach Verfeinerung");
+    expect(showSuccess).toHaveBeenCalledWith("🔬 1 Treffer nach Verfeinerung");
     jest.runOnlyPendingTimers();
     expect(updateList).toHaveBeenCalled();
   });

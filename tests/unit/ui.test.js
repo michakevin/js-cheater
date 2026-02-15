@@ -10,6 +10,7 @@ jest.mock("../../src/popup/favorites.js", () => ({
 
 jest.mock("../../src/popup/messages.js", () => ({
   showError: jest.fn(),
+  showSuccess: jest.fn(),
   clearStatus: jest.fn(),
 }));
 

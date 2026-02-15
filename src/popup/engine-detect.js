@@ -9,7 +9,7 @@
 import { send, getActiveTab } from "./communication.js";
 import { $ } from "./utils.js";
 import { getPresetsForEngine } from "./engine-presets.js";
-import { showError } from "./messages.js";
+import { showError, showSuccess, showInfo } from "./messages.js";
 import { showDialog } from "./dialog.js";
 
 const ENGINE_COLLAPSE_KEY_PREFIX = "engine_collapsed_";
@@ -238,7 +238,7 @@ async function handleDirectPreset(item) {
       value: parsed,
     });
     if (pokeResult && pokeResult.success) {
-      showError(`✅ ${item.label}: ${currentValue} → ${parsed}`);
+      showSuccess(`✅ ${item.label}: ${currentValue} → ${parsed}`);
     } else {
       showError(
         `❌ Änderung fehlgeschlagen: ${pokeResult?.error || "Unbekannter Fehler"}`,
@@ -277,9 +277,7 @@ function handleSearchPreset(item) {
   searchType.dispatchEvent(new Event("change"));
   valueInput.focus();
 
-  showError(
-    `🔍 Suchfelder für "${item.label}" ausgefüllt – jetzt Scan starten`,
-  );
+  showInfo(`🔍 Suchfelder für "${item.label}" ausgefüllt – jetzt Scan starten`);
 }
 
 /**

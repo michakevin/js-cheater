@@ -13,6 +13,7 @@ import { createScanner } from "./scanner-core.js";
   window.addEventListener(
     "message",
     (ev) => {
+      if (ev.source !== window) return;
       if (ev.data?.type !== REQ) return;
       const { id, command, data } = ev.data;
       let result;

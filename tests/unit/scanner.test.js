@@ -47,6 +47,17 @@ describe("freezeByPath", () => {
     jest.advanceTimersByTime(120);
     expect(window.gameScore).toBe(2);
   });
+
+  test("freezes value without window. prefix", () => {
+    window.__cheatScanner__.freezeByPath("gameScore", 7);
+    window.gameScore = 1;
+    jest.advanceTimersByTime(120);
+    expect(window.gameScore).toBe(7);
+    window.__cheatScanner__.unfreezeByPath("gameScore");
+    window.gameScore = 3;
+    jest.advanceTimersByTime(120);
+    expect(window.gameScore).toBe(3);
+  });
 });
 
 describe("scan and refine", () => {
@@ -271,6 +282,18 @@ describe("poke and pokeByPath", () => {
     const res = window.__cheatScanner__.pokeByPath("window.nestedObj.val", 44);
     expect(res.success).toBe(true);
     expect(window.nestedObj.val).toBe(44);
+  });
+
+  test("pokeByPath works without window. prefix", () => {
+    const res = window.__cheatScanner__.pokeByPath("nestedObj.val", 55);
+    expect(res.success).toBe(true);
+    expect(window.nestedObj.val).toBe(55);
+  });
+
+  test("pokeByPath works for top-level var without window. prefix", () => {
+    const res = window.__cheatScanner__.pokeByPath("pokeVar", 66);
+    expect(res.success).toBe(true);
+    expect(window.pokeVar).toBe(66);
   });
 });
 

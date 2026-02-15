@@ -14,6 +14,7 @@
       return new Promise((resolve) => {
         let timerId;
         const cb = (ev) => {
+          if (ev.source !== window) return;
           if (ev.data?.type !== RES || ev.data.id !== id) return;
           clearTimeout(timerId);
           window.removeEventListener("message", cb);

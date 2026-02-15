@@ -1,5 +1,4 @@
 import { $ } from "./utils.js";
-import { DEBUG } from "../debug.js";
 
 let statusTimeout = null;
 
@@ -14,12 +13,7 @@ export function showError(message) {
  * Show a success message in the status bar.
  */
 export function showSuccess(message) {
-  const activeTab = document.querySelector(".tab-panel.active");
-  if (activeTab && activeTab.id === "searchTab") {
-    showStatus(message, "success");
-  } else {
-    if (DEBUG) console.log("✅", message);
-  }
+  showStatus(message, "success");
 }
 
 /**

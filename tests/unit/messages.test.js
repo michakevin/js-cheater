@@ -45,12 +45,11 @@ describe("messages", () => {
     expect(statusBar.classList.contains("hidden")).toBe(false);
   });
 
-  test("showSuccess logs message when search tab inactive", () => {
-    const logSpy = jest.spyOn(console, "log").mockImplementation(() => {});
+  test("showSuccess shows message even when search tab is inactive", () => {
     searchTab.classList.remove("active");
     showSuccess("Hallo");
-    expect(logSpy).toHaveBeenCalledWith("✅", "Hallo");
-    logSpy.mockRestore();
+    expect(statusBar.textContent).toBe("Hallo");
+    expect(statusBar.classList.contains("status-success")).toBe(true);
   });
 
   test("showInfo displays message with info class", () => {

@@ -7,7 +7,7 @@ import {
   setScanButtonsDisabled,
   updateList,
 } from "./ui.js";
-import { showError } from "./messages.js";
+import { showError, showSuccess } from "./messages.js";
 
 async function runSearch({ cmd, value, name }) {
   const extra = { value };
@@ -41,7 +41,7 @@ async function executeSearch({
   setScanButtonsDisabled(false);
 
   if (result !== null) {
-    showError(successMessage(result));
+    showSuccess(successMessage(result));
     if (showRefineState) {
       showRefineScanState();
     }

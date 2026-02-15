@@ -615,8 +615,10 @@ export function createScanner(DEBUG = false) {
         if (DEBUG) console.log("🎯 Path parts:", pathParts);
 
         let obj = window;
+        const startIdx =
+          pathParts[0] === "window" || pathParts[0] === "globalThis" ? 1 : 0;
 
-        for (let i = 1; i < pathParts.length - 1; i++) {
+        for (let i = startIdx; i < pathParts.length - 1; i++) {
           if (DEBUG) console.log("🎯 Navigating to: " + pathParts[i]);
           obj = obj[pathParts[i]];
           if (obj === undefined || obj === null) {
@@ -660,7 +662,9 @@ export function createScanner(DEBUG = false) {
       try {
         const parts = parsePath(path);
         let obj = window;
-        for (let i = 1; i < parts.length - 1; i++) {
+        const startIdx =
+          parts[0] === "window" || parts[0] === "globalThis" ? 1 : 0;
+        for (let i = startIdx; i < parts.length - 1; i++) {
           obj = obj[parts[i]];
           if (obj === undefined || obj === null) {
             return { success: false, error: "Path not found at: " + parts[i] };

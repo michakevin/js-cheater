@@ -38,9 +38,9 @@ export function renderFavorites(favorites, inputs) {
           <td class="favorite-value">${escapeHtml(
             JSON.stringify(fav.value),
           )}</td>
-          <td><input type="text" id="newValue_${fav.id}" placeholder="Neuer Wert..." value="${
-            inputs[fav.id] || ""
-          }" /></td>
+          <td><input type="text" id="newValue_${fav.id}" placeholder="Neuer Wert..." value="${escapeHtml(
+            inputs[fav.id] || "",
+          )}" /></td>
           <td>
             <div class="action-buttons">
               <button class="freeze-btn" data-id="${fav.id}" title="Einfrieren" aria-label="${escapeHtml(fav.name)} einfrieren">❄️</button>

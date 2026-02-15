@@ -66,6 +66,26 @@ describe("loadFavorites", () => {
     const firstTd = document.querySelector(".favorites-table tbody td");
     expect(firstTd.innerHTML).toBe("&lt;img&gt;");
   });
+
+  test("escapes HTML in input values to prevent injection", async () => {
+    const malicious = '"><img src=x onerror=alert(1)>';
+    const favs = {
+      1: { id: "1", name: "test", path: "foo", value: 1 },
+    };
+    const key = "cheat_favorites_https://example.com";
+    localStorage.setItem(key, JSON.stringify(favs));
+
+    // Simulate a stored input value with malicious content
+    const { renderFavorites } = await import("../../src/popup/favorites-ui.js");
+    renderFavorites(favs, { 1: malicious });
+
+    const input = document.getElementById("newValue_1");
+    expect(input).toBeTruthy();
+    // The input should not have broken out of the attribute
+    expect(input.value).toBe(malicious);
+    // No injected img element should exist
+    expect(document.querySelector("img")).toBeNull();
+  });
 });
 
 describe("import/export favorites", () => {

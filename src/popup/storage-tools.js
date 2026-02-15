@@ -10,7 +10,12 @@ export async function exportLocalStorage() {
     type: "application/json",
   });
   const [tab] = await queryTabs({ active: true, currentWindow: true });
-  const domain = tab ? new URL(tab.url).origin : "unknown";
+  let domain = "unknown";
+  try {
+    if (tab?.url) domain = new URL(tab.url).origin;
+  } catch {
+    // Invalid or special URL – fall back to "unknown"
+  }
   const fileName = `js-cheater-localStorage-${domain.replace(/[^a-z0-9]+/gi, "_")}.json`;
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

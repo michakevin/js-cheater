@@ -404,10 +404,10 @@ function buildTreeNode(key, value, path, onValueChange) {
     valSpan.title = "Doppelklick zum Bearbeiten";
     row.appendChild(valSpan);
 
-    // Double-click to edit
-    valSpan.addEventListener("dblclick", () => {
+    // Double-click to edit (use property to avoid listener accumulation)
+    valSpan.ondblclick = () => {
       startEditing(valSpan, value, path, onValueChange);
-    });
+    };
   }
 
   const container = document.createElement("div");
@@ -532,10 +532,10 @@ function startEditing(valSpan, currentValue, path, onValueChange) {
       valSpan.textContent = text;
       valSpan.title = "Doppelklick zum Bearbeiten";
 
-      // Re-attach dblclick
-      valSpan.addEventListener("dblclick", () => {
+      // Re-attach dblclick (use property to avoid listener accumulation)
+      valSpan.ondblclick = () => {
         startEditing(valSpan, newValue, path, onValueChange);
-      });
+      };
 
       if (newValue !== currentValue) {
         onValueChange(path, newValue);
@@ -545,9 +545,9 @@ function startEditing(valSpan, currentValue, path, onValueChange) {
       valSpan.className = originalClasses;
       valSpan.textContent = originalText;
       valSpan.title = "Doppelklick zum Bearbeiten";
-      valSpan.addEventListener("dblclick", () => {
+      valSpan.ondblclick = () => {
         startEditing(valSpan, currentValue, path, onValueChange);
-      });
+      };
     }
   }
 

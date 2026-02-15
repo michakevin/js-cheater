@@ -89,4 +89,89 @@ describe("storage tools export/import", () => {
     expect(send).toHaveBeenCalledWith("setLocalStorage", { data: { a: 1 } });
     expect(showSuccess).toHaveBeenCalled();
   });
+
+  test("exportLocalStorage handles invalid tab URL gracefully", async () => {
+    send.mockResolvedValue({ foo: "bar" });
+    queryTabs.mockResolvedValue([{ url: "not-a-valid-url" }]);
+
+    let createUrlMock;
+    if (URL.createObjectURL) {
+      createUrlMock = jest
+        .spyOn(URL, "createObjectURL")
+        .mockReturnValue("blob:url");
+    } else {
+      URL.createObjectURL = jest.fn(() => "blob:url");
+      createUrlMock = URL.createObjectURL;
+    }
+    if (!URL.revokeObjectURL) {
+      URL.revokeObjectURL = jest.fn();
+    } else {
+      jest.spyOn(URL, "revokeObjectURL");
+    }
+
+    const clickMock = jest.fn();
+    const origCreate = document.createElement;
+    document.createElement = jest.fn((tag) => {
+      const el = origCreate.call(document, tag);
+      if (tag === "a") {
+        el.click = clickMock;
+      }
+      return el;
+    });
+
+    jest.spyOn(document.body, "appendChild");
+    jest.spyOn(document.body, "removeChild");
+
+    await exportLocalStorage();
+
+    expect(send).toHaveBeenCalledWith("getLocalStorage");
+    expect(clickMock).toHaveBeenCalled();
+    expect(showSuccess).toHaveBeenCalled();
+
+    if (createUrlMock.mockRestore) createUrlMock.mockRestore();
+    if (URL.revokeObjectURL.mockRestore) URL.revokeObjectURL.mockRestore();
+    document.createElement = origCreate;
+  });
+
+  test("exportLocalStorage handles missing tab URL gracefully", async () => {
+    send.mockResolvedValue({ foo: "bar" });
+    queryTabs.mockResolvedValue([{}]);
+
+    let createUrlMock;
+    if (URL.createObjectURL) {
+      createUrlMock = jest
+        .spyOn(URL, "createObjectURL")
+        .mockReturnValue("blob:url");
+    } else {
+      URL.createObjectURL = jest.fn(() => "blob:url");
+      createUrlMock = URL.createObjectURL;
+    }
+    if (!URL.revokeObjectURL) {
+      URL.revokeObjectURL = jest.fn();
+    } else {
+      jest.spyOn(URL, "revokeObjectURL");
+    }
+
+    const clickMock = jest.fn();
+    const origCreate = document.createElement;
+    document.createElement = jest.fn((tag) => {
+      const el = origCreate.call(document, tag);
+      if (tag === "a") {
+        el.click = clickMock;
+      }
+      return el;
+    });
+
+    jest.spyOn(document.body, "appendChild");
+    jest.spyOn(document.body, "removeChild");
+
+    await exportLocalStorage();
+
+    expect(clickMock).toHaveBeenCalled();
+    expect(showSuccess).toHaveBeenCalled();
+
+    if (createUrlMock.mockRestore) createUrlMock.mockRestore();
+    if (URL.revokeObjectURL.mockRestore) URL.revokeObjectURL.mockRestore();
+    document.createElement = origCreate;
+  });
 });

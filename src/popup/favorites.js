@@ -261,7 +261,7 @@ export async function saveFavorite(path, value) {
   });
   if (!name) return;
 
-  const id = Date.now().toString();
+  const id = createFavoriteId();
   favorites[id] = { id, name, path, value, savedAt: new Date().toISOString() };
   await saveFavorites(favorites, currentDomain);
   showSuccess(`💾 "${name}" als Favorit gespeichert!`);
