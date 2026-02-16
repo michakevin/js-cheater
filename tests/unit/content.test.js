@@ -48,6 +48,7 @@ describe("content message handler", () => {
     window.addEventListener = originalAdd;
     window.removeEventListener = originalRemove;
     window.postMessage = originalPost;
+    delete window.__jsCheaterContentInitialized__;
     delete globalThis.chrome;
     localStorage.clear();
     jest.resetModules();
@@ -218,5 +219,14 @@ describe("content message handler", () => {
       timeout: true,
     });
     jest.useRealTimers();
+  });
+
+  test("second content-script injection does not add a duplicate runtime listener", async () => {
+    expect(chrome.runtime.onMessage.addListener).toHaveBeenCalledTimes(1);
+
+    jest.resetModules();
+    await import("../../src/content.js");
+
+    expect(chrome.runtime.onMessage.addListener).toHaveBeenCalledTimes(1);
   });
 });

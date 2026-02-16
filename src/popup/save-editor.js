@@ -93,6 +93,21 @@ const slotCache = new Map();
 // DOM references
 const $ = (sel) => document.querySelector(sel);
 
+function resetLoadedSlotState() {
+  currentSlotKey = "";
+  currentSlotSource = "";
+  editorData = null;
+  hasChanges = false;
+}
+
+function getSaveErrorMessage(result) {
+  return (
+    result?.error ||
+    result?.message ||
+    "Unbekannter Fehler beim Speichern."
+  );
+}
+
 // ---- RPG Maker save key detection ----
 
 /**
@@ -761,6 +776,8 @@ async function loadSlots() {
 
 async function loadSlotData(key) {
   if (!key) {
+    resetLoadedSlotState();
+
     const container = $("#editorContent");
     if (container) {
       container.innerHTML = `
@@ -771,6 +788,8 @@ async function loadSlotData(key) {
     }
     const searchBar = $("#searchBar");
     if (searchBar) searchBar.classList.add("hidden");
+    const saveBtn = $("#saveChanges");
+    if (saveBtn) saveBtn.disabled = true;
     hideStatus();
     return;
   }
@@ -815,11 +834,15 @@ async function saveChanges() {
   try {
     const encoded = await encodeSaveData(editorData, saveFormat);
 
-    await send("setRpgMakerSave", {
+    const saveResult = await send("setRpgMakerSave", {
       key: currentSlotKey,
       source: currentSlotSource,
       raw: encoded,
     });
+
+    if (!saveResult || saveResult.success !== true) {
+      throw new Error(getSaveErrorMessage(saveResult));
+    }
 
     // Update cached raw data
     const cached = slotCache.get(currentSlotKey);

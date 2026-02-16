@@ -1,4 +1,9 @@
 (() => {
+  if (window.__jsCheaterContentInitialized__) {
+    return;
+  }
+  window.__jsCheaterContentInitialized__ = true;
+
   const DEBUG = false;
   if (DEBUG)
     console.log("[js-cheater] Content script loaded (postMessage Mode)");

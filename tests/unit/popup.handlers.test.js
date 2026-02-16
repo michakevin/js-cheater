@@ -3,6 +3,7 @@ import { jest } from "@jest/globals";
 // Mock dependencies used by popup handlers
 jest.mock("../../src/popup/communication.js", () => ({
   send: jest.fn(),
+  sendTabMessage: jest.fn(),
   checkScannerStatus: jest.fn(),
   setActiveTab: jest.fn(),
   queryTabs: jest.fn(),
@@ -29,6 +30,7 @@ jest.mock("../../src/popup/dialog.js", () => ({
 }));
 
 let send,
+  sendTabMessage,
   queryTabs,
   checkScannerStatus,
   showError,
@@ -45,7 +47,7 @@ let onInject, onStart, onRefine, onNewSearch;
 async function initializePopup({ firefoxMode = false } = {}) {
   jest.resetModules();
 
-  ({ send, queryTabs, checkScannerStatus } = await import(
+  ({ send, sendTabMessage, queryTabs, checkScannerStatus } = await import(
     "../../src/popup/communication.js"
   ));
   ({ showError, showSuccess } = await import("../../src/popup/messages.js"));
@@ -96,6 +98,7 @@ async function initializePopup({ firefoxMode = false } = {}) {
   const popup = await import("../../src/popup/popup.js");
   queryTabs.mockResolvedValue([{ id: 1 }]);
   checkScannerStatus.mockResolvedValue(false);
+  sendTabMessage.mockRejectedValue(new Error("no content script"));
 
   await document.dispatchEvent(new Event("DOMContentLoaded"));
   await Promise.resolve();
@@ -160,6 +163,14 @@ describe("popup handlers (Chrome mode)", () => {
     expect(showDialog).toHaveBeenCalledWith(
       expect.objectContaining({ type: "alert" }),
     );
+  });
+
+  test("onInject skips content-script reinjection when already ready", async () => {
+    sendTabMessage.mockResolvedValue("pong");
+
+    await onInject();
+    expect(globalThis.chrome.scripting.executeScript).not.toHaveBeenCalled();
+    expect(navigator.clipboard.writeText).toHaveBeenCalled();
   });
 
   test("onStart sends start command and switches state", async () => {

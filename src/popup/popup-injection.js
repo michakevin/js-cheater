@@ -1,5 +1,5 @@
 import { $ } from "./utils.js";
-import { queryTabs, setActiveTab } from "./communication.js";
+import { queryTabs, sendTabMessage, setActiveTab } from "./communication.js";
 import { showDialog } from "./dialog.js";
 import { SCANNER_CODE } from "./scanner-code.js";
 
@@ -122,6 +122,15 @@ async function injectContentScript(tabId) {
   });
 }
 
+async function isContentScriptReady(tabId) {
+  try {
+    const result = await sendTabMessage(tabId, { cmd: "ping" });
+    return result === "pong";
+  } catch {
+    return false;
+  }
+}
+
 async function injectScannerIntoTab(tabId) {
   const injector = `(function(){
     var s = document.createElement('script');
@@ -153,8 +162,11 @@ export function createInjectHandler({ directScannerInjection, startPolling }) {
 
       if (currTab) {
         setActiveTab(currTab.id);
-        await injectContentScript(currTab.id);
-        contentScriptReady = true;
+        contentScriptReady = await isContentScriptReady(currTab.id);
+        if (!contentScriptReady) {
+          await injectContentScript(currTab.id);
+          contentScriptReady = true;
+        }
 
         if (directScannerInjection) {
           try {

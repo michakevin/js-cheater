@@ -13,7 +13,8 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 const distDir = resolve(projectRoot, "dist");
-const baseManifestPath = resolve(projectRoot, "manifest.chrome.json");
+const mv3ManifestPath = resolve(projectRoot, "manifest.chrome.json");
+const mv2ManifestPath = resolve(projectRoot, "manifest.firefox.json");
 const debugPath = resolve(projectRoot, "src/debug.js");
 const mv2TemplatePath = resolve(__dirname, "templates/background-mv2.js");
 
@@ -138,13 +139,14 @@ async function main() {
   await ensureScannerBuild();
   await resetDist();
 
-  const baseManifest = JSON.parse(await readFile(baseManifestPath, "utf8"));
+  const mv3Manifest = JSON.parse(await readFile(mv3ManifestPath, "utf8"));
+  const mv2Manifest = JSON.parse(await readFile(mv2ManifestPath, "utf8"));
   const debugSource = await readFile(debugPath, "utf8");
   const debugMatch = debugSource.match(/DEBUG\s*=\s*([^;]+);/);
   const debugValue = debugMatch ? debugMatch[1].trim() : "false";
 
-  await buildMv3(baseManifest);
-  await buildMv2(baseManifest, debugValue);
+  await buildMv3(mv3Manifest);
+  await buildMv2(mv2Manifest, debugValue);
 }
 
 await main();
