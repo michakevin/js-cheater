@@ -2,40 +2,27 @@
   "name": "js-cheater",
   "description": "Cheat-Engine-ähnlicher Scanner für Browser-RPGs",
   "version": "0.1.0",
-  "manifest_version": 2,
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "js-cheater@example.com",
-      "strict_min_version": "109.0"
-    }
-  },
+  "manifest_version": 3,
+
   "icons": {
     "16": "icons/icon128.png",
     "32": "icons/icon128.png",
     "48": "icons/icon128.png",
     "128": "icons/icon128.png"
   },
-  "permissions": [
-    "activeTab",
-    "storage",
-    "tabs",
-    "clipboardWrite",
-    "<all_urls>"
-  ],
-  "background": {
-    "scripts": ["src/background.js"],
-    "persistent": false
-  },
+
+  "permissions": ["activeTab", "scripting", "storage", "sidePanel", "tabs"],
+  "host_permissions": ["<all_urls>"],
+
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
       "js": ["src/content.js"],
-      "run_at": "document_idle",
-      "all_frames": true,
-      "match_about_blank": true
+      "run_at": "document_idle"
     }
   ],
-  "browser_action": {
+
+  "action": {
     "default_title": "Aktiviere JS-Cheater für diese Site",
     "default_icon": {
       "16": "icons/icon128.png",
@@ -44,9 +31,8 @@
       "128": "icons/icon128.png"
     }
   },
-  "sidebar_action": {
-    "default_title": "JS-Cheater",
-    "default_panel": "src/popup/popup.html",
+  "side_panel": {
+    "default_path": "src/popup/popup.html",
     "default_icon": {
       "16": "icons/icon128.png",
       "32": "icons/icon128.png",
@@ -54,11 +40,20 @@
       "128": "icons/icon128.png"
     }
   },
+  "background": {
+    "service_worker": "src/service-worker.js",
+    "type": "module"
+  },
   "web_accessible_resources": [
-    "src/content.js",
-    "src/popup/save-editor.html",
-    "src/popup/save-editor.js",
-    "src/popup/save-editor.css",
-    "src/popup/lz-string.js"
+    {
+      "resources": [
+        "src/content.js",
+        "src/popup/save-editor.html",
+        "src/popup/save-editor.js",
+        "src/popup/save-editor.css",
+        "src/popup/lz-string.js"
+      ],
+      "matches": ["<all_urls>"]
+    }
   ]
 }
