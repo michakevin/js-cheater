@@ -1,0 +1,638 @@
+/* ---- RPG Maker Data Editor Styles ---- */
+
+body {
+  font:
+    14px/1.4 system-ui,
+    sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #ffffff;
+  color: #333;
+  min-width: 520px;
+}
+
+/* ---- Header ---- */
+.editor-header {
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.editor-header h1 {
+  margin: 0 0 2px;
+  font-size: 16px;
+}
+
+.editor-subtitle {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+}
+
+/* ---- Main Tab Navigation ---- */
+.editor-tabs {
+  display: flex;
+  border-bottom: 2px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+.tab-btn {
+  padding: 8px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #666;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover {
+  color: #333;
+  background: #ececec;
+}
+
+.tab-btn.active {
+  color: #2980b9;
+  border-bottom-color: #2980b9;
+  background: #fff;
+}
+
+/* ---- Status Message ---- */
+.status-message {
+  padding: 8px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.status-message.status-success {
+  background: #d4edda;
+  color: #155724;
+  border-color: #c3e6cb;
+}
+
+.status-message.status-error {
+  background: #f8d7da;
+  color: #721c24;
+  border-color: #f5c6cb;
+}
+
+.status-message.status-info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border-color: #bee5eb;
+}
+
+/* ---- Tab Panels ---- */
+.tab-panel {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 96px);
+}
+
+.tab-panel.hidden {
+  display: none;
+}
+
+/* ---- Panel Toolbar ---- */
+.panel-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.panel-toolbar input {
+  flex: 1;
+  padding: 5px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.btn-refresh {
+  padding: 5px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.btn-refresh:hover {
+  background: #e9ecef;
+}
+
+/* ---- Item Type Filter ---- */
+.item-type-filter {
+  display: flex;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+  flex-shrink: 0;
+}
+
+.filter-btn {
+  padding: 4px 12px;
+  border: 1px solid #ccc;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font-size: 12px;
+  color: #555;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
+}
+
+.filter-btn:hover {
+  background: #e9ecef;
+}
+
+.filter-btn.active {
+  background: #2980b9;
+  border-color: #2980b9;
+  color: #fff;
+}
+
+/* ---- Panel Content (scrollable) ---- */
+.panel-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 16px;
+  color: #888;
+}
+
+.empty-state p {
+  margin: 4px 0;
+}
+
+.text-secondary {
+  color: #888;
+  font-size: 12px;
+}
+
+/* ---- Section Headers ---- */
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 4px;
+  margin: 8px 0 4px;
+  font-weight: 600;
+  font-size: 13px;
+  color: #444;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.section-count {
+  font-size: 11px;
+  font-weight: 400;
+  color: #888;
+}
+
+/* ---- Values Table ---- */
+.values-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+.values-table th {
+  text-align: left;
+  padding: 4px 8px;
+  background: #f0f4f8;
+  border-bottom: 1px solid #ddd;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.values-table td {
+  padding: 3px 8px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+
+.values-table tr:hover td {
+  background: #f7f9fc;
+}
+
+.values-table tr.hidden-row {
+  display: none;
+}
+
+.col-id {
+  width: 48px;
+  color: #888;
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+}
+
+.col-name {
+  min-width: 140px;
+  max-width: 240px;
+  color: #333;
+}
+
+.col-name.unnamed {
+  color: #aaa;
+  font-style: italic;
+}
+
+.col-value {
+  width: 140px;
+}
+
+/* Editable number input */
+.value-input {
+  width: 120px;
+  padding: 2px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: "Consolas", "Monaco", monospace;
+  background: #fff;
+  color: #1c00cf;
+  text-align: right;
+}
+
+.value-input:focus {
+  outline: 2px solid #3498db;
+  border-color: #3498db;
+}
+
+.value-input.modified {
+  background: #fffde7;
+  border-color: #f0c040;
+}
+
+/* Switch toggle */
+.switch-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.switch-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #27ae60;
+}
+
+.switch-label-on {
+  font-size: 11px;
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.switch-label-off {
+  font-size: 11px;
+  color: #aaa;
+}
+
+/* ---- Item Cards ---- */
+.item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.item-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  transition: background 0.1s;
+}
+
+.item-row:hover {
+  background: #f7f9fc;
+  border-color: #e8eef5;
+}
+
+.item-row.hidden-row {
+  display: none;
+}
+
+.item-icon {
+  width: 28px;
+  height: 28px;
+  background: #e8eef5;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #888;
+  flex-shrink: 0;
+  font-family: monospace;
+}
+
+.item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.item-name {
+  font-weight: 500;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-desc {
+  font-size: 11px;
+  color: #888;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-qty-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.item-qty-label {
+  font-size: 11px;
+  color: #888;
+}
+
+.item-qty-input {
+  width: 64px;
+  padding: 3px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: "Consolas", "Monaco", monospace;
+  text-align: right;
+  background: #fff;
+  color: #1c00cf;
+}
+
+.item-qty-input:focus {
+  outline: 2px solid #3498db;
+  border-color: #3498db;
+}
+
+.item-qty-input.modified {
+  background: #fffde7;
+  border-color: #f0c040;
+}
+
+.item-qty-input.in-party {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+/* ---- Buttons ---- */
+.btn-apply {
+  padding: 2px 10px;
+  border: 1px solid #27ae60;
+  border-radius: 3px;
+  background: #27ae60;
+  color: #fff;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn-apply:hover {
+  background: #219a52;
+}
+
+/* ---- Hidden ---- */
+.hidden {
+  display: none !important;
+}
+
+/* ---- Loading state ---- */
+.loading-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: #888;
+  font-size: 13px;
+}
+
+/* ---- Dark Mode ---- */
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #1e1e1e;
+    color: #f0f0f0;
+  }
+
+  .editor-header {
+    border-bottom-color: #444;
+  }
+
+  .editor-subtitle {
+    color: #aaa;
+  }
+
+  .editor-tabs {
+    background: #2b2b2b;
+    border-bottom-color: #444;
+  }
+
+  .tab-btn {
+    color: #aaa;
+  }
+
+  .tab-btn:hover {
+    color: #f0f0f0;
+    background: #333;
+  }
+
+  .tab-btn.active {
+    color: #4dabf7;
+    border-bottom-color: #4dabf7;
+    background: #1e1e1e;
+  }
+
+  .status-message {
+    border-bottom-color: #444;
+  }
+
+  .status-message.status-success {
+    background: #1e3a1e;
+    color: #7ddf7d;
+    border-color: #2d5a2d;
+  }
+
+  .status-message.status-error {
+    background: #3a1e1e;
+    color: #df7d7d;
+    border-color: #5a2d2d;
+  }
+
+  .status-message.status-info {
+    background: #1e2e3a;
+    color: #7dbfdf;
+    border-color: #2d4a5a;
+  }
+
+  .panel-toolbar {
+    background: #2b2b2b;
+    border-bottom-color: #444;
+  }
+
+  .panel-toolbar input {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #f0f0f0;
+  }
+
+  .btn-refresh {
+    background: #3a3a3a;
+    border-color: #555;
+    color: #f0f0f0;
+  }
+
+  .btn-refresh:hover {
+    background: #4a4a4a;
+  }
+
+  .item-type-filter {
+    background: #2b2b2b;
+    border-bottom-color: #444;
+  }
+
+  .filter-btn {
+    background: #3a3a3a;
+    border-color: #555;
+    color: #ccc;
+  }
+
+  .filter-btn:hover {
+    background: #4a4a4a;
+  }
+
+  .filter-btn.active {
+    background: #2980b9;
+    border-color: #2980b9;
+    color: #fff;
+  }
+
+  .section-header {
+    color: #ccc;
+    border-bottom-color: #444;
+  }
+
+  .section-count {
+    color: #777;
+  }
+
+  .values-table th {
+    background: #2a2e33;
+    border-bottom-color: #444;
+    color: #aaa;
+  }
+
+  .values-table td {
+    border-bottom-color: #333;
+  }
+
+  .values-table tr:hover td {
+    background: #2a2e33;
+  }
+
+  .col-id {
+    color: #777;
+  }
+
+  .col-name {
+    color: #f0f0f0;
+  }
+
+  .col-name.unnamed {
+    color: #666;
+  }
+
+  .value-input {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #b5cea8;
+  }
+
+  .value-input:focus {
+    outline-color: #4dabf7;
+    border-color: #4dabf7;
+  }
+
+  .value-input.modified {
+    background: #3a3520;
+    border-color: #a08030;
+  }
+
+  .switch-label-on {
+    color: #7ddf7d;
+  }
+
+  .switch-label-off {
+    color: #666;
+  }
+
+  .item-row:hover {
+    background: #2a2e33;
+    border-color: #3a4a5a;
+  }
+
+  .item-icon {
+    background: #2a2e33;
+    color: #777;
+  }
+
+  .item-desc {
+    color: #777;
+  }
+
+  .item-qty-label {
+    color: #777;
+  }
+
+  .item-qty-input {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #b5cea8;
+  }
+
+  .item-qty-input:focus {
+    outline-color: #4dabf7;
+    border-color: #4dabf7;
+  }
+
+  .item-qty-input.modified {
+    background: #3a3520;
+    border-color: #a08030;
+  }
+
+  .item-qty-input.in-party {
+    color: #7ddf7d;
+  }
+
+  .empty-state {
+    color: #777;
+  }
+
+  .loading-state {
+    color: #777;
+  }
+}

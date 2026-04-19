@@ -184,6 +184,25 @@
       return { error: "Unknown source: " + source };
     },
     test: () => API.test(),
+    /**
+     * Fetch RPG Maker static data files from the game server.
+     * Works because content scripts share the page's origin for fetch.
+     */
+    getRpgMakerGameData: async () => {
+      const files = ["Items", "Weapons", "Armors", "System"];
+      const result = {};
+      await Promise.all(
+        files.map(async (name) => {
+          try {
+            const res = await fetch(`/data/${name}.json`);
+            result[name.toLowerCase()] = res.ok ? await res.json() : null;
+          } catch {
+            result[name.toLowerCase()] = null;
+          }
+        }),
+      );
+      return result;
+    },
   };
 
   /**

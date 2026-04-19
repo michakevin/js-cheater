@@ -10,6 +10,7 @@ export function setupToolsEventListeners() {
       try {
         await detectAndShowPresets("enginePresetsTools");
         updateSaveEditorVisibility();
+        updateRpgDataEditorVisibility();
       } finally {
         detectBtn.disabled = false;
         detectBtn.textContent = "🔍 Engine erkennen";
@@ -22,11 +23,17 @@ export function setupToolsEventListeners() {
     saveEditorBtn.addEventListener("click", openSaveEditor);
   }
 
+  const rpgDataEditorBtn = document.getElementById("openRpgDataEditor");
+  if (rpgDataEditorBtn) {
+    rpgDataEditorBtn.addEventListener("click", openRpgDataEditor);
+  }
+
   // If engine was already detected (e.g. in search tab), show results immediately
   const alreadyDetected = getLastDetection();
   if (alreadyDetected) {
     detectAndShowPresets("enginePresetsTools");
     updateSaveEditorVisibility();
+    updateRpgDataEditorVisibility();
   }
 }
 
@@ -46,6 +53,42 @@ export function updateSaveEditorVisibility() {
       detection.id.includes("rpgmaker"));
 
   group.classList.toggle("hidden", !isRpgMaker);
+}
+
+/**
+ * Show/hide the RPG Data Editor button based on detected engine.
+ */
+export function updateRpgDataEditorVisibility() {
+  const group = document.getElementById("rpgDataEditorGroup");
+  if (!group) return;
+
+  const detection = getLastDetection();
+  const isRpgMaker =
+    detection?.id &&
+    (detection.id.startsWith("rpgmaker") ||
+      detection.id.includes("rpg-maker") ||
+      detection.id.includes("rpgmaker"));
+
+  group.classList.toggle("hidden", !isRpgMaker);
+}
+
+/**
+ * Open the RPG Maker Data Editor in a new popup window.
+ */
+async function openRpgDataEditor() {
+  let tabId;
+  try {
+    const tab = await getActiveTab();
+    tabId = tab?.id;
+  } catch {
+    /* ignore */
+  }
+
+  const editorUrl = chrome.runtime.getURL(
+    "src/popup/rpgmaker-data-editor.html" + (tabId ? "?tabId=" + tabId : ""),
+  );
+
+  window.open(editorUrl, "rpgDataEditor", "width=620,height=700");
 }
 
 /**

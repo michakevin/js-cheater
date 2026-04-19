@@ -51,7 +51,10 @@
         "src/popup/save-editor.html",
         "src/popup/save-editor.js",
         "src/popup/save-editor.css",
-        "src/popup/lz-string.js"
+        "src/popup/lz-string.js",
+        "src/popup/rpgmaker-data-editor.html",
+        "src/popup/rpgmaker-data-editor.js",
+        "src/popup/rpgmaker-data-editor.css"
       ],
       "matches": ["<all_urls>"]
     }
