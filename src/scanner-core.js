@@ -216,6 +216,32 @@ export function createScanner(DEBUG = false) {
       }
       return out;
     },
+    /**
+     * Execute a sequence of scan passes over `window` and keep the first
+     * non-empty result as the active hit list. Each pass is an object
+     * `{ predicate, depth, opts }`.
+     * @param {Array<{predicate: Function, depth: number, opts: object}>} passes
+     * @returns {number} number of hits
+     */
+    runPasses: function (passes) {
+      this.hits = [];
+      for (const pass of passes) {
+        this.hits = this.findAll(
+          window,
+          pass.predicate,
+          new WeakSet(),
+          "window",
+          pass.depth,
+          pass.opts,
+        );
+        if (this.hits.length > 0) break;
+      }
+      if (DEBUG) console.log("✅ Found hits:", this.hits.length);
+      if (DEBUG && this.hits.length > 0) {
+        console.log("📍 First few hits:", this.hits.slice(0, 5));
+      }
+      return this.hits.length;
+    },
     scan: function (value) {
       if (DEBUG) console.log("🔍 Scanning for:", value, "type:", typeof value);
       const priorityPatterns = GAME_KEYWORDS_VALUE;
@@ -293,25 +319,7 @@ export function createScanner(DEBUG = false) {
         });
       }
 
-      this.hits = [];
-      for (const pass of passes) {
-        this.hits = this.findAll(
-          window,
-          pass.predicate,
-          new WeakSet(),
-          "window",
-          pass.depth,
-          pass.opts,
-        );
-        if (this.hits.length > 0) {
-          break;
-        }
-      }
-      if (DEBUG) console.log("✅ Found hits:", this.hits.length);
-      if (DEBUG && this.hits.length > 0) {
-        console.log("📍 First few hits:", this.hits.slice(0, 5));
-      }
-      return this.hits.length;
+      return this.runPasses(passes);
     },
     refine: function (value) {
       const oldCount = this.hits.length;
@@ -341,6 +349,7 @@ export function createScanner(DEBUG = false) {
 
       const passes = [
         {
+          predicate: matchByName,
           depth: 5,
           opts: {
             maxTime: 1200,
@@ -353,6 +362,7 @@ export function createScanner(DEBUG = false) {
           },
         },
         {
+          predicate: matchByName,
           depth: 8,
           opts: {
             maxTime: 2800,
@@ -368,6 +378,7 @@ export function createScanner(DEBUG = false) {
 
       if (!conservativeMode) {
         passes.push({
+          predicate: matchByName,
           depth: 10,
           opts: {
             maxTime: 3500,
@@ -381,25 +392,7 @@ export function createScanner(DEBUG = false) {
         });
       }
 
-      this.hits = [];
-      for (const pass of passes) {
-        this.hits = this.findAll(
-          window,
-          matchByName,
-          new WeakSet(),
-          "window",
-          pass.depth,
-          pass.opts,
-        );
-        if (this.hits.length > 0) {
-          break;
-        }
-      }
-      if (DEBUG) console.log("✅ Found hits:", this.hits.length);
-      if (DEBUG && this.hits.length > 0) {
-        console.log("📍 First few hits:", this.hits.slice(0, 5));
-      }
-      return this.hits.length;
+      return this.runPasses(passes);
     },
     refineByName: function (name) {
       const oldCount = this.hits.length;
@@ -515,25 +508,7 @@ export function createScanner(DEBUG = false) {
         });
       }
 
-      this.hits = [];
-      for (const pass of passes) {
-        this.hits = this.findAll(
-          window,
-          pass.predicate,
-          new WeakSet(),
-          "window",
-          pass.depth,
-          pass.opts,
-        );
-        if (this.hits.length > 0) {
-          break;
-        }
-      }
-      if (DEBUG) console.log("✅ Found hits:", this.hits.length);
-      if (DEBUG && this.hits.length > 0) {
-        console.log("📍 First few hits:", this.hits.slice(0, 5));
-      }
-      return this.hits.length;
+      return this.runPasses(passes);
     },
 
     refineByNameAndValue: function (name, value) {
