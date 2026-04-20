@@ -16,7 +16,7 @@ const distDir = resolve(projectRoot, "dist");
 const mv3ManifestPath = resolve(projectRoot, "manifest.chrome.json");
 const mv2ManifestPath = resolve(projectRoot, "manifest.firefox.json");
 const debugPath = resolve(projectRoot, "src/debug.js");
-const mv2TemplatePath = resolve(__dirname, "templates/background-mv2.js");
+const mv2BackgroundPath = resolve(projectRoot, "src/background.js");
 
 async function ensureScannerBuild() {
   await import("./build-scanner.mjs");
@@ -152,8 +152,11 @@ async function buildMv2(baseManifest, debugValue) {
   const manifest = transformToMv2Manifest(baseManifest);
   await writeManifest(targetDir, manifest);
 
-  const template = await readFile(mv2TemplatePath, "utf8");
-  const backgroundCode = template.replace(/__DEBUG_VALUE__/g, debugValue);
+  const backgroundSource = await readFile(mv2BackgroundPath, "utf8");
+  const backgroundCode = backgroundSource.replace(
+    /const\s+DEBUG\s*=\s*[^;]+;/,
+    `const DEBUG = ${debugValue};`,
+  );
   await writeFile(resolve(targetDir, "src/background.js"), backgroundCode);
   console.info("Built MV2 package in dist/mv2");
 }
