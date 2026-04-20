@@ -12,3 +12,7 @@ test-results/
 
 # Build-Artefakte
 *.zip
+
+# Agent / planning scratch
+.claude/
+PLAN.md
