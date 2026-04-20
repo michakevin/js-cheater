@@ -159,7 +159,31 @@ describe("content message handler", () => {
     );
     expect(ret).toBeUndefined();
     expect(localStorage.getItem("c")).toBe("3");
-    expect(sendResponse).toHaveBeenCalledWith({ success: true });
+    expect(sendResponse).toHaveBeenCalledWith({ success: true, skipped: [] });
+  });
+
+  test("setLocalStorage skips non-string values", () => {
+    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {});
+    const sendResponse = jest.fn();
+    listener(
+      {
+        cmd: "setLocalStorage",
+        data: { good: "ok", bad: { obj: 1 }, num: 42 },
+      },
+      null,
+      sendResponse,
+    );
+    expect(localStorage.getItem("good")).toBe("ok");
+    expect(localStorage.getItem("bad")).toBeNull();
+    expect(localStorage.getItem("num")).toBeNull();
+    expect(sendResponse).toHaveBeenCalledWith({
+      success: true,
+      skipped: [
+        { key: "bad", type: "object" },
+        { key: "num", type: "number" },
+      ],
+    });
+    warnSpy.mockRestore();
   });
 
   test("unknown command returns error", () => {

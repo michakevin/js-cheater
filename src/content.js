@@ -121,14 +121,24 @@
       return data;
     },
     setLocalStorage: (msg) => {
+      const skipped = [];
       Object.entries(msg.data || {}).forEach(([k, v]) => {
+        if (typeof v !== "string") {
+          skipped.push({ key: k, type: typeof v });
+          console.warn(
+            "[js-cheater] setLocalStorage skipped non-string value",
+            k,
+            typeof v,
+          );
+          return;
+        }
         try {
           localStorage.setItem(k, v);
         } catch (e) {
           console.error("[js-cheater] Failed to set", k, e);
         }
       });
-      return { success: true };
+      return { success: true, skipped };
     },
     /**
      * Enumerate RPG Maker save slots from both localStorage and IndexedDB.
