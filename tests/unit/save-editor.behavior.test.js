@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { compressToBase64 } from "../../src/popup/lz-string.js";
+import { compressToBase64, decompressFromBase64 } from "../../src/popup/lz-string.js";
 
 async function settleAsyncWork() {
   await Promise.resolve();
@@ -101,5 +101,87 @@ describe("save-editor behavior regressions", () => {
     expect(
       sentCommands.filter((message) => message.cmd === "setRpgMakerSave"),
     ).toHaveLength(1);
+  });
+
+  test("editing a nested value writes the correct nested path on save", async () => {
+    const slotRaw = compressToBase64(
+      JSON.stringify({ party: { gold: 100, name: "Hero" } }),
+    );
+    const sentCommands = [];
+
+    globalThis.chrome = {
+      tabs: {
+        sendMessage: jest.fn((tabId, message, callback) => {
+          sentCommands.push(message);
+          if (message.cmd === "getRpgMakerSaves") {
+            callback({
+              slots: [{ key: "RPG File1", source: "localStorage", raw: slotRaw }],
+            });
+            return;
+          }
+          if (message.cmd === "setRpgMakerSave") {
+            callback({ success: true });
+            return;
+          }
+          callback(null);
+        }),
+      },
+      runtime: {},
+    };
+
+    document.body.innerHTML = `
+      <div class="editor-toolbar">
+        <select id="slotSelect"><option value="">--</option></select>
+        <button id="refreshSlots" type="button">refresh</button>
+        <button id="saveChanges" type="button" disabled>save</button>
+        <button id="expandAll" type="button">expand</button>
+        <button id="collapseAll" type="button">collapse</button>
+      </div>
+      <div id="searchBar" class="hidden">
+        <input id="searchInput" />
+        <span id="searchCount"></span>
+      </div>
+      <div id="statusMessage" class="hidden"></div>
+      <div id="editorContent"></div>
+    `;
+    window.history.replaceState(
+      {},
+      "",
+      "http://localhost/src/popup/save-editor.html?tabId=1",
+    );
+
+    await import("../../src/popup/save-editor.js");
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+    await settleAsyncWork();
+
+    const slotSelect = document.getElementById("slotSelect");
+    slotSelect.value = "RPG File1";
+    slotSelect.dispatchEvent(new Event("change"));
+    await settleAsyncWork();
+
+    // Expand the "party" category so its children render
+    const catHeader = document.querySelector(".category-header");
+    expect(catHeader).not.toBeNull();
+    // already expanded by default; find nested gold value
+    const goldNode = Array.from(document.querySelectorAll(".json-node")).find(
+      (n) => n.textContent.includes("gold"),
+    );
+    expect(goldNode).not.toBeNull();
+    const valueEl = goldNode.querySelector(".json-value");
+    valueEl.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+
+    const editInput = document.querySelector(".json-edit-input");
+    expect(editInput).not.toBeNull();
+    editInput.value = "500";
+    editInput.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+
+    const saveButton = document.getElementById("saveChanges");
+    saveButton.click();
+    await settleAsyncWork();
+
+    const writes = sentCommands.filter((m) => m.cmd === "setRpgMakerSave");
+    expect(writes).toHaveLength(1);
+    const parsed = JSON.parse(decompressFromBase64(writes[0].raw));
+    expect(parsed).toEqual({ party: { gold: 500, name: "Hero" } });
   });
 });
