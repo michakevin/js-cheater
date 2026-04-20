@@ -60,8 +60,10 @@ describe("rpgmaker-data-editor readPath response handling", () => {
             return;
           }
           if (message.cmd === "readPath") {
-            if (message.path === "$gameVariables._data") cb({ value: variables });
-            else if (message.path === "$gameSwitches._data") cb({ value: switches });
+            if (message.path === "$gameVariables._data")
+              cb({ value: variables });
+            else if (message.path === "$gameSwitches._data")
+              cb({ value: switches });
             else cb({ value: null });
             return;
           }
@@ -104,7 +106,10 @@ describe("rpgmaker-data-editor readPath response handling", () => {
           if (message.cmd === "getRpgMakerGameData") {
             cb({
               system: { variables: [], switches: [] },
-              items: [null, { name: "Potion", description: "heal", iconIndex: 1 }],
+              items: [
+                null,
+                { name: "Potion", description: "heal", iconIndex: 1 },
+              ],
               weapons: [],
               armors: [],
             });

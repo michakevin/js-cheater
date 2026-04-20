@@ -1,5 +1,8 @@
 import { jest } from "@jest/globals";
-import { compressToBase64, decompressFromBase64 } from "../../src/popup/lz-string.js";
+import {
+  compressToBase64,
+  decompressFromBase64,
+} from "../../src/popup/lz-string.js";
 
 async function settleAsyncWork() {
   await Promise.resolve();
@@ -23,7 +26,9 @@ describe("save-editor behavior regressions", () => {
           sentCommands.push(message);
           if (message.cmd === "getRpgMakerSaves") {
             callback({
-              slots: [{ key: "RPG File1", source: "localStorage", raw: slotRaw }],
+              slots: [
+                { key: "RPG File1", source: "localStorage", raw: slotRaw },
+              ],
             });
             return;
           }
@@ -115,7 +120,9 @@ describe("save-editor behavior regressions", () => {
           sentCommands.push(message);
           if (message.cmd === "getRpgMakerSaves") {
             callback({
-              slots: [{ key: "RPG File1", source: "localStorage", raw: slotRaw }],
+              slots: [
+                { key: "RPG File1", source: "localStorage", raw: slotRaw },
+              ],
             });
             return;
           }

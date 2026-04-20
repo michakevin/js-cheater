@@ -50,11 +50,11 @@ function escapeHtml(str) {
 // ---- State ----
 
 let staticData = null; // { items, weapons, armors, system }
-let partyItems = {};   // { [itemId]: qty }
+let partyItems = {}; // { [itemId]: qty }
 let partyWeapons = {}; // { [weaponId]: qty }
-let partyArmors = {};  // { [armorId]: qty }
-let variables = [];    // array indexed by variable ID
-let switches = [];     // array indexed by switch ID
+let partyArmors = {}; // { [armorId]: qty }
+let variables = []; // array indexed by variable ID
+let switches = []; // array indexed by switch ID
 
 let currentItemType = "items";
 
@@ -96,7 +96,9 @@ async function loadValues() {
     ]);
 
     if (varResult?.timeout || swResult?.timeout) {
-      throw new Error("Scanner nicht aktiv – bitte zuerst den Scanner starten.");
+      throw new Error(
+        "Scanner nicht aktiv – bitte zuerst den Scanner starten.",
+      );
     }
     if (varResult?.error) throw new Error(varResult.error);
     if (swResult?.error) throw new Error(swResult.error);
@@ -106,7 +108,8 @@ async function loadValues() {
 
     renderValues();
   } catch (e) {
-    content.innerHTML = '<div class="empty-state"><p>❌ Fehler beim Laden</p></div>';
+    content.innerHTML =
+      '<div class="empty-state"><p>❌ Fehler beim Laden</p></div>';
     showStatus("❌ " + e.message, "error");
   }
 }
@@ -132,14 +135,19 @@ async function loadItems() {
     ]);
 
     if (itemsResult?.timeout) {
-      throw new Error("Scanner nicht aktiv – bitte zuerst den Scanner starten.");
+      throw new Error(
+        "Scanner nicht aktiv – bitte zuerst den Scanner starten.",
+      );
     }
     if (itemsResult?.error) throw new Error(itemsResult.error);
     if (weaponsResult?.error) throw new Error(weaponsResult.error);
     if (armorsResult?.error) throw new Error(armorsResult.error);
 
     const asPartyMap = (r) =>
-      r && typeof r.value === "object" && r.value !== null && !Array.isArray(r.value)
+      r &&
+      typeof r.value === "object" &&
+      r.value !== null &&
+      !Array.isArray(r.value)
         ? r.value
         : {};
     partyItems = asPartyMap(itemsResult);
@@ -148,7 +156,8 @@ async function loadItems() {
 
     renderItems();
   } catch (e) {
-    content.innerHTML = '<div class="empty-state"><p>❌ Fehler beim Laden</p></div>';
+    content.innerHTML =
+      '<div class="empty-state"><p>❌ Fehler beim Laden</p></div>';
     showStatus("❌ " + e.message, "error");
   }
 }
@@ -212,7 +221,8 @@ function renderValues() {
   }
 
   if (varRows.length === 0 && swRows.length === 0) {
-    content.innerHTML = '<div class="empty-state"><p>Keine Ergebnisse.</p></div>';
+    content.innerHTML =
+      '<div class="empty-state"><p>Keine Ergebnisse.</p></div>';
   }
 }
 
@@ -226,7 +236,12 @@ function buildVariableRows(varNames, filter) {
     if (!name && value === 0) continue; // skip unnamed zero variables
     const label = name || `Variable ${i}`;
 
-    if (filter && !String(i).includes(filter) && !label.toLowerCase().includes(filter)) continue;
+    if (
+      filter &&
+      !String(i).includes(filter) &&
+      !label.toLowerCase().includes(filter)
+    )
+      continue;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -258,7 +273,12 @@ function buildSwitchRows(swNames, filter) {
     if (!name && !value) continue; // skip unnamed off switches
     const label = name || `Schalter ${i}`;
 
-    if (filter && !String(i).includes(filter) && !label.toLowerCase().includes(filter)) continue;
+    if (
+      filter &&
+      !String(i).includes(filter) &&
+      !label.toLowerCase().includes(filter)
+    )
+      continue;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -335,7 +355,12 @@ function renderItems() {
     const iconIndex = item.iconIndex ?? 0;
     const qty = Number(partyData[i] ?? partyData[String(i)] ?? 0);
 
-    if (filter && !name.toLowerCase().includes(filter) && !desc.toLowerCase().includes(filter)) continue;
+    if (
+      filter &&
+      !name.toLowerCase().includes(filter) &&
+      !desc.toLowerCase().includes(filter)
+    )
+      continue;
 
     const row = document.createElement("div");
     row.className = "item-row";
@@ -368,7 +393,9 @@ function renderItems() {
       const panel = this.closest(".panel-content");
       if (!panel) return;
       const top = panel.scrollTop;
-      requestAnimationFrame(() => { panel.scrollTop = top; });
+      requestAnimationFrame(() => {
+        panel.scrollTop = top;
+      });
     });
 
     row.querySelector(".item-qty-wrap").appendChild(input);
@@ -378,7 +405,8 @@ function renderItems() {
 
   content.innerHTML = "";
   if (count === 0) {
-    content.innerHTML = '<div class="empty-state"><p>Keine Items gefunden.</p></div>';
+    content.innerHTML =
+      '<div class="empty-state"><p>Keine Items gefunden.</p></div>';
   } else {
     content.appendChild(listEl);
   }
@@ -401,7 +429,8 @@ async function onVariableChange(e) {
   input.classList.add("modified");
   try {
     const result = await send("poke", { path, value });
-    if (result?.success === false) throw new Error(result.error || "Poke fehlgeschlagen");
+    if (result?.success === false)
+      throw new Error(result.error || "Poke fehlgeschlagen");
     const idx = Number(input.dataset.idx);
     variables[idx] = value;
     showStatus(`✓ Variable ${idx} auf ${value} gesetzt.`, "success");
@@ -419,7 +448,10 @@ async function onSwitchChange(e) {
   try {
     await send("poke", { path, value });
     switches[idx] = value;
-    showStatus(`✓ Schalter ${idx} auf ${value ? "EIN" : "AUS"} gesetzt.`, "success");
+    showStatus(
+      `✓ Schalter ${idx} auf ${value ? "EIN" : "AUS"} gesetzt.`,
+      "success",
+    );
   } catch (e) {
     showStatus("❌ Fehler: " + e.message, "error");
     cb.checked = !value; // revert
@@ -432,16 +464,22 @@ async function onItemQtyChange(e) {
   const qty = Math.max(0, Math.min(99, Number(input.value) || 0));
   input.value = qty;
 
-  const partyRef = currentItemType === "items" ? partyItems
-    : currentItemType === "weapons" ? partyWeapons
-    : partyArmors;
+  const partyRef =
+    currentItemType === "items"
+      ? partyItems
+      : currentItemType === "weapons"
+        ? partyWeapons
+        : partyArmors;
 
   // Path to the specific item slot. pokeByPath now supports creating new keys,
   // so this works even when the item isn't in the party yet. We set only this
   // one key and leave the rest of $gameParty._items untouched.
-  const itemPath = currentItemType === "items" ? `$gameParty._items[${itemId}]`
-    : currentItemType === "weapons" ? `$gameParty._weapons[${itemId}]`
-    : `$gameParty._armors[${itemId}]`;
+  const itemPath =
+    currentItemType === "items"
+      ? `$gameParty._items[${itemId}]`
+      : currentItemType === "weapons"
+        ? `$gameParty._weapons[${itemId}]`
+        : `$gameParty._armors[${itemId}]`;
 
   input.classList.add("modified");
   try {
@@ -459,9 +497,16 @@ async function onItemQtyChange(e) {
       partyRef[itemId] = qty;
       input.classList.add("in-party");
     }
-    const typeLabel = currentItemType === "items" ? "Item"
-      : currentItemType === "weapons" ? "Waffe" : "Rüstung";
-    showStatus(`✓ ${typeLabel} ${itemId}: Anzahl auf ${qty} gesetzt.`, "success");
+    const typeLabel =
+      currentItemType === "items"
+        ? "Item"
+        : currentItemType === "weapons"
+          ? "Waffe"
+          : "Rüstung";
+    showStatus(
+      `✓ ${typeLabel} ${itemId}: Anzahl auf ${qty} gesetzt.`,
+      "success",
+    );
   } catch (err) {
     showStatus("❌ Fehler: " + err.message, "error");
   }
@@ -493,7 +538,9 @@ document.addEventListener("DOMContentLoaded", () => {
   // Item type filter
   document.querySelectorAll(".filter-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
+      document
+        .querySelectorAll(".filter-btn")
+        .forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
       currentItemType = btn.dataset.type;
       renderItems();

@@ -613,7 +613,10 @@ export function createScanner(DEBUG = false) {
         if (DEBUG) console.log("🎯 Current value:", obj[key]);
 
         if (obj === null || obj === undefined) {
-          return { success: false, error: "Cannot set property on null/undefined at: " + key };
+          return {
+            success: false,
+            error: "Cannot set property on null/undefined at: " + key,
+          };
         }
 
         const oldVal = obj[key];

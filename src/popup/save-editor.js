@@ -58,9 +58,7 @@ function resetLoadedSlotState() {
 
 function getSaveErrorMessage(result) {
   return (
-    result?.error ||
-    result?.message ||
-    "Unbekannter Fehler beim Speichern."
+    result?.error || result?.message || "Unbekannter Fehler beim Speichern."
   );
 }
 
