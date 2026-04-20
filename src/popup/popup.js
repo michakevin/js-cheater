@@ -12,8 +12,6 @@ import { createSearchHandlers, setupSearchTypeUI } from "./popup-search.js";
 import { createTabContextController } from "./popup-tab-context.js";
 import * as popupSelf from "./popup.js";
 
-let statusInterval;
-let statusFailures = 0;
 let directScannerInjection = false;
 
 // Handlers are exported for unit testing. They are assigned once the
@@ -23,27 +21,55 @@ export let onStart;
 export let onRefine;
 export let onNewSearch;
 
-export let startConnectionMonitor = function startConnectionMonitor() {
-  clearInterval(statusInterval);
-  statusFailures = 0;
-  statusInterval = setInterval(async () => {
-    const ok = await checkScannerStatus();
-    if (ok) {
-      statusFailures = 0;
-    } else if (++statusFailures >= 3) {
-      showError("Scanner-Verbindung verloren – bitte Code erneut einfügen");
-      showSetupMode();
-      stopConnectionMonitor();
+/**
+ * Factory for the scanner connection monitor. Each instance owns its
+ * own interval timer and failure counter, making the behaviour easier to
+ * reason about and test than module-level mutable state.
+ */
+export function createConnectionMonitor({
+  checkStatus = checkScannerStatus,
+  onLost = () => {
+    showError("Scanner-Verbindung verloren – bitte Code erneut einfügen");
+    showSetupMode();
+  },
+  intervalMs = 5000,
+  failureThreshold = 3,
+} = {}) {
+  let timer = null;
+  let failures = 0;
+
+  function stop() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
     }
-  }, 5000);
+    failures = 0;
+  }
+
+  function start() {
+    stop();
+    timer = setInterval(async () => {
+      const ok = await checkStatus();
+      if (ok) {
+        failures = 0;
+      } else if (++failures >= failureThreshold) {
+        onLost();
+        stop();
+      }
+    }, intervalMs);
+  }
+
+  return { start, stop };
+}
+
+const connectionMonitor = createConnectionMonitor();
+
+export let startConnectionMonitor = function startConnectionMonitor() {
+  connectionMonitor.start();
 };
 
 export function stopConnectionMonitor() {
-  if (statusInterval) {
-    clearInterval(statusInterval);
-    statusInterval = null;
-  }
-  statusFailures = 0;
+  connectionMonitor.stop();
 }
 
 export function startPolling(options = {}) {
