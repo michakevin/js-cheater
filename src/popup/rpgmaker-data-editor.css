@@ -59,11 +59,20 @@ body {
   background: #fff;
 }
 
-/* ---- Status Message ---- */
+/* ---- Status Message (fixed toast, does not affect layout flow) ---- */
 .status-message {
-  padding: 8px 16px;
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 7px 16px;
   font-size: 13px;
-  border-bottom: 1px solid #e0e0e0;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  z-index: 1000;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .status-message.status-success {
@@ -467,26 +476,25 @@ body {
     background: #1e1e1e;
   }
 
-  .status-message {
-    border-bottom-color: #444;
-  }
-
   .status-message.status-success {
     background: #1e3a1e;
     color: #7ddf7d;
     border-color: #2d5a2d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
 
   .status-message.status-error {
     background: #3a1e1e;
     color: #df7d7d;
     border-color: #5a2d2d;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
 
   .status-message.status-info {
     background: #1e2e3a;
     color: #7dbfdf;
     border-color: #2d4a5a;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
 
   .panel-toolbar {

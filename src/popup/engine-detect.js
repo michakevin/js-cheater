@@ -11,6 +11,7 @@ import { $ } from "./utils.js";
 import { getPresetsForEngine } from "./engine-presets.js";
 import { showError, showSuccess, showInfo } from "./messages.js";
 import { showDialog } from "./dialog.js";
+import { saveFavorite } from "./favorites.js";
 
 const ENGINE_COLLAPSE_KEY_PREFIX = "engine_collapsed_";
 
@@ -239,6 +240,7 @@ async function handleDirectPreset(item) {
     });
     if (pokeResult && pokeResult.success) {
       showSuccess(`✅ ${item.label}: ${currentValue} → ${parsed}`);
+      await saveFavorite(item.path, parsed, item.label);
     } else {
       showError(
         `❌ Änderung fehlgeschlagen: ${pokeResult?.error || "Unbekannter Fehler"}`,

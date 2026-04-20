@@ -635,9 +635,8 @@ export function createScanner(DEBUG = false) {
         if (DEBUG) console.log("🎯 Target object:", obj);
         if (DEBUG) console.log("🎯 Current value:", obj[key]);
 
-        if (!(key in obj)) {
-          console.error("❌ Property not found:", key);
-          return { success: false, error: "Property not found: " + key };
+        if (obj === null || obj === undefined) {
+          return { success: false, error: "Cannot set property on null/undefined at: " + key };
         }
 
         const oldVal = obj[key];

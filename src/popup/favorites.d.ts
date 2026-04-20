@@ -8,7 +8,7 @@ export function importFavoritesFromText(text: string): Promise<void>;
 
 export function renameFavorite(id: string, newName: string): Promise<boolean>;
 
-export function saveFavorite(path: string, value: unknown): Promise<void>;
+export function saveFavorite(path: string, value: unknown, defaultName?: string): Promise<void>;
 
 export function loadFavorites(): Promise<void>;
 

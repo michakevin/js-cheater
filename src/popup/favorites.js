@@ -250,14 +250,14 @@ export async function renameFavorite(id, newName) {
   return true;
 }
 
-export async function saveFavorite(path, value) {
+export async function saveFavorite(path, value, defaultName) {
   await refreshDomainContext();
   const favorites = await getFavorites(currentDomain);
   const name = await showDialog({
     type: "prompt",
     title: "Favorit speichern",
     message: "Name für diese Variable:",
-    defaultValue: parsePath(path).pop() || "variable",
+    defaultValue: defaultName || parsePath(path).pop() || "variable",
   });
   if (!name) return;
 

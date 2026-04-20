@@ -374,6 +374,14 @@ function renderItems() {
     input.dataset.path = `${partyPath}[${i}]`;
     input.addEventListener("change", onItemQtyChange);
     input.addEventListener("focus", () => input.select());
+    // Prevent browser auto-scroll-to-focus when clicking the number spinner buttons.
+    // The browser scrolls synchronously on focus; rAF runs after that paint step.
+    input.addEventListener("pointerdown", function () {
+      const panel = this.closest(".panel-content");
+      if (!panel) return;
+      const top = panel.scrollTop;
+      requestAnimationFrame(() => { panel.scrollTop = top; });
+    });
 
     row.querySelector(".item-qty-wrap").appendChild(input);
     listEl.appendChild(row);
@@ -404,7 +412,8 @@ async function onVariableChange(e) {
 
   input.classList.add("modified");
   try {
-    await send("poke", { path, value });
+    const result = await send("poke", { path, value });
+    if (result?.success === false) throw new Error(result.error || "Poke fehlgeschlagen");
     const idx = Number(input.dataset.idx);
     variables[idx] = value;
     showStatus(`✓ Variable ${idx} auf ${value} gesetzt.`, "success");
@@ -431,19 +440,29 @@ async function onSwitchChange(e) {
 
 async function onItemQtyChange(e) {
   const input = e.target;
-  const path = input.dataset.path;
   const itemId = Number(input.dataset.itemId);
   const qty = Math.max(0, Math.min(99, Number(input.value) || 0));
   input.value = qty;
 
+  const partyRef = currentItemType === "items" ? partyItems
+    : currentItemType === "weapons" ? partyWeapons
+    : partyArmors;
+
+  // Path to the specific item slot. pokeByPath now supports creating new keys,
+  // so this works even when the item isn't in the party yet. We set only this
+  // one key and leave the rest of $gameParty._items untouched.
+  const itemPath = currentItemType === "items" ? `$gameParty._items[${itemId}]`
+    : currentItemType === "weapons" ? `$gameParty._weapons[${itemId}]`
+    : `$gameParty._armors[${itemId}]`;
+
   input.classList.add("modified");
   try {
-    await send("poke", { path, value: qty });
+    const result = await send("poke", { path: itemPath, value: qty });
+    if (result?.success === false) {
+      throw new Error(result.error || "Poke fehlgeschlagen");
+    }
 
-    // Update local cache
-    const partyRef = currentItemType === "items" ? partyItems
-      : currentItemType === "weapons" ? partyWeapons
-      : partyArmors;
+    // Mirror the change in the local cache
     if (qty === 0) {
       delete partyRef[itemId];
       delete partyRef[String(itemId)];
@@ -452,7 +471,9 @@ async function onItemQtyChange(e) {
       partyRef[itemId] = qty;
       input.classList.add("in-party");
     }
-    showStatus(`✓ ${currentItemType === "items" ? "Item" : currentItemType === "weapons" ? "Waffe" : "Rüstung"} ${itemId}: Anzahl auf ${qty} gesetzt.`, "success");
+    const typeLabel = currentItemType === "items" ? "Item"
+      : currentItemType === "weapons" ? "Waffe" : "Rüstung";
+    showStatus(`✓ ${typeLabel} ${itemId}: Anzahl auf ${qty} gesetzt.`, "success");
   } catch (err) {
     showStatus("❌ Fehler: " + err.message, "error");
   }
