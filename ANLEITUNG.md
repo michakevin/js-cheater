@@ -19,7 +19,7 @@ Die Extension nutzt ein **Side Panel** für persistente Bedienung und verwendet 
 
 ### 2. Test-Seite öffnen
 
-- Starte lokalen Server: `cd js-cheater && python3 -m http.server 8000`
+- Starte lokalen Server: `npm run dev`
 - Gehe zu `http://localhost:8000/test.html`
 - Diese Seite enthält Test-Variablen wie `gameScore: 1337`
 
