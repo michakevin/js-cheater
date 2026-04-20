@@ -1,6 +1,6 @@
 import { showError, showInfo, showSuccess } from "./messages.js";
 import { send } from "./communication.js";
-import { parsePath } from "./path-utils.js";
+import { parsePath } from "../parse-path.js";
 import {
   getDomainKey,
   getDomainFromKey,
