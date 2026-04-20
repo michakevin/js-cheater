@@ -11,40 +11,14 @@
 // ---- Communication ----
 
 import { sendTabMessage } from "./communication.js";
+import { $, escapeHtml } from "./utils.js";
+import { hideStatus, showStatus } from "./editor-status.js";
 
 let activeTabId = null;
 
 async function send(cmd, extra = {}) {
   if (!activeTabId) throw new Error("Kein aktiver Tab");
   return sendTabMessage(activeTabId, { cmd, ...extra });
-}
-
-// ---- DOM helpers ----
-
-const $ = (sel) => document.querySelector(sel);
-
-function showStatus(msg, type = "info") {
-  const el = $("#statusMessage");
-  if (!el) return;
-  el.textContent = msg;
-  el.className = `status-message status-${type}`;
-  el.classList.remove("hidden");
-  if (type === "success") {
-    setTimeout(() => el.classList.add("hidden"), 3000);
-  }
-}
-
-function hideStatus() {
-  const el = $("#statusMessage");
-  if (el) el.classList.add("hidden");
-}
-
-function escapeHtml(str) {
-  return String(str)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
 }
 
 // ---- State ----

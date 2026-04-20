@@ -14,6 +14,8 @@
 
 import { compressToBase64, decompressFromBase64 } from "./lz-string.js";
 import { sendTabMessage } from "./communication.js";
+import { $ } from "./utils.js";
+import { hideStatus, showStatus } from "./editor-status.js";
 
 // ---- Communication helpers ----
 // This page is opened as a popup/window from the extension sidebar.
@@ -47,8 +49,6 @@ let hasChanges = false;
 const slotCache = new Map();
 
 // DOM references
-const $ = (sel) => document.querySelector(sel);
-
 function resetLoadedSlotState() {
   currentSlotKey = "";
   currentSlotSource = "";
@@ -669,22 +669,6 @@ function markChanged() {
   hasChanges = true;
   const saveBtn = $("#saveChanges");
   if (saveBtn) saveBtn.disabled = false;
-}
-
-function showStatus(message, type = "info") {
-  const el = $("#statusMessage");
-  if (!el) return;
-  el.textContent = message;
-  el.className = "status-message status-" + type;
-  el.classList.remove("hidden");
-  if (type === "success") {
-    setTimeout(() => el.classList.add("hidden"), 3000);
-  }
-}
-
-function hideStatus() {
-  const el = $("#statusMessage");
-  if (el) el.classList.add("hidden");
 }
 
 // ---- Slot loading ----
