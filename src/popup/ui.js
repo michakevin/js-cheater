@@ -190,7 +190,10 @@ export function renderHitsWithSaveButtons(list) {
   const hitsUl = $("#hits");
   hitsUl.textContent = "";
   if (!list || list.length === 0) {
-    hitsUl.innerHTML = "<li class='text-secondary'>Keine Treffer gefunden</li>";
+    const emptyLi = document.createElement("li");
+    emptyLi.className = "text-secondary";
+    emptyLi.textContent = "Keine Treffer gefunden";
+    hitsUl.appendChild(emptyLi);
     return;
   }
 
@@ -199,27 +202,27 @@ export function renderHitsWithSaveButtons(list) {
     const hitInfo = document.createElement("div");
     hitInfo.className = "hit-info";
     const displayPath = h.path.replace(/^window\.globalThis\./, "");
-    hitInfo.innerHTML = `[${i}] ${escapeHtml(displayPath)} = ${escapeHtml(safeStringify(h.value))}`;
+    hitInfo.textContent = `[${i}] ${displayPath} = ${safeStringify(h.value)}`;
 
     const saveBtn = document.createElement("button");
     saveBtn.className = "save-btn";
-    saveBtn.innerHTML = "💾";
+    saveBtn.textContent = "💾";
     saveBtn.title = "Als Favorit speichern";
     saveBtn.setAttribute("aria-label", `${displayPath} als Favorit speichern`);
-    saveBtn.onclick = (e) => {
+    saveBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       saveFavorite(h.path, h.value);
-    };
+    });
 
     const freezeBtn = document.createElement("button");
     freezeBtn.className = "freeze-btn";
-    freezeBtn.innerHTML = "❄️";
+    freezeBtn.textContent = "❄️";
     freezeBtn.title = "Wert einfrieren";
     freezeBtn.setAttribute("aria-label", `${displayPath} einfrieren`);
-    freezeBtn.onclick = (e) => {
+    freezeBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       if (freezeBtn.classList.toggle("active")) {
-        freezeBtn.innerHTML = "🔥";
+        freezeBtn.textContent = "🔥";
         freezeBtn.title = "Einfrieren aufheben";
         freezeBtn.setAttribute(
           "aria-label",
@@ -227,14 +230,14 @@ export function renderHitsWithSaveButtons(list) {
         );
         send("freeze", { path: h.path, value: h.value });
       } else {
-        freezeBtn.innerHTML = "❄️";
+        freezeBtn.textContent = "❄️";
         freezeBtn.title = "Wert einfrieren";
         freezeBtn.setAttribute("aria-label", `${displayPath} einfrieren`);
         send("unfreeze", { path: h.path });
       }
-    };
+    });
 
-    hitInfo.onclick = async () => {
+    hitInfo.addEventListener("click", async () => {
       const value = await showDialog({
         type: "prompt",
         title: "Wert ändern",
@@ -245,7 +248,7 @@ export function renderHitsWithSaveButtons(list) {
         const success = await send("poke", { idx: i, value: tryParse(value) });
         if (success) updateList();
       }
-    };
+    });
 
     li.appendChild(hitInfo);
     li.appendChild(saveBtn);
