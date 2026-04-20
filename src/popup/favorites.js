@@ -1,4 +1,4 @@
-import { showInfo, showSuccess } from "./messages.js";
+import { showError, showInfo, showSuccess } from "./messages.js";
 import { send } from "./communication.js";
 import { parsePath } from "./path-utils.js";
 import {
@@ -218,22 +218,29 @@ async function updateFavorite(id, newValue) {
     return;
   }
 
-  send("poke", { path: favorite.path, value: newValue })
-    .then(async (result) => {
-      if (result && result.success) {
-        favorite.value = newValue;
-        favorites[id] = favorite;
-        await saveFavorites(favorites, domain);
-        await loadFavorites();
-      } else {
-        const errorMsg =
-          result?.error || result?.message || "Unbekannter Fehler";
-        console.error(`Fehler beim Ändern von ${favorite.name}: ${errorMsg}`);
-      }
-    })
-    .catch((err) => {
-      console.error("Poke error caught:", err);
+  try {
+    const result = await send("poke", {
+      path: favorite.path,
+      value: newValue,
     });
+    if (result && result.success) {
+      favorite.value = newValue;
+      favorites[id] = favorite;
+      await saveFavorites(favorites, domain);
+      await loadFavorites();
+      showSuccess(`"${favorite.name}" aktualisiert`);
+    } else {
+      const errorMsg =
+        result?.error || result?.message || "Unbekannter Fehler";
+      console.error(`Fehler beim Ändern von ${favorite.name}: ${errorMsg}`);
+      showError(`"${favorite.name}" konnte nicht geändert werden: ${errorMsg}`);
+    }
+  } catch (err) {
+    console.error("Poke error caught:", err);
+    showError(
+      `"${favorite.name}" konnte nicht geändert werden: ${err?.message || err}`,
+    );
+  }
 }
 
 export async function renameFavorite(id, newName) {

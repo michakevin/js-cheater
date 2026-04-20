@@ -21,7 +21,29 @@ describe("storage utils", () => {
   });
 
   test("saveToStorage stores stringified value", () => {
-    saveToStorage(key, { b: 2 });
+    const result = saveToStorage(key, { b: 2 });
     expect(localStorage.getItem(key)).toBe('{"b":2}');
+    expect(result).toEqual({ success: true });
+  });
+
+  test("saveToStorage reports errors when setItem throws", () => {
+    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const original = Storage.prototype.setItem;
+    Storage.prototype.setItem = jest.fn(() => {
+      const err = new Error("quota");
+      err.name = "QuotaExceededError";
+      throw err;
+    });
+    try {
+      const result = saveToStorage(key, { b: 2 });
+      expect(result).toEqual({
+        success: false,
+        error: "QuotaExceededError",
+        message: "quota",
+      });
+    } finally {
+      Storage.prototype.setItem = original;
+      errorSpy.mockRestore();
+    }
   });
 });

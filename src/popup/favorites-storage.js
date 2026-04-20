@@ -78,7 +78,7 @@ export async function getFavorites(domain) {
 
 export async function saveFavorites(favorites, domain) {
   const key = await getFavoritesKey(domain);
-  saveToStorage(key, favorites);
+  return saveToStorage(key, favorites);
 }
 
 export async function getInputs(domain) {
@@ -88,7 +88,7 @@ export async function getInputs(domain) {
 
 export async function saveInputs(inputs, domain) {
   const key = await getInputsKey(domain);
-  saveToStorage(key, inputs);
+  return saveToStorage(key, inputs);
 }
 
 export async function saveFavoriteInputValue(id, value, domain) {
