@@ -4,6 +4,7 @@
   }
   window.__jsCheaterContentInitialized__ = true;
 
+  // Kept in sync with src/debug.js by scripts/build-extensions.mjs.
   const DEBUG = false;
   if (DEBUG)
     console.log("[js-cheater] Content script loaded (postMessage Mode)");

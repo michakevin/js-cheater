@@ -1,6 +1,7 @@
 // src/background.js
 // js-cheater – Hintergrundskript für Firefox (Manifest V2)
 
+// Kept in sync with src/debug.js by scripts/build-extensions.mjs.
 const DEBUG = false;
 
 // Sets the side panel to open automatically when clicking the action icon.

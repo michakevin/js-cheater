@@ -101,7 +101,22 @@ function transformToMv2Manifest(baseManifest) {
   return manifest;
 }
 
-async function buildMv3(manifest) {
+async function patchDebugConstant(filePath, debugValue) {
+  try {
+    const code = await readFile(filePath, "utf8");
+    const patched = code.replace(
+      /const\s+DEBUG\s*=\s*[^;]+;/,
+      `const DEBUG = ${debugValue};`,
+    );
+    if (patched !== code) {
+      await writeFile(filePath, patched);
+    }
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+}
+
+async function buildMv3(manifest, debugValue) {
   const targetDir = resolve(distDir, "mv3");
   await mkdir(targetDir, { recursive: true });
   await copyDirectory(
@@ -111,6 +126,10 @@ async function buildMv3(manifest) {
   await copyDirectory(resolve(projectRoot, "src"), resolve(targetDir, "src"));
   await copyOptionalFile(resolve(projectRoot, "favicon.ico"), targetDir);
   await copyOptionalFile(resolve(projectRoot, "test.html"), targetDir);
+  await patchDebugConstant(
+    resolve(targetDir, "src/content.js"),
+    debugValue,
+  );
   await writeManifest(targetDir, manifest);
   console.info("Built MV3 package in dist/mv3");
 }
@@ -125,6 +144,10 @@ async function buildMv2(baseManifest, debugValue) {
   await copyDirectory(resolve(projectRoot, "src"), resolve(targetDir, "src"));
   await copyOptionalFile(resolve(projectRoot, "favicon.ico"), targetDir);
   await copyOptionalFile(resolve(projectRoot, "test.html"), targetDir);
+  await patchDebugConstant(
+    resolve(targetDir, "src/content.js"),
+    debugValue,
+  );
 
   const manifest = transformToMv2Manifest(baseManifest);
   await writeManifest(targetDir, manifest);
@@ -145,7 +168,7 @@ async function main() {
   const debugMatch = debugSource.match(/DEBUG\s*=\s*([^;]+);/);
   const debugValue = debugMatch ? debugMatch[1].trim() : "false";
 
-  await buildMv3(mv3Manifest);
+  await buildMv3(mv3Manifest, debugValue);
   await buildMv2(mv2Manifest, debugValue);
 }
 
