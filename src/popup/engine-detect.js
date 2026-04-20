@@ -16,6 +16,7 @@ import { saveFavorite } from "./favorites.js";
 const ENGINE_COLLAPSE_KEY_PREFIX = "engine_collapsed_";
 
 let lastDetectedEngine = null;
+let lastRawResult = null;
 
 /**
  * Ask the page-context scanner to detect the game engine.
@@ -32,8 +33,6 @@ export async function detectEngine() {
   lastRawResult = result;
   return null;
 }
-
-let lastRawResult = null;
 
 /**
  * @returns {*} The raw result from last detection attempt (for debugging).

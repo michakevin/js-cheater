@@ -675,9 +675,15 @@ export function createScanner(DEBUG = false) {
         }
 
         this.unfreezeByPath(path);
+        // Resolve the parent object fresh on every tick so re-created parents
+        // (e.g. $gameActors after a scene change) keep getting the frozen value.
+        const self = this;
         const timer = setInterval(() => {
           try {
-            obj[key] = value;
+            const resolved = self.pokeByPath(path, value);
+            if (resolved && resolved.success === false && DEBUG) {
+              console.error("Freeze error", resolved.error);
+            }
           } catch (e) {
             console.error("Freeze error", e);
           }
@@ -824,7 +830,9 @@ export function createScanner(DEBUG = false) {
       try {
         const pathParts = parsePath(path);
         let obj = window;
-        for (let i = 0; i < pathParts.length; i++) {
+        const startIdx =
+          pathParts[0] === "window" || pathParts[0] === "globalThis" ? 1 : 0;
+        for (let i = startIdx; i < pathParts.length; i++) {
           if (obj === undefined || obj === null) {
             return { error: "Path not found at: " + pathParts[i] };
           }

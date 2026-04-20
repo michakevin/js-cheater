@@ -590,7 +590,7 @@ function startEditing(valSpan, currentValue, path, onValueChange) {
 function setAtPath(obj, path, value) {
   const parts = path.split(".");
   let current = obj;
-  for (let i = 1; i < parts.length - 1; i++) {
+  for (let i = 0; i < parts.length - 1; i++) {
     const key = parts[i];
     if (Array.isArray(current)) {
       current = current[parseInt(key, 10)];

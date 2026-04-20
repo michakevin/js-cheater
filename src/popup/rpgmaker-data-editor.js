@@ -120,9 +120,11 @@ async function loadValues() {
     if (varResult?.timeout || swResult?.timeout) {
       throw new Error("Scanner nicht aktiv – bitte zuerst den Scanner starten.");
     }
+    if (varResult?.error) throw new Error(varResult.error);
+    if (swResult?.error) throw new Error(swResult.error);
 
-    variables = Array.isArray(varResult) ? varResult : [];
-    switches = Array.isArray(swResult) ? swResult : [];
+    variables = Array.isArray(varResult?.value) ? varResult.value : [];
+    switches = Array.isArray(swResult?.value) ? swResult.value : [];
 
     renderValues();
   } catch (e) {
@@ -154,13 +156,17 @@ async function loadItems() {
     if (itemsResult?.timeout) {
       throw new Error("Scanner nicht aktiv – bitte zuerst den Scanner starten.");
     }
+    if (itemsResult?.error) throw new Error(itemsResult.error);
+    if (weaponsResult?.error) throw new Error(weaponsResult.error);
+    if (armorsResult?.error) throw new Error(armorsResult.error);
 
-    partyItems = itemsResult && typeof itemsResult === "object" && !itemsResult.error
-      ? itemsResult : {};
-    partyWeapons = weaponsResult && typeof weaponsResult === "object" && !weaponsResult.error
-      ? weaponsResult : {};
-    partyArmors = armorsResult && typeof armorsResult === "object" && !armorsResult.error
-      ? armorsResult : {};
+    const asPartyMap = (r) =>
+      r && typeof r.value === "object" && r.value !== null && !Array.isArray(r.value)
+        ? r.value
+        : {};
+    partyItems = asPartyMap(itemsResult);
+    partyWeapons = asPartyMap(weaponsResult);
+    partyArmors = asPartyMap(armorsResult);
 
     renderItems();
   } catch (e) {
