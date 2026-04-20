@@ -23,11 +23,37 @@ const DOMAIN_SELECT_ID = "favoritesDomainSelect";
 const IMPORT_BUTTON_ID = "adoptFavoritesForCurrentDomain";
 const UNKNOWN_DOMAIN = "unknown";
 
-let selectedDomain = null;
-let currentDomain = UNKNOWN_DOMAIN;
+/**
+ * Small FSM-ish store that groups the mutable domain state used by the
+ * favorites tab. `current` is the domain derived from the active tab and
+ * `selected` is whatever the user chose in the domain picker. Once
+ * `pinned` is true, `selected` sticks even if the current tab changes.
+ */
+const domainStore = {
+  current: UNKNOWN_DOMAIN,
+  selected: null,
+  pinned: false,
+  getActive() {
+    return this.selected || this.current;
+  },
+  setCurrent(domain) {
+    this.current = domain;
+    if (!this.selected || !this.pinned) {
+      this.selected = domain;
+    }
+  },
+  pin(domain) {
+    this.selected = domain;
+    this.pinned = domain !== this.current;
+  },
+  unpin() {
+    this.selected = this.current;
+    this.pinned = false;
+  },
+};
+
 let domainSelectListenerAdded = false;
 let importButtonListenerAdded = false;
-let domainSelectionPinned = false;
 
 function createFavoriteId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -37,26 +63,23 @@ function createFavoriteId() {
 }
 
 function getActiveFavoritesDomain() {
-  return selectedDomain || currentDomain;
+  return domainStore.getActive();
 }
 
 async function refreshDomainContext() {
-  currentDomain = getDomainFromKey(await getDomainKey());
-  if (!selectedDomain || !domainSelectionPinned) {
-    selectedDomain = currentDomain;
-  }
+  domainStore.setCurrent(getDomainFromKey(await getDomainKey()));
 }
 
 function getVisibleDomains() {
   const domains = new Set(listStoredFavoriteDomains());
-  domains.add(currentDomain);
-  domains.add(getActiveFavoritesDomain());
+  domains.add(domainStore.current);
+  domains.add(domainStore.getActive());
 
   const sortedOthers = [...domains]
-    .filter((domain) => domain && domain !== currentDomain)
+    .filter((domain) => domain && domain !== domainStore.current)
     .sort((a, b) => a.localeCompare(b));
 
-  return [currentDomain, ...sortedOthers];
+  return [domainStore.current, ...sortedOthers];
 }
 
 function renderDomainControls() {
@@ -70,19 +93,19 @@ function renderDomainControls() {
       const option = document.createElement("option");
       option.value = domain;
       option.textContent =
-        domain === currentDomain ? `${domain} (aktuell)` : domain;
+        domain === domainStore.current ? `${domain} (aktuell)` : domain;
       domainSelect.appendChild(option);
     });
 
-    if (!visibleDomains.includes(selectedDomain)) {
-      selectedDomain = currentDomain;
-      domainSelectionPinned = false;
+    if (!visibleDomains.includes(domainStore.selected)) {
+      domainStore.unpin();
     }
-    domainSelect.value = getActiveFavoritesDomain();
+    domainSelect.value = domainStore.getActive();
   }
 
   if (importButton) {
-    const foreignDomainSelected = getActiveFavoritesDomain() !== currentDomain;
+    const foreignDomainSelected =
+      domainStore.getActive() !== domainStore.current;
     importButton.classList.toggle("hidden", !foreignDomainSelected);
     importButton.disabled = !foreignDomainSelected;
   }
@@ -150,8 +173,8 @@ export async function importFavoritesFromText(text) {
 
 async function importFavoritesToCurrentDomain() {
   await refreshDomainContext();
-  const sourceDomain = getActiveFavoritesDomain();
-  if (sourceDomain === currentDomain) {
+  const sourceDomain = domainStore.getActive();
+  if (sourceDomain === domainStore.current) {
     return;
   }
 
@@ -162,7 +185,7 @@ async function importFavoritesToCurrentDomain() {
     return;
   }
 
-  const targetFavorites = await getFavorites(currentDomain);
+  const targetFavorites = await getFavorites(domainStore.current);
   const existingPaths = new Set(
     Object.values(targetFavorites).map((fav) => fav.path),
   );
@@ -189,9 +212,8 @@ async function importFavoritesToCurrentDomain() {
     return;
   }
 
-  await saveFavorites(targetFavorites, currentDomain);
-  selectedDomain = currentDomain;
-  domainSelectionPinned = false;
+  await saveFavorites(targetFavorites, domainStore.current);
+  domainStore.unpin();
   await loadFavorites();
   showSuccess(`${importedCount} Favoriten für die aktuelle Domain übernommen.`);
 }
@@ -262,7 +284,7 @@ export async function renameFavorite(id, newName) {
 
 export async function saveFavorite(path, value, defaultName) {
   await refreshDomainContext();
-  const favorites = await getFavorites(currentDomain);
+  const favorites = await getFavorites(domainStore.current);
   const name = await showDialog({
     type: "prompt",
     title: "Favorit speichern",
@@ -273,7 +295,7 @@ export async function saveFavorite(path, value, defaultName) {
 
   const id = createFavoriteId();
   favorites[id] = { id, name, path, value, savedAt: new Date().toISOString() };
-  await saveFavorites(favorites, currentDomain);
+  await saveFavorites(favorites, domainStore.current);
   showSuccess(`💾 "${name}" als Favorit gespeichert!`);
 
   if (
@@ -293,8 +315,8 @@ function bindDomainControlEvents() {
       if (!target || typeof target.value !== "string") {
         return;
       }
-      selectedDomain = target.value || currentDomain;
-      domainSelectionPinned = selectedDomain !== currentDomain;
+      const next = target.value || domainStore.current;
+      domainStore.pin(next);
       await loadFavorites();
     });
     domainSelectListenerAdded = true;
