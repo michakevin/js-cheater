@@ -2,6 +2,32 @@ import { parsePath } from "./parse-path.js";
 
 // Path parsing utility function
 
+// Keyword lists used to prioritize game-like property names during scans.
+const GAME_KEYWORDS_CORE = Object.freeze([
+  "game",
+  "player",
+  "party",
+  "actor",
+  "character",
+  "unit",
+  "hero",
+  "hp",
+  "sp",
+  "mp",
+  "health",
+  "mana",
+  "stamina",
+  "state",
+  "stats",
+  "data",
+]);
+const GAME_KEYWORDS_VALUE = Object.freeze([
+  ...GAME_KEYWORDS_CORE,
+  "gold",
+  "coin",
+  "score",
+]);
+
 export function createScanner(DEBUG = false) {
   return {
     hits: [],
@@ -192,27 +218,7 @@ export function createScanner(DEBUG = false) {
     },
     scan: function (value) {
       if (DEBUG) console.log("🔍 Scanning for:", value, "type:", typeof value);
-      const priorityPatterns = [
-        "game",
-        "player",
-        "party",
-        "actor",
-        "character",
-        "unit",
-        "hero",
-        "hp",
-        "sp",
-        "mp",
-        "health",
-        "mana",
-        "stamina",
-        "state",
-        "stats",
-        "data",
-        "gold",
-        "coin",
-        "score",
-      ];
+      const priorityPatterns = GAME_KEYWORDS_VALUE;
       const exactMatch = (v) => v === value;
       const isNumericTarget =
         typeof value === "number" && Number.isFinite(value);
@@ -324,25 +330,7 @@ export function createScanner(DEBUG = false) {
       if (DEBUG) console.log("🔍 Scanning by name:", name);
       const loweredName = name.toLowerCase();
       const conservativeMode = this.shouldAvoidGetterEvaluation();
-      const priorityPatterns = [
-        loweredName,
-        "game",
-        "player",
-        "party",
-        "actor",
-        "character",
-        "unit",
-        "hero",
-        "hp",
-        "sp",
-        "mp",
-        "health",
-        "mana",
-        "stamina",
-        "state",
-        "stats",
-        "data",
-      ];
+      const priorityPatterns = [loweredName, ...GAME_KEYWORDS_CORE];
       const matchByName = (val, k) => {
         const matches = k.toLowerCase().includes(loweredName);
         const isPrimitive =
@@ -440,25 +428,7 @@ export function createScanner(DEBUG = false) {
       if (DEBUG) console.log("🔍 Scanning by name+value:", name, value);
       const loweredName = name.toLowerCase();
       const conservativeMode = this.shouldAvoidGetterEvaluation();
-      const priorityPatterns = [
-        loweredName,
-        "game",
-        "player",
-        "party",
-        "actor",
-        "character",
-        "unit",
-        "hero",
-        "hp",
-        "sp",
-        "mp",
-        "health",
-        "mana",
-        "stamina",
-        "state",
-        "stats",
-        "data",
-      ];
+      const priorityPatterns = [loweredName, ...GAME_KEYWORDS_CORE];
       const matchByNameAndValue = (val, k) => {
         const nameMatches = k.toLowerCase().includes(loweredName);
         return nameMatches && val === value;
