@@ -55,8 +55,12 @@ let partyWeapons = {}; // { [weaponId]: qty }
 let partyArmors = {}; // { [armorId]: qty }
 let variables = []; // array indexed by variable ID
 let switches = []; // array indexed by switch ID
+let actors = []; // array indexed by actor ID ($gameActors._data)
 
 let currentItemType = "items";
+
+// Param labels for RPG Maker _paramPlus[0..7]
+const PARAM_LABELS = ["MHP", "MMP", "ATK", "DEF", "MAT", "MDF", "AGI", "LUK"];
 
 // ---- Tab switching ----
 
@@ -74,6 +78,8 @@ function switchTab(tabName) {
     loadValues();
   } else if (tabName === "items") {
     loadItems();
+  } else if (tabName === "actors") {
+    loadActors();
   }
 }
 
@@ -160,6 +166,30 @@ async function loadItems() {
     partyArmors = asPartyMap(armorsResult);
 
     renderItems();
+  } catch (e) {
+    content.innerHTML =
+      '<div class="empty-state"><p>❌ Fehler beim Laden</p></div>';
+    showStatus("❌ " + e.message, "error");
+  }
+}
+
+async function loadActors() {
+  const content = $("#actorsContent");
+  content.innerHTML = '<div class="loading-state">⏳ Lade Charaktere…</div>';
+  hideStatus();
+
+  try {
+    const result = await send("readPath", { path: "$gameActors._data" });
+
+    if (result?.timeout) {
+      throw new Error(
+        "Scanner nicht aktiv – bitte zuerst den Scanner starten.",
+      );
+    }
+    if (result?.error) throw new Error(result.error);
+
+    actors = Array.isArray(result?.value) ? result.value : [];
+    renderActors();
   } catch (e) {
     content.innerHTML =
       '<div class="empty-state"><p>❌ Fehler beim Laden</p></div>';
@@ -417,6 +447,147 @@ function renderItems() {
   }
 }
 
+// ---- Render Charaktere ----
+
+function renderActors() {
+  const content = $("#actorsContent");
+  const filter = $("#actorsSearch")?.value?.toLowerCase() || "";
+
+  const cards = [];
+  for (let i = 1; i < actors.length; i++) {
+    const actor = actors[i];
+    if (!actor || typeof actor !== "object") continue;
+
+    const name = String(actor._name ?? "");
+    const label = name || `Actor ${i}`;
+
+    if (
+      filter &&
+      !String(i).includes(filter) &&
+      !label.toLowerCase().includes(filter)
+    )
+      continue;
+
+    cards.push(buildActorCard(i, actor));
+  }
+
+  content.innerHTML = "";
+  if (cards.length === 0) {
+    content.innerHTML =
+      '<div class="empty-state"><p>Keine Charaktere gefunden.</p></div>';
+    return;
+  }
+  const wrap = document.createElement("div");
+  wrap.className = "actor-list";
+  cards.forEach((c) => wrap.appendChild(c));
+  content.appendChild(wrap);
+}
+
+function buildActorCard(id, actor) {
+  const card = document.createElement("div");
+  card.className = "actor-card";
+  card.dataset.actorId = String(id);
+
+  const basePath = `$gameActors._data[${id}]`;
+  const paramPlus = Array.isArray(actor._paramPlus) ? actor._paramPlus : [];
+
+  card.innerHTML = `
+    <div class="actor-header">
+      <span class="actor-id">#${id}</span>
+      <input class="actor-name-input" type="text"
+             data-path="${basePath}._name" data-type="text"
+             aria-label="Name" />
+      <span class="actor-level-label">Lv.</span>
+      <input class="actor-small-input" type="number" min="1"
+             data-path="${basePath}._level" data-type="number"
+             aria-label="Level" />
+    </div>
+    <div class="actor-resources">
+      <label>HP <input class="actor-small-input" type="number" min="0"
+                     data-path="${basePath}._hp" data-type="number" /></label>
+      <label>MP <input class="actor-small-input" type="number" min="0"
+                     data-path="${basePath}._mp" data-type="number" /></label>
+      <label>TP <input class="actor-small-input" type="number" min="0"
+                     data-path="${basePath}._tp" data-type="number" /></label>
+      <label>EXP <input class="actor-small-input" type="number" min="0"
+                     data-path="${basePath}._exp" data-type="number" /></label>
+    </div>
+    <div class="actor-params-grid"></div>
+  `;
+
+  card.querySelector(".actor-name-input").value = String(actor._name ?? "");
+  const smalls = card.querySelectorAll(
+    ".actor-header .actor-small-input, .actor-resources .actor-small-input",
+  );
+  // order: level, hp, mp, tp, exp
+  const values = [
+    actor._level ?? 1,
+    actor._hp ?? 0,
+    actor._mp ?? 0,
+    actor._tp ?? 0,
+    // _exp is an object keyed by classId; we edit the current class' EXP
+    extractCurrentExp(actor),
+  ];
+  smalls.forEach((inp, idx) => {
+    inp.value = String(values[idx] ?? 0);
+  });
+
+  // EXP path needs the current classId resolved at build time
+  const expInput = smalls[4];
+  if (expInput) {
+    const cid = Number(actor._classId);
+    if (Number.isFinite(cid) && cid > 0) {
+      expInput.dataset.path = `${basePath}._exp[${cid}]`;
+    } else {
+      // No classId available → disable EXP editing rather than poking a random path
+      expInput.disabled = true;
+      expInput.title = "Keine Klasse erkannt";
+    }
+  }
+
+  // Params grid
+  const grid = card.querySelector(".actor-params-grid");
+  for (let k = 0; k < PARAM_LABELS.length; k++) {
+    const cell = document.createElement("label");
+    cell.className = "actor-param";
+    const val = Number(paramPlus[k] ?? 0);
+    cell.innerHTML = `
+      <span class="actor-param-label">${PARAM_LABELS[k]}</span>
+    `;
+    const inp = document.createElement("input");
+    inp.type = "number";
+    inp.className = "actor-small-input";
+    inp.value = String(val);
+    inp.dataset.path = `${basePath}._paramPlus[${k}]`;
+    inp.dataset.type = "number";
+    cell.appendChild(inp);
+    grid.appendChild(cell);
+  }
+
+  // Wire change handlers for every editable input inside the card
+  card.querySelectorAll("input[data-path]").forEach((inp) => {
+    inp.addEventListener("change", onActorFieldChange);
+    if (inp.type === "number") {
+      inp.addEventListener("focus", () => inp.select());
+    }
+  });
+
+  return card;
+}
+
+function extractCurrentExp(actor) {
+  const exp = actor?._exp;
+  if (!exp || typeof exp !== "object") return 0;
+  const cid = Number(actor._classId);
+  if (Number.isFinite(cid) && cid > 0 && exp[cid] != null) return exp[cid];
+  // Fallback: first numeric value
+  for (const k of Object.keys(exp)) {
+    const v = exp[k];
+    if (typeof v === "number") return v;
+  }
+  return 0;
+}
+
 // ---- Change handlers ----
 
 async function onVariableChange(e) {
@@ -527,6 +698,40 @@ function applyItemsFilter() {
   renderItems();
 }
 
+function applyActorsFilter() {
+  renderActors();
+}
+
+async function onActorFieldChange(e) {
+  const input = e.target;
+  const path = input.dataset.path;
+  const type = input.dataset.type || "text";
+  const raw = input.value;
+
+  let value;
+  if (type === "number") {
+    const n = Number(raw);
+    if (!Number.isFinite(n)) {
+      showStatus("❌ Ungültige Zahl", "error");
+      return;
+    }
+    value = n;
+  } else {
+    value = String(raw);
+  }
+
+  input.classList.add("modified");
+  try {
+    const result = await send("poke", { path, value });
+    if (result?.success === false) {
+      throw new Error(result.error || "Poke fehlgeschlagen");
+    }
+    showStatus(`✓ ${path} = ${value}`, "success");
+  } catch (err) {
+    showStatus("❌ Fehler: " + err.message, "error");
+  }
+}
+
 // ---- Init ----
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -555,10 +760,12 @@ document.addEventListener("DOMContentLoaded", () => {
   // Refresh buttons
   $("#refreshValues")?.addEventListener("click", loadValues);
   $("#refreshItems")?.addEventListener("click", loadItems);
+  $("#refreshActors")?.addEventListener("click", loadActors);
 
   // Search inputs
   $("#valuesSearch")?.addEventListener("input", applyValuesFilter);
   $("#itemsSearch")?.addEventListener("input", applyItemsFilter);
+  $("#actorsSearch")?.addEventListener("input", applyActorsFilter);
 
   // Auto-load initial tab (default: values)
   const activePanel = document.querySelector(".tab-panel.active");
@@ -567,5 +774,7 @@ document.addEventListener("DOMContentLoaded", () => {
     loadValues();
   } else if (initialTab === "items") {
     loadItems();
+  } else if (initialTab === "actors") {
+    loadActors();
   }
 });

@@ -12,11 +12,24 @@
     </header>
 
     <div class="editor-tabs" role="tablist">
-      <button class="tab-btn active" data-tab="values" role="tab" aria-selected="true">
+      <button
+        class="tab-btn active"
+        data-tab="values"
+        role="tab"
+        aria-selected="true"
+      >
         📊 Spielwerte
       </button>
       <button class="tab-btn" data-tab="items" role="tab" aria-selected="false">
         🎒 Items
+      </button>
+      <button
+        class="tab-btn"
+        data-tab="actors"
+        role="tab"
+        aria-selected="false"
+      >
+        👤 Charaktere
       </button>
     </div>
 
@@ -60,6 +73,25 @@
       <div id="itemsContent" class="panel-content">
         <div class="empty-state">
           <p>🎒 Klicke auf "Laden" um die Items zu laden.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charaktere Tab -->
+    <div id="actorsTab" class="tab-panel hidden">
+      <div class="panel-toolbar">
+        <input
+          id="actorsSearch"
+          type="text"
+          placeholder="🔍 Charakter suchen…"
+          aria-label="Charaktere filtern"
+        />
+        <button id="refreshActors" class="btn-refresh">🔄 Laden</button>
+      </div>
+      <div id="actorsContent" class="panel-content">
+        <div class="empty-state">
+          <p>👤 Klicke auf "Laden" um die Charaktere zu laden.</p>
+          <p class="text-secondary">Der Scanner muss aktiv sein.</p>
         </div>
       </div>
     </div>

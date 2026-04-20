@@ -398,6 +398,113 @@ body {
   color: #1c00cf;
 }
 
+/* ---- Actor Cards ---- */
+.actor-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.actor-card {
+  border: 1px solid #e0e4ea;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #fafbfc;
+}
+
+.actor-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+.actor-header .actor-id {
+  font-size: 11px;
+  color: #888;
+  font-variant-numeric: tabular-nums;
+  min-width: 30px;
+}
+
+.actor-name-input {
+  flex: 1;
+  padding: 3px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 13px;
+  font-weight: 500;
+  background: #fff;
+  color: #333;
+}
+
+.actor-level-label {
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.actor-resources {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.actor-resources label,
+.actor-param {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+}
+
+.actor-params-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.actor-param-label {
+  color: #666;
+}
+
+.actor-small-input {
+  width: 100%;
+  padding: 3px 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  font-size: 13px;
+  font-family: "Consolas", "Monaco", monospace;
+  text-align: right;
+  background: #fff;
+  color: #1c00cf;
+  box-sizing: border-box;
+}
+
+.actor-small-input:focus {
+  outline: 2px solid #3498db;
+  border-color: #3498db;
+}
+
+.actor-small-input.modified,
+.actor-name-input.modified {
+  background: #fffde7;
+  border-color: #f0c040;
+}
+
+.actor-small-input:disabled {
+  background: #f0f0f0;
+  color: #999;
+  cursor: not-allowed;
+}
+
 .item-qty-input:focus {
   outline: 2px solid #3498db;
   border-color: #3498db;
