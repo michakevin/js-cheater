@@ -76,7 +76,8 @@ export async function detectAndShowPresets(containerId = "enginePresets") {
   if (!preset) return;
 
   container.classList.remove("hidden");
-  renderPresetPanel(container, preset);
+  const collapsed = await isCollapsedForDomain();
+  renderPresetPanel(container, preset, collapsed);
 }
 
 /**
@@ -128,18 +129,19 @@ async function setCollapsedForDomain(collapsed) {
   }
 }
 
-function renderPresetPanel(container, preset) {
+function renderPresetPanel(container, preset, initialCollapsed = false) {
   // Collapsible header
   const header = document.createElement("div");
   header.className = "engine-header engine-header-toggle";
   header.setAttribute("role", "button");
   header.setAttribute("tabindex", "0");
-  header.innerHTML = `<span class="engine-toggle-arrow">▼</span> <span class="engine-icon">${preset.icon}</span> <strong>${preset.name}</strong> erkannt`;
+  const arrowChar = initialCollapsed ? "▶" : "▼";
+  header.innerHTML = `<span class="engine-toggle-arrow">${arrowChar}</span> <span class="engine-icon">${preset.icon}</span> <strong>${preset.name}</strong> erkannt`;
   container.appendChild(header);
 
   // Collapsible body wrapping description + presets
   const body = document.createElement("div");
-  body.className = "engine-body";
+  body.className = initialCollapsed ? "engine-body collapsed" : "engine-body";
 
   // Description
   const desc = document.createElement("div");
@@ -198,14 +200,6 @@ function renderPresetPanel(container, preset) {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
       toggleCollapse();
-    }
-  });
-
-  // Restore saved collapse state
-  isCollapsedForDomain().then((collapsed) => {
-    if (collapsed) {
-      body.classList.add("collapsed");
-      header.querySelector(".engine-toggle-arrow").textContent = "▶";
     }
   });
 }
