@@ -658,18 +658,36 @@ export function createScanner(DEBUG = false) {
         // Resolve the parent object fresh on every tick so re-created parents
         // (e.g. $gameActors after a scene change) keep getting the frozen value.
         const self = this;
-        const timer = setInterval(() => {
+        const MAX_CONSECUTIVE_FAILURES = 20;
+        const entry = { timer: null, failures: 0 };
+        entry.timer = setInterval(() => {
           try {
             const resolved = self.pokeByPath(path, value);
-            if (resolved && resolved.success === false && DEBUG) {
-              console.error("Freeze error", resolved.error);
+            if (resolved && resolved.success === false) {
+              entry.failures += 1;
+              if (DEBUG) console.error("Freeze error", resolved.error);
+              if (entry.failures >= MAX_CONSECUTIVE_FAILURES) {
+                console.warn(
+                  `🧊 Auto-unfreeze ${path}: ${entry.failures} consecutive failures (${resolved.error || "unknown"})`,
+                );
+                self.unfreezeByPath(path);
+              }
+            } else {
+              entry.failures = 0;
             }
           } catch (e) {
+            entry.failures += 1;
             console.error("Freeze error", e);
+            if (entry.failures >= MAX_CONSECUTIVE_FAILURES) {
+              console.warn(
+                `🧊 Auto-unfreeze ${path}: ${entry.failures} consecutive exceptions`,
+              );
+              self.unfreezeByPath(path);
+            }
           }
         }, 100);
 
-        this.frozen.set(path, { timer });
+        this.frozen.set(path, entry);
         if (DEBUG) console.log("❄️ Frozen", path, "to", value);
         return { success: true };
       } catch (error) {
