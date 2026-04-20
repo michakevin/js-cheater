@@ -6,31 +6,38 @@ export function createScanner(DEBUG = false) {
   return {
     hits: [],
 
+    _avoidGetterCache: null,
+
     shouldAvoidGetterEvaluation: function () {
+      if (this._avoidGetterCache !== null) return this._avoidGetterCache;
+      let result = false;
       try {
         if (
           typeof navigator !== "undefined" &&
           typeof navigator.userAgent === "string" &&
           /jsdom/i.test(navigator.userAgent)
         ) {
-          return true;
+          result = true;
         }
       } catch {
         // Ignore environment detection errors.
       }
 
-      try {
-        if (
-          typeof window !== "undefined" &&
-          Object.prototype.hasOwnProperty.call(window, "_globalObject")
-        ) {
-          return true;
+      if (!result) {
+        try {
+          if (
+            typeof window !== "undefined" &&
+            Object.prototype.hasOwnProperty.call(window, "_globalObject")
+          ) {
+            result = true;
+          }
+        } catch {
+          // Ignore environment detection errors.
         }
-      } catch {
-        // Ignore environment detection errors.
       }
 
-      return false;
+      this._avoidGetterCache = result;
+      return result;
     },
 
     collectKeys: function (root, opts = {}) {

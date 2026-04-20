@@ -888,16 +888,8 @@ function performSearch(query, countEl) {
   const allRows = document.querySelectorAll(".json-key-row");
 
   if (!query) {
-    // Clear search highlights
     allRows.forEach((row) => {
       row.style.display = "";
-    });
-    document.querySelectorAll(".search-highlight").forEach((el) => {
-      const parent = el.parentNode;
-      if (parent) {
-        parent.replaceChild(document.createTextNode(el.textContent || ""), el);
-        parent.normalize();
-      }
     });
     if (countEl) countEl.textContent = "";
     return;

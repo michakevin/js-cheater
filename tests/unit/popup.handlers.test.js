@@ -15,7 +15,6 @@ jest.mock("../../src/popup/ui.js", () => ({
   showInitialScanState: jest.fn(),
   showRefineScanState: jest.fn(),
   showLoading: jest.fn(),
-  showEmptyState: jest.fn(),
   setScanButtonsDisabled: jest.fn(),
   updateList: jest.fn(),
 }));

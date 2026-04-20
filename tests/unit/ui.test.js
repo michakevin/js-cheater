@@ -19,11 +19,9 @@ jest.mock("../../src/popup/dialog.js", () => ({
 }));
 
 import {
-  renderHits,
   renderHitsWithSaveButtons,
   updateList,
   showLoading,
-  showEmptyState,
   setScanButtonsDisabled,
   showInitialScanState,
   showRefineScanState,
@@ -44,19 +42,6 @@ describe("ui rendering", () => {
       <button id="newSearch"></button>
     `;
     jest.clearAllMocks();
-  });
-
-  test("renderHits creates list items without buttons", () => {
-    const list = [
-      { path: "player.hp", value: 10 },
-      { path: "player.mp", value: "20" },
-    ];
-    renderHits(list);
-    const items = document.querySelectorAll("#hits li");
-    expect(items.length).toBe(2);
-    expect(items[0].textContent).toBe("[0] player.hp = 10");
-    expect(items[1].textContent).toBe('[1] player.mp = "20"');
-    expect(items[0].querySelector("button")).toBeNull();
   });
 
   test("renderHitsWithSaveButtons creates buttons and classes", () => {
@@ -80,13 +65,6 @@ describe("ui rendering", () => {
     freezeBtn.click();
     expect(freezeBtn.classList.contains("active")).toBe(false);
     expect(send).toHaveBeenCalledWith("unfreeze", { path: "foo" });
-  });
-
-  test("renderHits trims window.globalThis prefix", () => {
-    const list = [{ path: "window.globalThis.foo", value: 1 }];
-    renderHits(list);
-    const li = document.querySelector("#hits li");
-    expect(li.textContent).toBe("[0] foo = 1");
   });
 
   test("renderHitsWithSaveButtons trims window.globalThis prefix", () => {
@@ -141,12 +119,6 @@ describe("ui rendering", () => {
     expect(container.querySelector(".loading-text").textContent).toBe(
       "Scanning...",
     );
-  });
-
-  test("showEmptyState is a no-op", () => {
-    showEmptyState();
-    const state = document.querySelector("#hits .empty-state");
-    expect(state).toBeNull();
   });
 
   test("setScanButtonsDisabled disables scan buttons", () => {

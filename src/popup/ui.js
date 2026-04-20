@@ -121,14 +121,6 @@ export function showLoading(message = "Scanne...") {
 }
 
 /**
- * Empty state placeholder – intentionally a no-op.
- * Kept as export for backward compatibility.
- */
-export function showEmptyState() {
-  // No-op: hint component removed by design.
-}
-
-/**
  * Disable/enable the scan action buttons during a scan.
  * @param {boolean} disabled
  */
@@ -155,34 +147,6 @@ export async function updateList() {
       showError(`⚠️ Unerwartete Antwort: ${JSON.stringify(list)}`);
     }
   }
-}
-
-export function renderHits(list) {
-  const hitsUl = $("#hits");
-  hitsUl.textContent = "";
-  if (!list || list.length === 0) {
-    hitsUl.innerHTML = "<li class='text-secondary'>Keine Treffer gefunden</li>";
-    return;
-  }
-
-  list.forEach((h, i) => {
-    const li = document.createElement("li");
-    const displayPath = h.path.replace(/^window\.globalThis\./, "");
-    li.textContent = `[${i}] ${displayPath} = ${safeStringify(h.value)}`;
-    li.onclick = async () => {
-      const value = await showDialog({
-        type: "prompt",
-        title: "Wert ändern",
-        message: `Neuer Wert für ${h.path}:`,
-        defaultValue: String(h.value),
-      });
-      if (value !== null) {
-        const success = await send("poke", { idx: i, value: tryParse(value) });
-        if (success) updateList();
-      }
-    };
-    hitsUl.appendChild(li);
-  });
 }
 
 export function renderHitsWithSaveButtons(list) {

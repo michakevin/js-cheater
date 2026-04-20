@@ -1,6 +1,44 @@
 import { detectAndShowPresets, getLastDetection } from "./engine-detect.js";
 import { getActiveTab } from "./communication.js";
 
+function isRpgMakerEngine() {
+  const detection = getLastDetection();
+  return Boolean(detection?.id && detection.id.startsWith("rpgmaker"));
+}
+
+function toggleGroupVisibility(groupId, visible) {
+  const group = document.getElementById(groupId);
+  if (group) group.classList.toggle("hidden", !visible);
+}
+
+function openEditorWindow(file, name, features) {
+  return async () => {
+    let tabId;
+    try {
+      const tab = await getActiveTab();
+      tabId = tab?.id;
+    } catch {
+      /* ignore */
+    }
+    const url = chrome.runtime.getURL(
+      `src/popup/${file}` + (tabId ? `?tabId=${tabId}` : ""),
+    );
+    window.open(url, name, features);
+  };
+}
+
+const openSaveEditor = openEditorWindow(
+  "save-editor.html",
+  "saveEditor",
+  "width=700,height=600",
+);
+
+const openRpgDataEditor = openEditorWindow(
+  "rpgmaker-data-editor.html",
+  "rpgDataEditor",
+  "width=620,height=700",
+);
+
 export function setupToolsEventListeners() {
   const detectBtn = document.getElementById("detectEngine");
   if (detectBtn) {
@@ -42,70 +80,12 @@ export function setupToolsEventListeners() {
  * Only RPG Maker engines have localStorage-based save files.
  */
 export function updateSaveEditorVisibility() {
-  const group = document.getElementById("saveEditorGroup");
-  if (!group) return;
-
-  const detection = getLastDetection();
-  const isRpgMaker =
-    detection?.id &&
-    (detection.id.startsWith("rpgmaker") ||
-      detection.id.includes("rpg-maker") ||
-      detection.id.includes("rpgmaker"));
-
-  group.classList.toggle("hidden", !isRpgMaker);
+  toggleGroupVisibility("saveEditorGroup", isRpgMakerEngine());
 }
 
 /**
  * Show/hide the RPG Data Editor button based on detected engine.
  */
 export function updateRpgDataEditorVisibility() {
-  const group = document.getElementById("rpgDataEditorGroup");
-  if (!group) return;
-
-  const detection = getLastDetection();
-  const isRpgMaker =
-    detection?.id &&
-    (detection.id.startsWith("rpgmaker") ||
-      detection.id.includes("rpg-maker") ||
-      detection.id.includes("rpgmaker"));
-
-  group.classList.toggle("hidden", !isRpgMaker);
-}
-
-/**
- * Open the RPG Maker Data Editor in a new popup window.
- */
-async function openRpgDataEditor() {
-  let tabId;
-  try {
-    const tab = await getActiveTab();
-    tabId = tab?.id;
-  } catch {
-    /* ignore */
-  }
-
-  const editorUrl = chrome.runtime.getURL(
-    "src/popup/rpgmaker-data-editor.html" + (tabId ? "?tabId=" + tabId : ""),
-  );
-
-  window.open(editorUrl, "rpgDataEditor", "width=620,height=700");
-}
-
-/**
- * Open the Save-Game-Editor in a new popup window.
- */
-async function openSaveEditor() {
-  let tabId;
-  try {
-    const tab = await getActiveTab();
-    tabId = tab?.id;
-  } catch {
-    /* ignore */
-  }
-
-  const editorUrl = chrome.runtime.getURL(
-    "src/popup/save-editor.html" + (tabId ? "?tabId=" + tabId : ""),
-  );
-
-  window.open(editorUrl, "saveEditor", "width=700,height=600");
+  toggleGroupVisibility("rpgDataEditorGroup", isRpgMakerEngine());
 }
