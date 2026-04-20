@@ -26,8 +26,9 @@ Policy baseline lives in `.github/copilot-instructions.md`.
 - `src/scanner-core.js`: core scanner utilities used by the build step.
 - `src/parse-path.js`: path parser embedded into generated scanner code.
 - `src/popup/`: side panel UI (plain HTML/CSS/JS).
+- `src/popup/popup.html`: side panel markup; also hosts the integrated Editor tab that embeds the RPG Maker data editor via iframe when the sidebar is wide and the page is detected as RPG Maker.
 - `src/popup/save-editor.js`: standalone window for RPG Maker save file editing.
-- `src/popup/rpgmaker-data-editor.js`: standalone window for live RPG Maker variables/switches/items.
+- `src/popup/rpgmaker-data-editor.js`: standalone window for live RPG Maker variables/switches/items (also embedded into the popup Editor tab).
 - `scripts/build-scanner.mjs`: generates `src/popup/scanner-code.js`.
 - `tests/unit/`: Jest unit tests.
 - `tests/e2e/`: Playwright end-to-end tests.
