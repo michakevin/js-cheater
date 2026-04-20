@@ -10,31 +10,9 @@
 
 // ---- Communication ----
 
-let activeTabId = null;
+import { sendTabMessage } from "./communication.js";
 
-async function sendTabMessage(tabId, message) {
-  if (!chrome?.tabs?.sendMessage) throw new Error("tabs.sendMessage nicht verfügbar");
-  return new Promise((resolve, reject) => {
-    let settled = false;
-    const settle = (err, r) => {
-      if (settled) return;
-      settled = true;
-      err ? reject(err) : resolve(r);
-    };
-    const cb = (r) => {
-      const e = chrome.runtime?.lastError;
-      e ? settle(new Error(e.message || String(e))) : settle(null, r);
-    };
-    try {
-      const p = chrome.tabs.sendMessage(tabId, message, cb);
-      if (p && typeof p.then === "function") {
-        p.then((r) => settle(null, r)).catch((e) => settle(e));
-      }
-    } catch (e) {
-      settle(e);
-    }
-  });
-}
+let activeTabId = null;
 
 async function send(cmd, extra = {}) {
   if (!activeTabId) throw new Error("Kein aktiver Tab");
