@@ -1,7 +1,7 @@
 {
   "name": "js-cheater",
   "version": "0.1.0",
-  "description": "Cheat-Engine-ähnlicher Scanner für Browser-RPGs (Manifest V3, keine Frameworks im Popup)",
+  "description": "Cheat-Engine-ähnlicher Scanner für Browser-RPGs (Manifest V3, keine UI-Frameworks im Popup)",
   "private": true,
   "scripts": {
     "lint": "eslint src scripts tests",
