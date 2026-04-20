@@ -61,6 +61,12 @@ export async function detectAndShowPresets(containerId = "enginePresets") {
   container.classList.add("hidden");
 
   const engine = await detectEngine();
+  // Reflect detection on body so responsive CSS (e.g. inline Editor tab)
+  // and other UI elements can react to the active engine family.
+  document.body.classList.toggle(
+    "engine-rpgmaker",
+    Boolean(engine?.id && engine.id.startsWith("rpgmaker")),
+  );
   if (!engine) {
     // No engine detected – keep container hidden, show nothing
     return;

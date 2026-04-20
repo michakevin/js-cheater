@@ -6,13 +6,32 @@ import {
 } from "./favorites.js";
 import { setupToolsEventListeners } from "./tools.js";
 import { setupStorageToolsEventListeners } from "./storage-tools.js";
-import { send } from "./communication.js";
+import { send, getActiveTab } from "./communication.js";
 import { showError, showSuccess } from "./messages.js";
 import { showDialog } from "./dialog.js";
 
 let favoritesListenerAdded = false;
 let toolsListenerAdded = false;
 let tabsInitialized = false;
+let editorFrameLoaded = false;
+
+async function ensureEditorFrameLoaded() {
+  if (editorFrameLoaded) return;
+  const frame = document.getElementById("editorFrame");
+  if (!frame) return;
+  let tabId;
+  try {
+    const tab = await getActiveTab();
+    tabId = tab?.id;
+  } catch {
+    /* ignore */
+  }
+  const base = chrome?.runtime?.getURL
+    ? chrome.runtime.getURL("src/popup/rpgmaker-data-editor.html")
+    : "rpgmaker-data-editor.html";
+  frame.src = tabId ? `${base}?tabId=${tabId}` : base;
+  editorFrameLoaded = true;
+}
 
 export function initTabs() {
   if (tabsInitialized) return;
@@ -46,6 +65,8 @@ export function initTabs() {
         setupStorageToolsEventListeners();
         toolsListenerAdded = true;
       }
+    } else if (targetTab === "editor") {
+      ensureEditorFrameLoaded();
     }
   }
 
@@ -81,6 +102,22 @@ export function initTabs() {
       }
     });
   });
+
+  // If the popup gets resized so narrow that the editor tab is no longer
+  // visible, fall back to the search tab so no empty panel is shown.
+  if (typeof ResizeObserver !== "undefined") {
+    const editorBtn = document.getElementById("tab-editor");
+    const searchBtn = document.querySelector('.tab-button[data-tab="search"]');
+    if (editorBtn && searchBtn) {
+      const ro = new ResizeObserver(() => {
+        const visible = editorBtn.offsetParent !== null;
+        if (!visible && editorBtn.classList.contains("active")) {
+          activateTab(searchBtn);
+        }
+      });
+      ro.observe(document.body);
+    }
+  }
 }
 
 export function showSetupMode() {

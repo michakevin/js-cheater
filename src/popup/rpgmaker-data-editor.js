@@ -70,6 +70,11 @@ function switchTab(tabName) {
     panel.classList.toggle("hidden", panel.id !== tabName + "Tab");
     panel.classList.toggle("active", panel.id === tabName + "Tab");
   });
+  if (tabName === "values") {
+    loadValues();
+  } else if (tabName === "items") {
+    loadItems();
+  }
 }
 
 // ---- Load data ----
@@ -554,4 +559,13 @@ document.addEventListener("DOMContentLoaded", () => {
   // Search inputs
   $("#valuesSearch")?.addEventListener("input", applyValuesFilter);
   $("#itemsSearch")?.addEventListener("input", applyItemsFilter);
+
+  // Auto-load initial tab (default: values)
+  const activePanel = document.querySelector(".tab-panel.active");
+  const initialTab = activePanel?.id?.replace(/Tab$/, "") || "values";
+  if (initialTab === "values") {
+    loadValues();
+  } else if (initialTab === "items") {
+    loadItems();
+  }
 });

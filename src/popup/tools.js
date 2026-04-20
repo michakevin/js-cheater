@@ -85,7 +85,11 @@ export function updateSaveEditorVisibility() {
 
 /**
  * Show/hide the RPG Data Editor button based on detected engine.
+ * Also toggles the body class that controls whether the inline Editor
+ * tab is available in wide sidebar layouts (via CSS container query).
  */
 export function updateRpgDataEditorVisibility() {
-  toggleGroupVisibility("rpgDataEditorGroup", isRpgMakerEngine());
+  const isRpg = isRpgMakerEngine();
+  toggleGroupVisibility("rpgDataEditorGroup", isRpg);
+  document.body.classList.toggle("engine-rpgmaker", isRpg);
 }

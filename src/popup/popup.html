@@ -52,6 +52,16 @@
           ⭐ Favoriten
         </button>
         <button
+          class="tab-button tab-editor-only"
+          data-tab="editor"
+          role="tab"
+          aria-selected="false"
+          aria-controls="editorTab"
+          id="tab-editor"
+        >
+          🎮 Editor
+        </button>
+        <button
           class="tab-button"
           data-tab="tools"
           role="tab"
@@ -208,13 +218,27 @@
           <div id="rpgDataEditorGroup" class="tool-group hidden">
             <h3 class="tool-group-title">🎮 Spielwerte & Item-Editor</h3>
             <p class="tool-group-description">
-              Bearbeite Variablen, Schalter und Inventar live im laufenden Spiel.
-              Erfordert aktiven Scanner.
+              Bearbeite Variablen, Schalter und Inventar live im laufenden
+              Spiel. Erfordert aktiven Scanner.
             </p>
             <button id="openRpgDataEditor" class="btn-save-editor">
               🎮 Spielwerte & Items öffnen
             </button>
           </div>
+        </div>
+
+        <!-- Editor Tab (nur in breiter Sidebar + RPG Maker Engine sichtbar) -->
+        <div
+          id="editorTab"
+          class="tab-panel tab-panel-editor"
+          role="tabpanel"
+          aria-labelledby="tab-editor"
+        >
+          <iframe
+            id="editorFrame"
+            class="editor-frame"
+            title="RPG Maker Editor"
+          ></iframe>
         </div>
       </div>
     </div>
