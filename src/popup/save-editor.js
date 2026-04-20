@@ -13,9 +13,9 @@
  */
 
 import { compressToBase64, decompressFromBase64 } from "./lz-string.js";
-import { sendTabMessage } from "./communication.js";
 import { $ } from "./utils.js";
 import { hideStatus, showStatus } from "./editor-status.js";
+import { createTabSender, readTabIdFromLocation } from "./editor-shell.js";
 
 // ---- Communication helpers ----
 // This page is opened as a popup/window from the extension sidebar.
@@ -23,16 +23,7 @@ import { hideStatus, showStatus } from "./editor-status.js";
 // the same way the main popup does.
 
 let activeTabId = null;
-
-/**
- * @param {string} cmd
- * @param {object} extra
- * @returns {Promise<*>}
- */
-async function send(cmd, extra = {}) {
-  if (!activeTabId) throw new Error("Kein aktiver Tab gefunden");
-  return sendTabMessage(activeTabId, { cmd, ...extra });
-}
+const send = createTabSender(() => activeTabId);
 
 // ---- State ----
 let currentSlotKey = "";
@@ -917,21 +908,10 @@ function collapseAll() {
   });
 }
 
-// ---- Receive tabId from opener ----
-
-function receiveTabId() {
-  // The opener passes the tabId via URL search params
-  const params = new URLSearchParams(window.location.search);
-  const tabIdParam = params.get("tabId");
-  if (tabIdParam) {
-    activeTabId = parseInt(tabIdParam, 10);
-  }
-}
-
 // ---- Init ----
 
 document.addEventListener("DOMContentLoaded", () => {
-  receiveTabId();
+  activeTabId = readTabIdFromLocation();
 
   const select = /** @type {HTMLSelectElement} */ ($("#slotSelect"));
   if (select) {

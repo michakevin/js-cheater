@@ -59,7 +59,11 @@ export function createConnectionMonitor({
     }, intervalMs);
   }
 
-  return { start, stop };
+  function isRunning() {
+    return timer !== null;
+  }
+
+  return { start, stop, isRunning };
 }
 
 const connectionMonitor = createConnectionMonitor();
@@ -132,7 +136,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   const tabContextController = createTabContextController({
     startConnectionMonitor: () => popupSelf.startConnectionMonitor(),
     stopConnectionMonitor,
-    isConnectionMonitorRunning: () => Boolean(statusInterval),
+    isConnectionMonitorRunning: () => connectionMonitor.isRunning(),
   });
   tabContextController.attachListeners();
 

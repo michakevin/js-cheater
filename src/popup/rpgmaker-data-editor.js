@@ -10,16 +10,12 @@
 
 // ---- Communication ----
 
-import { sendTabMessage } from "./communication.js";
 import { $, escapeHtml } from "./utils.js";
 import { hideStatus, showStatus } from "./editor-status.js";
+import { createTabSender, readTabIdFromLocation } from "./editor-shell.js";
 
 let activeTabId = null;
-
-async function send(cmd, extra = {}) {
-  if (!activeTabId) throw new Error("Kein aktiver Tab");
-  return sendTabMessage(activeTabId, { cmd, ...extra });
-}
+const send = createTabSender(() => activeTabId, "Kein aktiver Tab");
 
 // ---- State ----
 
@@ -709,10 +705,7 @@ async function onActorFieldChange(e) {
 // ---- Init ----
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Read tabId from URL
-  const params = new URLSearchParams(location.search);
-  const tid = params.get("tabId");
-  if (tid) activeTabId = Number(tid);
+  activeTabId = readTabIdFromLocation();
 
   // Tab switching
   document.querySelectorAll(".tab-btn").forEach((btn) => {
