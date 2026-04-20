@@ -8,7 +8,4 @@ export interface SaveToStorageResult {
   message?: string;
 }
 
-export function saveToStorage(
-  key: string,
-  obj: unknown,
-): SaveToStorageResult;
+export function saveToStorage(key: string, obj: unknown): SaveToStorageResult;

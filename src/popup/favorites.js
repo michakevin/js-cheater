@@ -56,7 +56,10 @@ let domainSelectListenerAdded = false;
 let importButtonListenerAdded = false;
 
 function createFavoriteId() {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
   return Date.now().toString() + Math.random().toString(36).slice(2);
@@ -255,8 +258,7 @@ async function updateFavorite(id, newValue) {
       await loadFavorites();
       showSuccess(`"${favorite.name}" aktualisiert`);
     } else {
-      const errorMsg =
-        result?.error || result?.message || "Unbekannter Fehler";
+      const errorMsg = result?.error || result?.message || "Unbekannter Fehler";
       console.error(`Fehler beim Ändern von ${favorite.name}: ${errorMsg}`);
       showError(`"${favorite.name}" konnte nicht geändert werden: ${errorMsg}`);
     }

@@ -126,10 +126,7 @@ async function buildMv3(manifest, debugValue) {
   await copyDirectory(resolve(projectRoot, "src"), resolve(targetDir, "src"));
   await copyOptionalFile(resolve(projectRoot, "favicon.ico"), targetDir);
   await copyOptionalFile(resolve(projectRoot, "test.html"), targetDir);
-  await patchDebugConstant(
-    resolve(targetDir, "src/content.js"),
-    debugValue,
-  );
+  await patchDebugConstant(resolve(targetDir, "src/content.js"), debugValue);
   await writeManifest(targetDir, manifest);
   console.info("Built MV3 package in dist/mv3");
 }
@@ -144,10 +141,7 @@ async function buildMv2(baseManifest, debugValue) {
   await copyDirectory(resolve(projectRoot, "src"), resolve(targetDir, "src"));
   await copyOptionalFile(resolve(projectRoot, "favicon.ico"), targetDir);
   await copyOptionalFile(resolve(projectRoot, "test.html"), targetDir);
-  await patchDebugConstant(
-    resolve(targetDir, "src/content.js"),
-    debugValue,
-  );
+  await patchDebugConstant(resolve(targetDir, "src/content.js"), debugValue);
 
   const manifest = transformToMv2Manifest(baseManifest);
   await writeManifest(targetDir, manifest);

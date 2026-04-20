@@ -39,7 +39,9 @@ export function getDomainFromKey(key) {
 
 export function buildFavoritesKey(domain) {
   const normalizedDomain =
-    typeof domain === "string" && domain.trim() ? domain.trim() : UNKNOWN_DOMAIN;
+    typeof domain === "string" && domain.trim()
+      ? domain.trim()
+      : UNKNOWN_DOMAIN;
   return FAVORITES_KEY_PREFIX + normalizedDomain;
 }
 
@@ -47,7 +49,11 @@ export function listStoredFavoriteDomains() {
   const domains = new Set();
   for (let i = 0; i < localStorage.length; i += 1) {
     const key = localStorage.key(i);
-    if (!key || !key.startsWith(FAVORITES_KEY_PREFIX) || key.endsWith("_inputs")) {
+    if (
+      !key ||
+      !key.startsWith(FAVORITES_KEY_PREFIX) ||
+      key.endsWith("_inputs")
+    ) {
       continue;
     }
     domains.add(getDomainFromKey(key));

@@ -11,7 +11,7 @@ function enableSidePanelOnClick() {
     chrome.sidePanel
       .setPanelBehavior({ openPanelOnActionClick: true })
       .catch((error) =>
-        console.error("[js-cheater] Side panel setup error:", error)
+        console.error("[js-cheater] Side panel setup error:", error),
       );
   }
 }
