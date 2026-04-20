@@ -16,7 +16,7 @@
     "build:extensions": "node scripts/build-extensions.mjs",
     "test": "npm run build && jest",
     "test:unit": "npm run build && jest",
-    "test:e2e": "npm run build && playwright test",
+    "test:e2e": "npm run build && node -e \"require('fs').rmSync('test-results',{recursive:true,force:true})\" && playwright test",
     "typecheck": "tsc --project tsconfig.typecheck.json",
     "setup": "npm install && npx playwright install"
   },
