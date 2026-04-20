@@ -298,14 +298,18 @@ function buildSwitchRows(swNames, filter) {
     cb.checked = Boolean(value);
     cb.dataset.idx = i;
     cb.dataset.path = `$gameSwitches._data[${i}]`;
-    cb.addEventListener("change", onSwitchChange);
 
     const lbl = document.createElement("span");
     lbl.className = value ? "switch-label-on" : "switch-label-off";
     lbl.textContent = value ? "EIN" : "AUS";
-    cb.addEventListener("change", () => {
+
+    const syncLabel = () => {
       lbl.className = cb.checked ? "switch-label-on" : "switch-label-off";
       lbl.textContent = cb.checked ? "EIN" : "AUS";
+    };
+    cb.addEventListener("change", async (e) => {
+      await onSwitchChange(e);
+      syncLabel();
     });
 
     wrap.appendChild(cb);

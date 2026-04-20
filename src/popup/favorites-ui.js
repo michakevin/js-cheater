@@ -76,8 +76,9 @@ export function setupFavoritesEventListeners({
     const inputValue = input.value.trim();
     if (!inputValue) return;
     let newValue = inputValue;
-    if (!isNaN(inputValue) && inputValue !== "") {
-      newValue = parseFloat(inputValue);
+    const asNumber = Number(inputValue);
+    if (Number.isFinite(asNumber) && inputValue !== "") {
+      newValue = asNumber;
     } else if (inputValue === "true" || inputValue === "false") {
       newValue = inputValue === "true";
     }
