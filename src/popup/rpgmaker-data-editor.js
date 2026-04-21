@@ -238,20 +238,28 @@ function buildVariableRows(varNames, filter) {
   for (let i = 1; i <= maxIdx; i++) {
     const name = varNames[i] || "";
     const value = variables[i] ?? 0;
-    if (!name && value === 0) continue; // skip unnamed zero variables
-    const label = name || `Variable ${i}`;
+    if (!name && value === 0) continue;
+
+    if (name.startsWith("--")) {
+      if (filter) continue;
+      const tr = document.createElement("tr");
+      tr.className = "table-section-header";
+      tr.innerHTML = `<td colspan="3">${escapeHtml(name.replace(/^-+\s*/, ""))}</td>`;
+      rows.push(tr);
+      continue;
+    }
 
     if (
       filter &&
       !String(i).includes(filter) &&
-      !label.toLowerCase().includes(filter)
+      !name.toLowerCase().includes(filter)
     )
       continue;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="col-id">${i}</td>
-      <td class="col-name${name ? "" : " unnamed"}">${escapeHtml(label)}</td>
+      <td class="col-name">${escapeHtml(name)}</td>
       <td class="col-value"></td>
     `;
 
@@ -275,20 +283,28 @@ function buildSwitchRows(swNames, filter) {
   for (let i = 1; i <= maxIdx; i++) {
     const name = swNames[i] || "";
     const value = switches[i] ?? false;
-    if (!name && !value) continue; // skip unnamed off switches
-    const label = name || `Schalter ${i}`;
+    if (!name && !value) continue;
+
+    if (name.startsWith("--")) {
+      if (filter) continue;
+      const tr = document.createElement("tr");
+      tr.className = "table-section-header";
+      tr.innerHTML = `<td colspan="3">${escapeHtml(name.replace(/^-+\s*/, ""))}</td>`;
+      rows.push(tr);
+      continue;
+    }
 
     if (
       filter &&
       !String(i).includes(filter) &&
-      !label.toLowerCase().includes(filter)
+      !name.toLowerCase().includes(filter)
     )
       continue;
 
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td class="col-id">${i}</td>
-      <td class="col-name${name ? "" : " unnamed"}">${escapeHtml(label)}</td>
+      <td class="col-name">${escapeHtml(name)}</td>
       <td class="col-value"></td>
     `;
 
@@ -353,9 +369,18 @@ function renderItems() {
 
   for (let i = 1; i < dataList.length; i++) {
     const item = dataList[i];
-    if (!item) continue;
+    if (!item || !item.name) continue;
 
-    const name = item.name || `Item ${i}`;
+    if (item.name.startsWith("-----")) {
+      if (filter) continue;
+      const header = document.createElement("div");
+      header.className = "item-section-header";
+      header.textContent = item.name.replace(/^-+\s*/, "");
+      listEl.appendChild(header);
+      continue;
+    }
+
+    const name = item.name;
     const desc = item.description || "";
     const iconIndex = item.iconIndex ?? 0;
     const qty = Number(partyData[i] ?? partyData[String(i)] ?? 0);

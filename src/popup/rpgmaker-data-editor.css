@@ -243,6 +243,21 @@ body {
   display: none;
 }
 
+.values-table tr.table-section-header td {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888;
+  padding-top: 12px;
+  padding-bottom: 3px;
+  border-bottom: 1px solid #e0e6ed;
+}
+
+.values-table tr.table-section-header:hover td {
+  background: transparent;
+}
+
 .col-id {
   width: 48px;
   color: #888;
@@ -318,6 +333,17 @@ body {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.item-section-header {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888;
+  padding: 10px 8px 3px;
+  border-bottom: 1px solid #e0e6ed;
+  margin-bottom: 2px;
 }
 
 .item-row {
@@ -669,6 +695,15 @@ body {
     background: #2a2e33;
   }
 
+  .values-table tr.table-section-header td {
+    color: #666;
+    border-bottom-color: #2a2e33;
+  }
+
+  .values-table tr.table-section-header:hover td {
+    background: transparent;
+  }
+
   .col-id {
     color: #777;
   }
@@ -703,6 +738,11 @@ body {
 
   .switch-label-off {
     color: #666;
+  }
+
+  .item-section-header {
+    color: #666;
+    border-bottom-color: #2a2e33;
   }
 
   .item-row:hover {
@@ -749,5 +789,55 @@ body {
 
   .loading-state {
     color: #777;
+  }
+
+  .actor-card {
+    background: #1e2226;
+    border-color: #2a2e33;
+  }
+
+  .actor-header {
+    border-bottom-color: #2a2e33;
+  }
+
+  .actor-header .actor-id {
+    color: #666;
+  }
+
+  .actor-name-input {
+    background: #2a2e33;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  .actor-level-label {
+    color: #666;
+  }
+
+  .actor-resources label,
+  .actor-param {
+    color: #666;
+  }
+
+  .actor-small-input {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #b5cea8;
+  }
+
+  .actor-small-input:focus {
+    outline-color: #4dabf7;
+    border-color: #4dabf7;
+  }
+
+  .actor-small-input.modified,
+  .actor-name-input.modified {
+    background: #3a3520;
+    border-color: #a08030;
+  }
+
+  .actor-small-input:disabled {
+    background: #1a1a1a;
+    color: #555;
   }
 }
