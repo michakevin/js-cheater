@@ -358,4 +358,109 @@ describe("rpgmaker-data-editor readPath response handling", () => {
     expect(cards.length).toBe(1);
     expect(cards[0].querySelector(".actor-name-input").value).toBe("Elmia");
   });
+
+  test("switch change reverts UI and shows error when poke transport fails", async () => {
+    globalThis.chrome = {
+      tabs: {
+        sendMessage: jest.fn((tabId, message, cb) => {
+          if (message.cmd === "getRpgMakerGameData") {
+            cb({
+              system: {
+                variables: [null, "Var1"],
+                switches: [null, "Sw1"],
+              },
+              items: [],
+              weapons: [],
+              armors: [],
+            });
+            return;
+          }
+          if (message.cmd === "readPath") {
+            if (message.path === "$gameVariables._data") cb({ value: [null, 0] });
+            else if (message.path === "$gameSwitches._data") cb({ value: [null, false] });
+            else cb({ value: null });
+            return;
+          }
+          if (message.cmd === "poke") {
+            cb(null);
+            return;
+          }
+          cb(null);
+        }),
+      },
+      runtime: {},
+    };
+
+    setupDom();
+    await import("../../src/popup/rpgmaker-data-editor.js");
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+    await settle();
+    await settle();
+
+    const checkbox = document.querySelector(
+      "#valuesContent input.switch-checkbox",
+    );
+    expect(checkbox).not.toBeNull();
+    expect(checkbox.checked).toBe(false);
+
+    checkbox.checked = true;
+    checkbox.dispatchEvent(new Event("change"));
+    await settle();
+
+    expect(checkbox.checked).toBe(false);
+    const status = document.getElementById("statusMessage");
+    expect(status.textContent).toContain("Scanner nicht erreichbar");
+  });
+
+  test("item qty change keeps cache/UI unchanged when poke transport fails", async () => {
+    globalThis.chrome = {
+      tabs: {
+        sendMessage: jest.fn((tabId, message, cb) => {
+          if (message.cmd === "getRpgMakerGameData") {
+            cb({
+              system: { variables: [], switches: [] },
+              items: [null, { name: "Potion", description: "", iconIndex: 1 }],
+              weapons: [],
+              armors: [],
+            });
+            return;
+          }
+          if (message.cmd === "readPath") {
+            if (message.path === "$gameParty._items") cb({ value: {} });
+            else if (message.path === "$gameParty._weapons") cb({ value: {} });
+            else if (message.path === "$gameParty._armors") cb({ value: {} });
+            else cb({ value: null });
+            return;
+          }
+          if (message.cmd === "poke") {
+            cb(null);
+            return;
+          }
+          cb(null);
+        }),
+      },
+      runtime: {},
+    };
+
+    setupDom();
+    await import("../../src/popup/rpgmaker-data-editor.js");
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+    await settle();
+
+    document.getElementById("refreshItems").click();
+    await settle();
+    await settle();
+
+    const qtyInput = document.querySelector("#itemsContent input.item-qty-input");
+    expect(qtyInput).not.toBeNull();
+    expect(qtyInput.classList.contains("in-party")).toBe(false);
+
+    qtyInput.value = "5";
+    qtyInput.dispatchEvent(new Event("change"));
+    await settle();
+
+    expect(qtyInput.classList.contains("in-party")).toBe(false);
+    const status = document.getElementById("statusMessage");
+    expect(status.textContent).toContain("Scanner nicht erreichbar");
+  });
 });

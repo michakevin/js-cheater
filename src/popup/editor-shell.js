@@ -39,3 +39,27 @@ export function createTabSender(
     return sendTabMessage(tabId, { cmd, ...extra });
   };
 }
+
+/**
+ * Send a message and ensure the response indicates success.
+ * Throws on transport-level failures (`null`) and explicit scanner failures.
+ * @param {(cmd:string, extra?:Record<string, unknown>) => Promise<any>} send
+ * @param {string} cmd
+ * @param {Record<string, unknown>} [extra]
+ * @param {string} [fallbackError]
+ */
+export async function sendAndAssertSuccess(
+  send,
+  cmd,
+  extra = {},
+  fallbackError = "Befehl fehlgeschlagen",
+) {
+  const result = await send(cmd, extra);
+  if (result == null) {
+    throw new Error("Scanner nicht erreichbar");
+  }
+  if (result?.success === false) {
+    throw new Error(result.error || fallbackError);
+  }
+  return result;
+}

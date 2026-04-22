@@ -12,7 +12,11 @@
 
 import { $, escapeHtml } from "./utils.js";
 import { hideStatus, showStatus } from "./editor-status.js";
-import { createTabSender, readTabIdFromLocation } from "./editor-shell.js";
+import {
+  createTabSender,
+  readTabIdFromLocation,
+  sendAndAssertSuccess,
+} from "./editor-shell.js";
 
 let activeTabId = null;
 const send = createTabSender(() => activeTabId, "Kein aktiver Tab");
@@ -599,9 +603,7 @@ async function onVariableChange(e) {
 
   input.classList.add("modified");
   try {
-    const result = await send("poke", { path, value });
-    if (result?.success === false)
-      throw new Error(result.error || "Poke fehlgeschlagen");
+    await sendAndAssertSuccess(send, "poke", { path, value }, "Poke fehlgeschlagen");
     const idx = Number(input.dataset.idx);
     variables[idx] = value;
     showStatus(`✓ Variable ${idx} auf ${value} gesetzt.`, "success");
@@ -617,7 +619,7 @@ async function onSwitchChange(e) {
   const idx = Number(cb.dataset.idx);
 
   try {
-    await send("poke", { path, value });
+    await sendAndAssertSuccess(send, "poke", { path, value }, "Poke fehlgeschlagen");
     switches[idx] = value;
     showStatus(
       `✓ Schalter ${idx} auf ${value ? "EIN" : "AUS"} gesetzt.`,
@@ -654,10 +656,12 @@ async function onItemQtyChange(e) {
 
   input.classList.add("modified");
   try {
-    const result = await send("poke", { path: itemPath, value: qty });
-    if (result?.success === false) {
-      throw new Error(result.error || "Poke fehlgeschlagen");
-    }
+    await sendAndAssertSuccess(
+      send,
+      "poke",
+      { path: itemPath, value: qty },
+      "Poke fehlgeschlagen",
+    );
 
     // Mirror the change in the local cache
     if (qty === 0) {
