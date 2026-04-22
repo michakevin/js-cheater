@@ -3,6 +3,7 @@ import { showError } from "./messages.js";
 import { DEBUG } from "../debug.js";
 
 let activeTabId;
+let activeTabUrl = null;
 
 function isConnectionErrorMessage(message) {
   return (
@@ -11,13 +12,24 @@ function isConnectionErrorMessage(message) {
   );
 }
 
-export function setActiveTab(tabId) {
-  activeTabId = tabId;
+export function setActiveTab(tabOrId, tabUrl = null) {
+  if (typeof tabOrId === "object" && tabOrId !== null) {
+    rememberActiveTab(tabOrId);
+    return;
+  }
+
+  activeTabId = tabOrId;
+  if (typeof tabUrl === "string" && tabUrl) {
+    activeTabUrl = tabUrl;
+  }
 }
 
 function rememberActiveTab(tab) {
   if (tab && tab.id !== undefined && tab.id !== null) {
     activeTabId = tab.id;
+    if (typeof tab.url === "string" && tab.url) {
+      activeTabUrl = tab.url;
+    }
   }
 }
 
@@ -74,7 +86,7 @@ export async function getActiveTab() {
   }
 
   if (activeTabId !== undefined && activeTabId !== null) {
-    return { id: activeTabId };
+    return { id: activeTabId, url: activeTabUrl };
   }
 
   if (queryError) {

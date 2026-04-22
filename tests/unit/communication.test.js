@@ -58,6 +58,28 @@ describe("communication send", () => {
     );
   });
 
+  test("getActiveTab fallback keeps cached url", async () => {
+    chrome.tabs.query.mockRejectedValue(new Error("query failed"));
+    const { getActiveTab, setActiveTab } = await import(
+      "../../src/popup/communication.js"
+    );
+    setActiveTab(5, "https://example.org/game");
+
+    const tab = await getActiveTab();
+    expect(tab).toEqual({ id: 5, url: "https://example.org/game" });
+  });
+
+  test("setActiveTab accepts a tab object", async () => {
+    chrome.tabs.query.mockRejectedValue(new Error("query failed"));
+    const { getActiveTab, setActiveTab } = await import(
+      "../../src/popup/communication.js"
+    );
+    setActiveTab({ id: 9, url: "https://example.com/play" });
+
+    const tab = await getActiveTab();
+    expect(tab).toEqual({ id: 9, url: "https://example.com/play" });
+  });
+
   test("shows message on timeout", async () => {
     const { send } = await import("../../src/popup/communication.js");
     const { showError } = await import("../../src/popup/messages.js");
