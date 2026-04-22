@@ -17,6 +17,7 @@ Policy baseline lives in `.github/copilot-instructions.md`.
 - Unit tests only: `npm run test:unit`
 - Default test command (build + Jest): `npm test`
 - E2E tests (build + Playwright): `npm run test:e2e`
+- Type declaration check: `npm run typecheck` (alias for `npm run typecheck:dts`)
 - Instruction consistency check: `npm run check:ai-instructions`
 
 ## Repo Map

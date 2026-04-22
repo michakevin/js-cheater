@@ -18,7 +18,8 @@
     "test": "npm run build && jest",
     "test:unit": "npm run build && jest",
     "test:e2e": "npm run build && node -e \"require('fs').rmSync('test-results',{recursive:true,force:true})\" && playwright test",
-    "typecheck": "tsc --project tsconfig.typecheck.json",
+    "typecheck": "npm run typecheck:dts",
+    "typecheck:dts": "tsc --project tsconfig.typecheck.json",
     "setup": "npm install && npx playwright install"
   },
   "devDependencies": {
