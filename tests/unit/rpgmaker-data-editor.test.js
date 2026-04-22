@@ -376,8 +376,10 @@ describe("rpgmaker-data-editor readPath response handling", () => {
             return;
           }
           if (message.cmd === "readPath") {
-            if (message.path === "$gameVariables._data") cb({ value: [null, 0] });
-            else if (message.path === "$gameSwitches._data") cb({ value: [null, false] });
+            if (message.path === "$gameVariables._data")
+              cb({ value: [null, 0] });
+            else if (message.path === "$gameSwitches._data")
+              cb({ value: [null, false] });
             else cb({ value: null });
             return;
           }
@@ -451,7 +453,9 @@ describe("rpgmaker-data-editor readPath response handling", () => {
     await settle();
     await settle();
 
-    const qtyInput = document.querySelector("#itemsContent input.item-qty-input");
+    const qtyInput = document.querySelector(
+      "#itemsContent input.item-qty-input",
+    );
     expect(qtyInput).not.toBeNull();
     expect(qtyInput.classList.contains("in-party")).toBe(false);
 

@@ -41,16 +41,18 @@ function registerMessageRouter(chromeApi) {
 }
 
 function registerInstallHandler(chromeApi, debugEnabled) {
-  chromeApi?.runtime?.onInstalled?.addListener(({ reason, previousVersion }) => {
-    if (reason === "install") {
-      if (debugEnabled) console.log("[js-cheater] Extension installed 🚀");
-    } else if (reason === "update") {
-      if (debugEnabled) {
-        console.log(`[js-cheater] Updated from ${previousVersion}`);
+  chromeApi?.runtime?.onInstalled?.addListener(
+    ({ reason, previousVersion }) => {
+      if (reason === "install") {
+        if (debugEnabled) console.log("[js-cheater] Extension installed 🚀");
+      } else if (reason === "update") {
+        if (debugEnabled) {
+          console.log(`[js-cheater] Updated from ${previousVersion}`);
+        }
       }
-    }
-    enableSidePanelOnClick(chromeApi);
-  });
+      enableSidePanelOnClick(chromeApi);
+    },
+  );
 }
 
 function initBackgroundRuntime({

@@ -1,4 +1,8 @@
-import { checkScannerStatus, queryTabs, setActiveTab } from "./communication.js";
+import {
+  checkScannerStatus,
+  queryTabs,
+  setActiveTab,
+} from "./communication.js";
 import {
   showSetupMode,
   showScannerMode,

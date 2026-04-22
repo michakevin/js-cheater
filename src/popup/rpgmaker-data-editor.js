@@ -603,7 +603,12 @@ async function onVariableChange(e) {
 
   input.classList.add("modified");
   try {
-    await sendAndAssertSuccess(send, "poke", { path, value }, "Poke fehlgeschlagen");
+    await sendAndAssertSuccess(
+      send,
+      "poke",
+      { path, value },
+      "Poke fehlgeschlagen",
+    );
     const idx = Number(input.dataset.idx);
     variables[idx] = value;
     showStatus(`✓ Variable ${idx} auf ${value} gesetzt.`, "success");
@@ -619,7 +624,12 @@ async function onSwitchChange(e) {
   const idx = Number(cb.dataset.idx);
 
   try {
-    await sendAndAssertSuccess(send, "poke", { path, value }, "Poke fehlgeschlagen");
+    await sendAndAssertSuccess(
+      send,
+      "poke",
+      { path, value },
+      "Poke fehlgeschlagen",
+    );
     switches[idx] = value;
     showStatus(
       `✓ Schalter ${idx} auf ${value ? "EIN" : "AUS"} gesetzt.`,

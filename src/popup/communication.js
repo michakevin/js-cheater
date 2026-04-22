@@ -62,7 +62,9 @@ export async function queryTabs(queryInfo) {
     try {
       const maybePromise = chrome.tabs.query(queryInfo, callback);
       if (maybePromise && typeof maybePromise.then === "function") {
-        maybePromise.then((tabs) => settle(null, tabs)).catch((error) => settle(error));
+        maybePromise
+          .then((tabs) => settle(null, tabs))
+          .catch((error) => settle(error));
       }
     } catch (error) {
       settle(error);
@@ -135,10 +137,8 @@ export async function sendTabMessage(tabId, message) {
 }
 
 export async function send(cmd, extra = {}, options = {}) {
-  const {
-    suppressConnectionError = false,
-    suppressTimeoutError = false,
-  } = options;
+  const { suppressConnectionError = false, suppressTimeoutError = false } =
+    options;
 
   try {
     const tab = await getActiveTab();
@@ -179,10 +179,14 @@ export async function send(cmd, extra = {}, options = {}) {
 
 export async function checkScannerStatus() {
   try {
-    const result = await send("test", {}, {
-      suppressConnectionError: true,
-      suppressTimeoutError: true,
-    });
+    const result = await send(
+      "test",
+      {},
+      {
+        suppressConnectionError: true,
+        suppressTimeoutError: true,
+      },
+    );
     if (result && result.scannerLoaded) {
       return true;
     }

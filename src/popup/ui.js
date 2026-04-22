@@ -285,7 +285,10 @@ function ensureHitsInteractionBound(hitsUl) {
       if (actionEl.classList.toggle("active")) {
         actionEl.textContent = "🔥";
         actionEl.setAttribute("title", "Einfrieren aufheben");
-        actionEl.setAttribute("aria-label", `${displayPath} Einfrieren aufheben`);
+        actionEl.setAttribute(
+          "aria-label",
+          `${displayPath} Einfrieren aufheben`,
+        );
         send("freeze", { path: hit.path, value: hit.value });
       } else {
         actionEl.textContent = "❄️";
