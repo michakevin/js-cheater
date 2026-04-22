@@ -211,13 +211,17 @@ async function handleDirectPreset(item) {
   // Read the current value via pokeByPath with no change
   const readResult = await send("readPath", { path: item.path });
 
+  if (readResult == null) {
+    showError("❌ Scanner nicht erreichbar");
+    return;
+  }
+
   if (readResult && readResult.error) {
     showError(`❌ Pfad nicht gefunden: ${item.path}`);
     return;
   }
 
-  const currentValue =
-    readResult !== null && readResult !== undefined ? readResult.value : "???";
+  const currentValue = readResult.value;
 
   const newValue = await showDialog({
     type: "prompt",
