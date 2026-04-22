@@ -85,7 +85,7 @@ function transformToMv2Manifest(baseManifest) {
   }
 
   manifest.background = {
-    scripts: ["src/background.js"],
+    scripts: ["src/background-common.js", "src/background.js"],
     persistent: false,
   };
 
