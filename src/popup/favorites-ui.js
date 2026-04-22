@@ -1,6 +1,11 @@
-import { escapeHtml } from "./utils.js";
+import { escapeHtml, safeStringify } from "./utils.js";
 import { send } from "./communication.js";
 import { showDialog } from "./dialog.js";
+
+function renderFavoriteValue(value) {
+  if (value === undefined) return "-";
+  return safeStringify(value);
+}
 
 export function renderFavorites(favorites, inputs) {
   const favoritesContent = document.getElementById("favoritesContent");
@@ -35,9 +40,7 @@ export function renderFavorites(favorites, inputs) {
           <td class="favorite-name" data-id="${fav.id}" title="${escapeHtml(
             fav.path,
           )}">${escapeHtml(fav.name)}</td>
-          <td class="favorite-value">${escapeHtml(
-            JSON.stringify(fav.value),
-          )}</td>
+          <td class="favorite-value">${escapeHtml(renderFavoriteValue(fav.value))}</td>
           <td><input type="text" id="newValue_${fav.id}" placeholder="Neuer Wert..." value="${escapeHtml(
             inputs[fav.id] || "",
           )}" /></td>

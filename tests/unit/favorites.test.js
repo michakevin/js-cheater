@@ -86,6 +86,30 @@ describe("loadFavorites", () => {
     // No injected img element should exist
     expect(document.querySelector("img")).toBeNull();
   });
+
+  test("renders undefined favorite value as placeholder", async () => {
+    const favs = {
+      1: { id: "1", name: "test", path: "foo", value: undefined },
+    };
+    const { renderFavorites } = await import("../../src/popup/favorites-ui.js");
+    renderFavorites(favs, {});
+
+    const valueCell = document.querySelector(".favorite-value");
+    expect(valueCell).toBeTruthy();
+    expect(valueCell.textContent).toBe("-");
+  });
+
+  test("renders BigInt favorite value without crashing", async () => {
+    const favs = {
+      1: { id: "1", name: "gold", path: "foo", value: BigInt(99) },
+    };
+    const { renderFavorites } = await import("../../src/popup/favorites-ui.js");
+    renderFavorites(favs, {});
+
+    const valueCell = document.querySelector(".favorite-value");
+    expect(valueCell).toBeTruthy();
+    expect(valueCell.textContent).toBe("99");
+  });
 });
 
 describe("import/export favorites", () => {
