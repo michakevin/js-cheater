@@ -35,11 +35,15 @@ async function copyOptionalFile(source, destinationDir) {
   }
 }
 
-async function copyDirectory(source, destination) {
+async function copyDirectory(source, destination, filter) {
   try {
     const stats = await stat(source);
     if (!stats.isDirectory()) return;
-    await cp(source, destination, { recursive: true });
+    const options = { recursive: true };
+    if (typeof filter === "function") {
+      options.filter = (entry) => filter(entry.replace(/\\/g, "/"));
+    }
+    await cp(source, destination, options);
   } catch (error) {
     if (error.code !== "ENOENT") throw error;
   }
@@ -123,7 +127,11 @@ async function buildMv3(manifest, debugValue) {
     resolve(projectRoot, "icons"),
     resolve(targetDir, "icons"),
   );
-  await copyDirectory(resolve(projectRoot, "src"), resolve(targetDir, "src"));
+  await copyDirectory(
+    resolve(projectRoot, "src"),
+    resolve(targetDir, "src"),
+    (entry) => !entry.endsWith("/src/background.js"),
+  );
   await copyOptionalFile(resolve(projectRoot, "favicon.ico"), targetDir);
   await copyOptionalFile(resolve(projectRoot, "test.html"), targetDir);
   await patchDebugConstant(resolve(targetDir, "src/content.js"), debugValue);
@@ -138,7 +146,11 @@ async function buildMv2(baseManifest, debugValue) {
     resolve(projectRoot, "icons"),
     resolve(targetDir, "icons"),
   );
-  await copyDirectory(resolve(projectRoot, "src"), resolve(targetDir, "src"));
+  await copyDirectory(
+    resolve(projectRoot, "src"),
+    resolve(targetDir, "src"),
+    (entry) => !entry.endsWith("/src/service-worker.js"),
+  );
   await copyOptionalFile(resolve(projectRoot, "favicon.ico"), targetDir);
   await copyOptionalFile(resolve(projectRoot, "test.html"), targetDir);
   await patchDebugConstant(resolve(targetDir, "src/content.js"), debugValue);
