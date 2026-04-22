@@ -15,6 +15,8 @@ let toolsListenerAdded = false;
 let tabsInitialized = false;
 let editorFrameLoaded = false;
 let editorFrameTabId = null;
+let hitsInteractionContainer = null;
+let currentHits = [];
 
 function getEditorFrameBaseUrl() {
   const runtime = globalThis.chrome?.runtime;
@@ -211,6 +213,8 @@ export async function updateList() {
 
 export function renderHitsWithSaveButtons(list) {
   const hitsUl = $("#hits");
+  currentHits = Array.isArray(list) ? list : [];
+  ensureHitsInteractionBound(hitsUl);
   hitsUl.textContent = "";
   if (!list || list.length === 0) {
     const emptyLi = document.createElement("li");
@@ -230,52 +234,79 @@ export function renderHitsWithSaveButtons(list) {
     const saveBtn = document.createElement("button");
     saveBtn.className = "save-btn";
     saveBtn.textContent = "💾";
+    saveBtn.dataset.action = "save";
+    saveBtn.dataset.idx = String(i);
     saveBtn.title = "Als Favorit speichern";
     saveBtn.setAttribute("aria-label", `${displayPath} als Favorit speichern`);
-    saveBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      saveFavorite(h.path, h.value);
-    });
 
     const freezeBtn = document.createElement("button");
     freezeBtn.className = "freeze-btn";
     freezeBtn.textContent = "❄️";
+    freezeBtn.dataset.action = "freeze";
+    freezeBtn.dataset.idx = String(i);
     freezeBtn.title = "Wert einfrieren";
     freezeBtn.setAttribute("aria-label", `${displayPath} einfrieren`);
-    freezeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (freezeBtn.classList.toggle("active")) {
-        freezeBtn.textContent = "🔥";
-        freezeBtn.title = "Einfrieren aufheben";
-        freezeBtn.setAttribute(
-          "aria-label",
-          `${displayPath} Einfrieren aufheben`,
-        );
-        send("freeze", { path: h.path, value: h.value });
-      } else {
-        freezeBtn.textContent = "❄️";
-        freezeBtn.title = "Wert einfrieren";
-        freezeBtn.setAttribute("aria-label", `${displayPath} einfrieren`);
-        send("unfreeze", { path: h.path });
-      }
-    });
+    freezeBtn.dataset.path = h.path;
 
-    hitInfo.addEventListener("click", async () => {
-      const value = await showDialog({
-        type: "prompt",
-        title: "Wert ändern",
-        message: `Neuer Wert für ${displayPath}:`,
-        defaultValue: String(h.value),
-      });
-      if (value !== null) {
-        const success = await send("poke", { idx: i, value: tryParse(value) });
-        if (success) updateList();
-      }
-    });
+    hitInfo.dataset.action = "edit";
+    hitInfo.dataset.idx = String(i);
 
     li.appendChild(hitInfo);
     li.appendChild(saveBtn);
     li.appendChild(freezeBtn);
     hitsUl.appendChild(li);
+  });
+}
+
+function ensureHitsInteractionBound(hitsUl) {
+  if (!hitsUl || hitsInteractionContainer === hitsUl) return;
+  hitsInteractionContainer = hitsUl;
+
+  hitsUl.addEventListener("click", async (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    const actionEl = target.closest("[data-action]");
+    if (!(actionEl instanceof Element)) return;
+    const idx = Number(actionEl.getAttribute("data-idx"));
+    if (!Number.isFinite(idx)) return;
+    const hit = currentHits[idx];
+    if (!hit) return;
+    const displayPath = hit.path.replace(/^window\.globalThis\./, "");
+    const action = actionEl.getAttribute("data-action");
+
+    if (action === "save") {
+      event.stopPropagation();
+      saveFavorite(hit.path, hit.value);
+      return;
+    }
+
+    if (action === "freeze") {
+      event.stopPropagation();
+      if (actionEl.classList.toggle("active")) {
+        actionEl.textContent = "🔥";
+        actionEl.setAttribute("title", "Einfrieren aufheben");
+        actionEl.setAttribute("aria-label", `${displayPath} Einfrieren aufheben`);
+        send("freeze", { path: hit.path, value: hit.value });
+      } else {
+        actionEl.textContent = "❄️";
+        actionEl.setAttribute("title", "Wert einfrieren");
+        actionEl.setAttribute("aria-label", `${displayPath} einfrieren`);
+        send("unfreeze", { path: hit.path });
+      }
+      return;
+    }
+
+    if (action === "edit") {
+      const value = await showDialog({
+        type: "prompt",
+        title: "Wert ändern",
+        message: `Neuer Wert für ${displayPath}:`,
+        defaultValue: String(hit.value),
+      });
+      if (value !== null) {
+        const success = await send("poke", { idx, value: tryParse(value) });
+        if (success) updateList();
+      }
+    }
   });
 }
