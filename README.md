@@ -149,7 +149,7 @@ npm run test:e2e     # Startet die Playwright-Tests (benötigt installierte Brow
 - **Testen:** Unit-Tests mit `npm test`, E2E-Tests mit `npm run test:e2e`. Führe zuvor `npm install` oder `npm run setup` aus.
 - **Manuelles Testen:** Die Erweiterung kann weiterhin als entpackte Erweiterung geladen werden (Chrome oder Firefox).
 - **Reload:** Nach Code-Änderungen die Erweiterung in `chrome://extensions/` bzw. `about:debugging` neu laden.
-- **Manifest:** Änderungen an `manifest.json` immer manuell prüfen, da sie nicht automatisch generiert werden.
+- **Manifest:** `manifest.json` wird durch `npm run use:chrome` bzw. `npm run use:firefox` überschrieben. Änderungen direkt in `manifest.json` gehen dabei verloren – stattdessen `manifest.chrome.json` oder `manifest.firefox.json` bearbeiten.
 - **Hinweis:** Das Feld `sidebar_action` wird nur von Firefox verwendet. Chrome ignoriert es und zeigt beim Laden der Erweiterung lediglich die Warnung `Unrecognized manifest key 'sidebar_action'` an. Wer eine warnungsfreie Version bauen möchte, kann ein kleines Skript schreiben, das vor dem Packen eine manifest.json ohne dieses Feld erzeugt.
 
 **Tipp:**
