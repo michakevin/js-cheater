@@ -14,6 +14,33 @@ let favoritesListenerAdded = false;
 let toolsListenerAdded = false;
 let tabsInitialized = false;
 let editorFrameLoaded = false;
+let editorFrameTabId = null;
+
+function getEditorFrameBaseUrl() {
+  const runtime = globalThis.chrome?.runtime;
+  return runtime?.getURL
+    ? runtime.getURL("src/popup/rpgmaker-data-editor.html")
+    : "rpgmaker-data-editor.html";
+}
+
+function setEditorFrameSource(frame, tabId) {
+  const normalizedTabId = tabId == null ? null : tabId;
+  const base = getEditorFrameBaseUrl();
+  frame.src =
+    normalizedTabId == null ? base : `${base}?tabId=${normalizedTabId}`;
+  editorFrameLoaded = true;
+  editorFrameTabId = normalizedTabId;
+}
+
+export function syncEditorFrameWithTabId(tabId) {
+  const frame = document.getElementById("editorFrame");
+  if (!frame) return;
+  const normalizedTabId = tabId == null ? null : tabId;
+  if (editorFrameLoaded && editorFrameTabId === normalizedTabId) {
+    return;
+  }
+  setEditorFrameSource(frame, normalizedTabId);
+}
 
 async function ensureEditorFrameLoaded() {
   if (editorFrameLoaded) return;
@@ -26,11 +53,7 @@ async function ensureEditorFrameLoaded() {
   } catch {
     /* ignore */
   }
-  const base = chrome?.runtime?.getURL
-    ? chrome.runtime.getURL("src/popup/rpgmaker-data-editor.html")
-    : "rpgmaker-data-editor.html";
-  frame.src = tabId ? `${base}?tabId=${tabId}` : base;
-  editorFrameLoaded = true;
+  setEditorFrameSource(frame, tabId);
 }
 
 export function initTabs() {

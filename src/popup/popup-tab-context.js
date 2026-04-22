@@ -1,5 +1,10 @@
 import { checkScannerStatus, queryTabs, setActiveTab } from "./communication.js";
-import { showSetupMode, showScannerMode, updateList } from "./ui.js";
+import {
+  showSetupMode,
+  showScannerMode,
+  syncEditorFrameWithTabId,
+  updateList,
+} from "./ui.js";
 import { detectAndShowPresets } from "./engine-detect.js";
 
 export function createTabContextController({
@@ -40,6 +45,11 @@ export function createTabContextController({
 
       const tabSignature = `${tabId}|${tab?.url || ""}`;
       const tabChanged = tabSignature !== activeTabSignature;
+
+      if (tabChanged) {
+        syncEditorFrameWithTabId(tabId);
+      }
+
       const scannerReady = await checkScannerStatus();
 
       if (!scannerReady) {

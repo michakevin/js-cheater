@@ -20,6 +20,7 @@ jest.mock("../../src/popup/dialog.js", () => ({
 
 import {
   renderHitsWithSaveButtons,
+  syncEditorFrameWithTabId,
   updateList,
   showLoading,
   setScanButtonsDisabled,
@@ -168,5 +169,23 @@ describe("ui rendering", () => {
     expect(
       document.getElementById("refineScanGroup").classList.contains("hidden"),
     ).toBe(true);
+  });
+
+  test("syncEditorFrameWithTabId updates iframe source only on tab changes", () => {
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      '<iframe id="editorFrame"></iframe>',
+    );
+
+    syncEditorFrameWithTabId(11);
+    const frame = document.getElementById("editorFrame");
+    expect(frame.src).toContain("rpgmaker-data-editor.html?tabId=11");
+
+    const firstSrc = frame.src;
+    syncEditorFrameWithTabId(11);
+    expect(frame.src).toBe(firstSrc);
+
+    syncEditorFrameWithTabId(15);
+    expect(frame.src).toContain("rpgmaker-data-editor.html?tabId=15");
   });
 });
