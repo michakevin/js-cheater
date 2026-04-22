@@ -33,21 +33,6 @@ export default [
     },
   },
   {
-    files: ["scripts/templates/**/*.js"],
-    languageOptions: {
-      ecmaVersion: 12,
-      sourceType: "script",
-      globals: {
-        ...browserGlobals,
-        chrome: "readonly",
-        __DEBUG_VALUE__: "readonly",
-      },
-    },
-    rules: {
-      "no-redeclare": "off",
-    },
-  },
-  {
     files: ["tests/**/*.js"],
     languageOptions: {
       ecmaVersion: 2022,
