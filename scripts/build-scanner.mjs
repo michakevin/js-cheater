@@ -7,9 +7,13 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const sourcePath = resolve(__dirname, "../src/scanner-source.js");
 const corePath = resolve(__dirname, "../src/scanner-core.js");
 const parsePathFile = resolve(__dirname, "../src/parse-path.js");
+const debugPath = resolve(__dirname, "../src/debug.js");
 const destPath = resolve(__dirname, "../src/popup/scanner-code.js");
 let sourceCode = await readFile(sourcePath, "utf8");
 let coreCode = await readFile(corePath, "utf8");
+const debugSource = await readFile(debugPath, "utf8");
+const debugMatch = debugSource.match(/DEBUG\s*=\s*([^;]+);/);
+const debugValue = debugMatch ? debugMatch[1].trim() : "false";
 
 let parsePath = await readFile(parsePathFile, "utf8");
 parsePath = parsePath.replace(/^export\s+/, "").trim();
@@ -37,6 +41,11 @@ coreCode = coreCode.replace(/^export\s+(function\s+createScanner)/m, "$1");
 sourceCode = sourceCode.replace(
   /^import\s+\{\s*createScanner\s*\}\s+from\s+"\.\/scanner-core\.js";\r?\n/m,
   "",
+);
+
+sourceCode = sourceCode.replace(
+  /const\s+BUILD_DEBUG\s*=\s*[^;]+;/,
+  `const BUILD_DEBUG = ${debugValue};`,
 );
 
 const combined = coreCode + "\n" + sourceCode;

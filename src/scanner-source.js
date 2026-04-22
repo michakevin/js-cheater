@@ -1,7 +1,9 @@
 import { createScanner } from "./scanner-core.js";
 // JS-Cheater Scanner - Füge diesen Code in die Browser-Konsole ein
 (function () {
-  const DEBUG = window.DEBUG || false;
+  const BUILD_DEBUG = false;
+  const runtimeDebug = window.__jsCheaterDebug__;
+  const DEBUG = typeof runtimeDebug === "boolean" ? runtimeDebug : BUILD_DEBUG;
   if (DEBUG) console.log("🎮 JS-Cheater Scanner wird geladen...");
 
   window.__cheatScanner__ = createScanner(DEBUG);
