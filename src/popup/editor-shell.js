@@ -35,7 +35,7 @@ export function createTabSender(
 ) {
   return async function send(cmd, extra = {}) {
     const tabId = getTabId();
-    if (!tabId) throw new Error(missingTabMessage);
+    if (tabId == null) throw new Error(missingTabMessage);
     return sendTabMessage(tabId, { cmd, ...extra });
   };
 }
