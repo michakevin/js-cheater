@@ -11,6 +11,7 @@ Policy baseline lives in `.github/copilot-instructions.md`.
 
 ## Commands
 - Build scanner bundle: `npm run build`
+- Clean extension dist outputs: `npm run clean:dist`
 - Lint: `npm run lint`
 - Format: `npm run format`
 - Unit tests only: `npm run test:unit`
