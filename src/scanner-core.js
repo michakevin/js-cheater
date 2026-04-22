@@ -242,6 +242,144 @@ export function createScanner(DEBUG = false) {
       }
       return this.hits.length;
     },
+    buildValuePasses: function ({
+      exactPredicate,
+      loosePredicate,
+      isNumericTarget,
+      isStringTarget,
+      conservativeMode,
+      priorityPatterns,
+    }) {
+      const passes = [
+        {
+          predicate: exactPredicate,
+          depth: isNumericTarget ? 5 : 4,
+          opts: {
+            maxTime: isNumericTarget ? 1600 : 900,
+            allowGetters: false,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: isNumericTarget ? 450 : 320,
+            maxHits: isNumericTarget ? 1200 : 450,
+            priorityPatterns,
+          },
+        },
+        {
+          predicate: exactPredicate,
+          depth: isNumericTarget ? 8 : 6,
+          opts: {
+            maxTime: isNumericTarget ? 3600 : 1500,
+            allowGetters: isNumericTarget && !isStringTarget,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: isNumericTarget ? 900 : 500,
+            maxHits: isNumericTarget ? 1500 : 600,
+            priorityPatterns,
+          },
+        },
+      ];
+
+      if (isNumericTarget && !conservativeMode) {
+        passes.push({
+          predicate: exactPredicate,
+          depth: 10,
+          opts: {
+            maxTime: 5000,
+            allowGetters: true,
+            includeNonEnumerableKeys: true,
+            maxKeysPerObject: 1200,
+            maxHits: 1800,
+            priorityPatterns,
+          },
+        });
+      }
+
+      if (isNumericTarget && !conservativeMode && loosePredicate) {
+        passes.push({
+          predicate: loosePredicate,
+          depth: 9,
+          opts: {
+            maxTime: 3200,
+            allowGetters: true,
+            includeNonEnumerableKeys: true,
+            maxKeysPerObject: 1000,
+            maxHits: 1000,
+            priorityPatterns,
+          },
+        });
+      }
+
+      return passes;
+    },
+    buildNamePasses: function ({
+      predicate,
+      loweredName,
+      conservativeMode,
+      priorityPatterns,
+      loosePredicate,
+      includeLooseNumeric = false,
+    }) {
+      const passes = [
+        {
+          predicate,
+          depth: 5,
+          opts: {
+            maxTime: 1200,
+            allowGetters: false,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: 350,
+            maxHits: 800,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        },
+        {
+          predicate,
+          depth: 8,
+          opts: {
+            maxTime: 2800,
+            allowGetters: true,
+            includeNonEnumerableKeys: false,
+            maxKeysPerObject: 700,
+            maxHits: 1200,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        },
+      ];
+
+      if (!conservativeMode) {
+        passes.push({
+          predicate,
+          depth: 10,
+          opts: {
+            maxTime: 3500,
+            allowGetters: true,
+            includeNonEnumerableKeys: true,
+            maxKeysPerObject: 1000,
+            maxHits: 1500,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        });
+      }
+
+      if (includeLooseNumeric && !conservativeMode && loosePredicate) {
+        passes.push({
+          predicate: loosePredicate,
+          depth: 9,
+          opts: {
+            maxTime: 3200,
+            allowGetters: true,
+            includeNonEnumerableKeys: true,
+            maxKeysPerObject: 1000,
+            maxHits: 1000,
+            keyHint: loweredName,
+            priorityPatterns,
+          },
+        });
+      }
+
+      return passes;
+    },
     scan: function (value) {
       if (DEBUG) console.log("🔍 Scanning for:", value, "type:", typeof value);
       const priorityPatterns = GAME_KEYWORDS_VALUE;
@@ -262,62 +400,14 @@ export function createScanner(DEBUG = false) {
         return false;
       };
 
-      const passes = [
-        {
-          predicate: exactMatch,
-          depth: isNumericTarget ? 5 : 4,
-          opts: {
-            maxTime: isNumericTarget ? 1600 : 900,
-            allowGetters: false,
-            includeNonEnumerableKeys: false,
-            maxKeysPerObject: isNumericTarget ? 450 : 320,
-            maxHits: isNumericTarget ? 1200 : 450,
-            priorityPatterns,
-          },
-        },
-        {
-          predicate: exactMatch,
-          depth: isNumericTarget ? 8 : 6,
-          opts: {
-            maxTime: isNumericTarget ? 3600 : 1500,
-            allowGetters: isNumericTarget && !isStringTarget,
-            includeNonEnumerableKeys: false,
-            maxKeysPerObject: isNumericTarget ? 900 : 500,
-            maxHits: isNumericTarget ? 1500 : 600,
-            priorityPatterns,
-          },
-        },
-      ];
-
-      if (isNumericTarget && !conservativeMode) {
-        passes.push({
-          predicate: exactMatch,
-          depth: 10,
-          opts: {
-            maxTime: 5000,
-            allowGetters: true,
-            includeNonEnumerableKeys: true,
-            maxKeysPerObject: 1200,
-            maxHits: 1800,
-            priorityPatterns,
-          },
-        });
-      }
-
-      if (isNumericTarget && !conservativeMode) {
-        passes.push({
-          predicate: looseNumericMatch,
-          depth: 9,
-          opts: {
-            maxTime: 3200,
-            allowGetters: true,
-            includeNonEnumerableKeys: true,
-            maxKeysPerObject: 1000,
-            maxHits: 1000,
-            priorityPatterns,
-          },
-        });
-      }
+      const passes = this.buildValuePasses({
+        exactPredicate: exactMatch,
+        loosePredicate: looseNumericMatch,
+        isNumericTarget,
+        isStringTarget,
+        conservativeMode,
+        priorityPatterns,
+      });
 
       return this.runPasses(passes);
     },
@@ -347,50 +437,12 @@ export function createScanner(DEBUG = false) {
         return matches && isPrimitive;
       };
 
-      const passes = [
-        {
-          predicate: matchByName,
-          depth: 5,
-          opts: {
-            maxTime: 1200,
-            allowGetters: false,
-            includeNonEnumerableKeys: false,
-            maxKeysPerObject: 350,
-            maxHits: 800,
-            keyHint: loweredName,
-            priorityPatterns,
-          },
-        },
-        {
-          predicate: matchByName,
-          depth: 8,
-          opts: {
-            maxTime: 2800,
-            allowGetters: true,
-            includeNonEnumerableKeys: false,
-            maxKeysPerObject: 700,
-            maxHits: 1200,
-            keyHint: loweredName,
-            priorityPatterns,
-          },
-        },
-      ];
-
-      if (!conservativeMode) {
-        passes.push({
-          predicate: matchByName,
-          depth: 10,
-          opts: {
-            maxTime: 3500,
-            allowGetters: true,
-            includeNonEnumerableKeys: true,
-            maxKeysPerObject: 1000,
-            maxHits: 1500,
-            keyHint: loweredName,
-            priorityPatterns,
-          },
-        });
-      }
+      const passes = this.buildNamePasses({
+        predicate: matchByName,
+        loweredName,
+        conservativeMode,
+        priorityPatterns,
+      });
 
       return this.runPasses(passes);
     },
@@ -447,66 +499,14 @@ export function createScanner(DEBUG = false) {
         return false;
       };
 
-      const passes = [
-        {
-          predicate: matchByNameAndValue,
-          depth: 5,
-          opts: {
-            maxTime: 1200,
-            allowGetters: false,
-            includeNonEnumerableKeys: false,
-            maxKeysPerObject: 350,
-            maxHits: 800,
-            keyHint: loweredName,
-            priorityPatterns,
-          },
-        },
-        {
-          predicate: matchByNameAndValue,
-          depth: 8,
-          opts: {
-            maxTime: 2800,
-            allowGetters: true,
-            includeNonEnumerableKeys: false,
-            maxKeysPerObject: 700,
-            maxHits: 1200,
-            keyHint: loweredName,
-            priorityPatterns,
-          },
-        },
-      ];
-
-      if (!conservativeMode) {
-        passes.push({
-          predicate: matchByNameAndValue,
-          depth: 10,
-          opts: {
-            maxTime: 3500,
-            allowGetters: true,
-            includeNonEnumerableKeys: true,
-            maxKeysPerObject: 1000,
-            maxHits: 1500,
-            keyHint: loweredName,
-            priorityPatterns,
-          },
-        });
-      }
-
-      if (isNumericTarget && !conservativeMode) {
-        passes.push({
-          predicate: looseMatchByNameAndValue,
-          depth: 9,
-          opts: {
-            maxTime: 3200,
-            allowGetters: true,
-            includeNonEnumerableKeys: true,
-            maxKeysPerObject: 1000,
-            maxHits: 1000,
-            keyHint: loweredName,
-            priorityPatterns,
-          },
-        });
-      }
+      const passes = this.buildNamePasses({
+        predicate: matchByNameAndValue,
+        loweredName,
+        conservativeMode,
+        priorityPatterns,
+        loosePredicate: looseMatchByNameAndValue,
+        includeLooseNumeric: isNumericTarget,
+      });
 
       return this.runPasses(passes);
     },
