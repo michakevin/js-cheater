@@ -302,7 +302,7 @@ describe("list and helpers", () => {
     window.listVar = 55;
     delete window.__cheatScanner__;
 
-    window.DEBUG = true;
+    window.__jsCheaterDebug__ = true;
 
     const originalConsoleLog = console.log;
     console.log = jest.fn();
@@ -311,7 +311,7 @@ describe("list and helpers", () => {
   });
 
   afterEach(() => {
-    delete window.DEBUG;
+    delete window.__jsCheaterDebug__;
   });
 
   test("list returns path/value pairs", () => {
