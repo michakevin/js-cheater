@@ -55,10 +55,8 @@ Viele Spiele liefern strenge CSP‑Header. Daher wird der Scanner nicht automati
    - Chrome → `chrome://extensions/`
    - Firefox → `about:debugging#/runtime/this-firefox`
 6. Entwicklermodus aktivieren → **Entpackte Erweiterung laden** → Projektordner wählen
-7. **Nur Firefox (MV2):** `npm run use:firefox` ausführen, damit `manifest.json` auf die Firefox-Variante zeigt.
-8. 🎮 GamePad‑Icon erscheint in der Toolbar
-9. Chrome meldet beim Laden möglicherweise `Unrecognized manifest key 'sidebar_action'`. Diese Warnung ist harmlos, da das Feld nur von Firefox genutzt wird.
-10. Für Chrome wieder auf MV3 zurückschalten: `npm run use:chrome`.
+7. 🎮 GamePad‑Icon erscheint in der Toolbar
+8. Chrome meldet beim Laden möglicherweise `Unrecognized manifest key 'sidebar_action'`. Diese Warnung ist harmlos.
 
 ## Schnellstart
 
@@ -149,8 +147,7 @@ npm run test:e2e     # Startet die Playwright-Tests (benötigt installierte Brow
 - **Testen:** Unit-Tests mit `npm test`, E2E-Tests mit `npm run test:e2e`. Führe zuvor `npm install` oder `npm run setup` aus.
 - **Manuelles Testen:** Die Erweiterung kann weiterhin als entpackte Erweiterung geladen werden (Chrome oder Firefox).
 - **Reload:** Nach Code-Änderungen die Erweiterung in `chrome://extensions/` bzw. `about:debugging` neu laden.
-- **Manifest:** `manifest.json` wird durch `npm run use:chrome` bzw. `npm run use:firefox` überschrieben. Änderungen direkt in `manifest.json` gehen dabei verloren – stattdessen `manifest.chrome.json` oder `manifest.firefox.json` bearbeiten.
-- **Hinweis:** Das Feld `sidebar_action` wird nur von Firefox verwendet. Chrome ignoriert es und zeigt beim Laden der Erweiterung lediglich die Warnung `Unrecognized manifest key 'sidebar_action'` an. Wer eine warnungsfreie Version bauen möchte, kann ein kleines Skript schreiben, das vor dem Packen eine manifest.json ohne dieses Feld erzeugt.
+- **Manifest:** `manifest.json` ist das einheitliche Manifest (MV3), das direkt in Chrome und Firefox geladen werden kann. Das Feld `sidebar_action` wird nur von Firefox genutzt; Chrome ignoriert es mit einer harmlosen Warnung.
 
 **Tipp:**
 

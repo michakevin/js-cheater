@@ -13,8 +13,7 @@ import {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, "..");
 const distDir = resolve(projectRoot, "dist");
-const mv3ManifestPath = resolve(projectRoot, "manifest.chrome.json");
-const mv2ManifestPath = resolve(projectRoot, "manifest.firefox.json");
+const unifiedManifestPath = resolve(projectRoot, "manifest.json");
 const debugPath = resolve(projectRoot, "src/debug.js");
 const mv2BackgroundPath = resolve(projectRoot, "src/background.js");
 
@@ -56,6 +55,13 @@ async function writeManifest(targetDir, manifest) {
   );
 }
 
+function stripFirefoxFields(manifest) {
+  const m = JSON.parse(JSON.stringify(manifest));
+  delete m.sidebar_action;
+  delete m.browser_specific_settings;
+  return m;
+}
+
 function transformToMv2Manifest(baseManifest) {
   const manifest = JSON.parse(JSON.stringify(baseManifest));
   manifest.manifest_version = 2;
@@ -75,6 +81,10 @@ function transformToMv2Manifest(baseManifest) {
 
   if (!Array.isArray(manifest.permissions)) {
     manifest.permissions = [];
+  }
+
+  if (!manifest.permissions.includes("clipboardWrite")) {
+    manifest.permissions.push("clipboardWrite");
   }
 
   if (Array.isArray(manifest.host_permissions)) {
@@ -135,7 +145,7 @@ async function buildMv3(manifest, debugValue) {
   await copyOptionalFile(resolve(projectRoot, "favicon.ico"), targetDir);
   await copyOptionalFile(resolve(projectRoot, "test.html"), targetDir);
   await patchDebugConstant(resolve(targetDir, "src/content.js"), debugValue);
-  await writeManifest(targetDir, manifest);
+  await writeManifest(targetDir, stripFirefoxFields(manifest));
   console.info("Built MV3 package in dist/mv3");
 }
 
@@ -171,14 +181,13 @@ async function main() {
   await ensureScannerBuild();
   await resetDist();
 
-  const mv3Manifest = JSON.parse(await readFile(mv3ManifestPath, "utf8"));
-  const mv2Manifest = JSON.parse(await readFile(mv2ManifestPath, "utf8"));
+  const unifiedManifest = JSON.parse(await readFile(unifiedManifestPath, "utf8"));
   const debugSource = await readFile(debugPath, "utf8");
   const debugMatch = debugSource.match(/DEBUG\s*=\s*([^;]+);/);
   const debugValue = debugMatch ? debugMatch[1].trim() : "false";
 
-  await buildMv3(mv3Manifest, debugValue);
-  await buildMv2(mv2Manifest, debugValue);
+  await buildMv3(unifiedManifest, debugValue);
+  await buildMv2(unifiedManifest, debugValue);
 }
 
 await main();

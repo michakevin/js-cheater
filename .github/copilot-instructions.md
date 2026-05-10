@@ -10,9 +10,7 @@ For setup and command details, see `AGENTS.md`.
 - Keep the popup free of external UI frameworks.
 
 ## Architecture Guardrails
-- `manifest.chrome.json` is the Manifest V3 source manifest.
-- Keep Firefox-specific compatibility in `manifest.firefox.json`.
-- `manifest.json` is the active local manifest selected via `npm run use:chrome` / `npm run use:firefox`.
+- `manifest.json` is the unified Manifest V3 that loads in both Chrome and Firefox without any pre-step.
 - Do not hand-edit generated `src/popup/scanner-code.js`; rebuild it.
 
 ## Code Quality

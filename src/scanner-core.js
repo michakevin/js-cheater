@@ -705,6 +705,10 @@ export function createScanner(DEBUG = false) {
             typeof window.$gameParty !== "undefined" &&
             typeof window.$gameActors !== "undefined" &&
             typeof window.effekseer !== "undefined",
+          getVersion: () => ({
+            exactName: "RPG Maker MZ (Effekseer)",
+            version: window.Utils?.RPGMAKER_VERSION ?? null,
+          }),
         },
         {
           id: "rpgmaker-mv-mz",
@@ -714,6 +718,13 @@ export function createScanner(DEBUG = false) {
             typeof window.$gameActors !== "undefined" &&
             typeof window.SceneManager !== "undefined" &&
             typeof window.$dataSystem !== "undefined",
+          getVersion: () => {
+            const variant = window.Utils?.RPGMAKER_NAME;
+            return {
+              exactName: variant ? `RPG Maker ${variant}` : null,
+              version: window.Utils?.RPGMAKER_VERSION ?? null,
+            };
+          },
         },
         {
           id: "twine",
@@ -790,7 +801,13 @@ export function createScanner(DEBUG = false) {
         try {
           if (check.test()) {
             if (DEBUG) console.log("🎮 Engine erkannt:", check.name);
-            return { id: check.id, name: check.name };
+            const versionData = check.getVersion?.() ?? null;
+            return {
+              id: check.id,
+              name: check.name,
+              exactName: versionData?.exactName ?? null,
+              version: versionData?.version ?? null,
+            };
           }
         } catch {
           // skip failing detection

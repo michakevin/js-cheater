@@ -77,7 +77,7 @@ export async function detectAndShowPresets(containerId = "enginePresets") {
 
   container.classList.remove("hidden");
   const collapsed = await isCollapsedForDomain();
-  renderPresetPanel(container, preset, collapsed);
+  renderPresetPanel(container, preset, collapsed, engine);
 }
 
 /**
@@ -129,14 +129,16 @@ async function setCollapsedForDomain(collapsed) {
   }
 }
 
-function renderPresetPanel(container, preset, initialCollapsed = false) {
+function renderPresetPanel(container, preset, initialCollapsed = false, engine = null) {
   // Collapsible header
   const header = document.createElement("div");
   header.className = "engine-header engine-header-toggle";
   header.setAttribute("role", "button");
   header.setAttribute("tabindex", "0");
   const arrowChar = initialCollapsed ? "▶" : "▼";
-  header.innerHTML = `<span class="engine-toggle-arrow">${arrowChar}</span> <span class="engine-icon">${preset.icon}</span> <strong>${preset.name}</strong> erkannt`;
+  const displayName = engine?.exactName || preset.name;
+  const versionStr = engine?.version ? ` ${engine.version}` : "";
+  header.innerHTML = `<span class="engine-toggle-arrow">${arrowChar}</span> <span class="engine-icon">${preset.icon}</span> <strong>${displayName}${versionStr}</strong> erkannt`;
   container.appendChild(header);
 
   // Collapsible body wrapping description + presets

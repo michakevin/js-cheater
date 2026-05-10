@@ -34,9 +34,7 @@ Policy baseline lives in `.github/copilot-instructions.md`.
 - `scripts/build-scanner.mjs`: generates `src/popup/scanner-code.js`.
 - `tests/unit/`: Jest unit tests.
 - `tests/e2e/`: Playwright end-to-end tests.
-- `manifest.chrome.json`: Chrome Manifest V3 source manifest.
-- `manifest.json`: active local manifest (switched via `npm run use:chrome` / `npm run use:firefox`).
-- `manifest.firefox.json`: Firefox-specific manifest variant.
+- `manifest.json`: unified Manifest V3 that works in both Chrome and Firefox without any pre-step.
 
 ## Do-Don't
 - Do use existing npm scripts instead of ad-hoc command variants.
