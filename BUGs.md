@@ -241,10 +241,17 @@ zur jeweiligen Größe passende PNG-Datei.
 - **Nicht committete Working-Tree-Änderungen:** Mehrere `*.d.ts` sind als
   gelöscht markiert und `src/globals.d.ts` ist neu/ungetrackt. Vor dem nächsten
   Commit prüfen, ob das gewollt ist (betrifft `typecheck:dts`).
+  **Erledigt:** Momentaufnahme inzwischen obsolet – `src/globals.d.ts` ist
+  getrackt, der Working-Tree ist sauber und `npm run typecheck` läuft fehlerfrei.
+  Kein Code-Fix nötig.
 - **Freeze-Wert in Favoriten** ([src/popup/favorites-ui.js:124](src/popup/favorites-ui.js#L124)):
   Es wird `fav.value` (Stand zum Speicherzeitpunkt) eingefroren, nicht der aktuell
   im Eingabefeld stehende bzw. der live ausgelesene Wert. Verhalten ist
   nachvollziehbar, kann aber überraschen.
+  **Behoben:** Der Favoriten-Freeze nutzt jetzt den im „Neu"-Feld eingegebenen
+  Wert (typgerecht über die neue Helper-Funktion `coerceInputValue`), und fällt
+  nur bei leerem Feld auf `fav.value` zurück. Regressionstest in
+  [tests/unit/favorites.events.test.js](tests/unit/favorites.events.test.js).
 - **`setLocalStorage`-Import mergt statt zu ersetzen**
   ([src/content.js:124-143](src/content.js#L124-L143)): Vorhandene Keys, die
   nicht im Import enthalten sind, bleiben erhalten. Je nach Erwartung an einen

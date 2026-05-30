@@ -8,6 +8,23 @@ function renderFavoriteValue(value) {
   return safeStringify(value);
 }
 
+/**
+ * Coerce a raw input string into a number/boolean where appropriate, matching
+ * the type handling used when applying a new favorite value.
+ * @param {string} inputValue - already-trimmed input text
+ * @returns {number|boolean|string}
+ */
+function coerceInputValue(inputValue) {
+  const asNumber = Number(inputValue);
+  if (Number.isFinite(asNumber) && inputValue !== "") {
+    return asNumber;
+  }
+  if (inputValue === "true" || inputValue === "false") {
+    return inputValue === "true";
+  }
+  return inputValue;
+}
+
 export function renderFavorites(favorites, inputs) {
   const favoritesContent = document.getElementById("favoritesContent");
   if (!favoritesContent) return;
@@ -80,14 +97,7 @@ export function setupFavoritesEventListeners({
     if (!input) return;
     const inputValue = input.value.trim();
     if (!inputValue) return;
-    let newValue = inputValue;
-    const asNumber = Number(inputValue);
-    if (Number.isFinite(asNumber) && inputValue !== "") {
-      newValue = asNumber;
-    } else if (inputValue === "true" || inputValue === "false") {
-      newValue = inputValue === "true";
-    }
-    updateFavorite(id, newValue);
+    updateFavorite(id, coerceInputValue(inputValue));
   }
 
   async function handleDeleteFavorite(id) {
@@ -126,7 +136,12 @@ export function setupFavoritesEventListeners({
         target.textContent = "🔥";
         target.setAttribute("title", "Einfrieren aufheben");
         markFrozen(fav.path);
-        send("freeze", { path: fav.path, value: fav.value });
+        // Prefer the value the user just typed into the "Neu" field; fall back
+        // to the stored favorite value when the field is empty.
+        const input = document.getElementById(`newValue_${id}`);
+        const typed = input?.value.trim();
+        const freezeValue = typed ? coerceInputValue(typed) : fav.value;
+        send("freeze", { path: fav.path, value: freezeValue });
       } else {
         target.textContent = "❄️";
         target.setAttribute("title", "Einfrieren");

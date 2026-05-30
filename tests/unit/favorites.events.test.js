@@ -128,4 +128,26 @@ describe("favorite events", () => {
     expect(send).toHaveBeenCalledWith("unfreeze", { path: "player.hp" });
     expect(btn.classList.contains("active")).toBe(false);
   });
+
+  test("freeze uses the value typed into the input field", async () => {
+    storeFavorites({ 1: { id: "1", name: "hp", path: "player.hp", value: 1 } });
+    await loadFavorites();
+    await waitTick();
+    setupFavoritesEventListeners();
+
+    const input = document.getElementById("newValue_1");
+    expect(input).not.toBeNull();
+    input.value = "999";
+
+    const btn = document.querySelector(".freeze-btn");
+    btn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await waitTick();
+
+    // The freshly typed value (coerced to a number) is frozen, not the
+    // stored favorite value of 1.
+    expect(send).toHaveBeenCalledWith("freeze", {
+      path: "player.hp",
+      value: 999,
+    });
+  });
 });
