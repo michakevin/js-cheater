@@ -1,11 +1,11 @@
 {
   "name": "js-cheater",
   "description": "Cheat-Engine-ähnlicher Scanner für Browser-RPGs",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "manifest_version": 3,
   "browser_specific_settings": {
     "gecko": {
-      "id": "js-cheater@example.com",
+      "id": "js-cheater@michakevin.de",
       "strict_min_version": "116.0"
     }
   },
