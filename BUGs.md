@@ -177,7 +177,7 @@ Weiterschaltung (da `abort()` zusätzlich `onerror` auslöst). Regressionstest i
 
 ## Niedrig / Latent
 
-### 7. ⚠️ Build escaped Backslashes nur in `parse-path`, nicht im restlichen Scanner-Code
+### 7. ✅ [BEHOBEN] Build escaped Backslashes nur in `parse-path`, nicht im restlichen Scanner-Code
 
 [scripts/build-scanner.mjs:21](scripts/build-scanner.mjs#L21) und
 [scripts/build-scanner.mjs:52](scripts/build-scanner.mjs#L52)
@@ -189,6 +189,15 @@ Template-Literal werden nur Backticks und `${` escaped – Backslashes aus
 zufällig keine Backslashes. Sobald aber z. B. ein Regex mit `\d`/`\s` in
 `scanner-core.js` ergänzt wird, würde der generierte `SCANNER_CODE` beim
 Template-Literal-Auswerten beschädigt. Latente Build-Fragilität.
+
+**Behoben:** Die Escaping-Logik liegt jetzt in
+[scripts/escape-template.js](scripts/escape-template.js) (`escapeForTemplate`)
+und verdoppelt Backslashes für den **gesamten** kombinierten Scanner-Code –
+zuerst Backslashes, dann Backticks und `${` (Reihenfolge ist wichtig). Das
+Sonder-Escaping nur für `parse-path` in
+[scripts/build-scanner.mjs](scripts/build-scanner.mjs) entfällt. Roundtrip-Test
+(inkl. `\d`/`\s`-Regex) in
+[tests/unit/escape-template.test.js](tests/unit/escape-template.test.js).
 
 ### 8. ⚠️ `findAll` – ungeschützter Zugriff auf `constructor.prototype`
 

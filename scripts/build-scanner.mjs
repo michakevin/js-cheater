@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "fs/promises";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import { escapeForTemplate } from "./escape-template.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -17,8 +18,8 @@ const debugValue = debugMatch ? debugMatch[1].trim() : "false";
 
 let parsePath = await readFile(parsePathFile, "utf8");
 parsePath = parsePath.replace(/^export\s+/, "").trim();
-// Escape backslashes for embedding in a template literal
-parsePath = parsePath.replace(/\\/g, "\\\\");
+// Note: backslashes are escaped uniformly for the whole combined source below
+// (see the `escaped` step), so no per-file escaping is needed here.
 
 // remove import line referencing parse-path.js in core
 coreCode = coreCode.replace(
@@ -49,7 +50,7 @@ sourceCode = sourceCode.replace(
 );
 
 const combined = coreCode + "\n" + sourceCode;
-const escaped = combined.replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
+const escaped = escapeForTemplate(combined);
 
 const out = `export const SCANNER_CODE = \`\n${escaped}\`;\n`;
 
