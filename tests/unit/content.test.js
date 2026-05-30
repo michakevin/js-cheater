@@ -230,6 +230,70 @@ describe("content message handler", () => {
     expect(sendResponse).toHaveBeenCalledWith({ success: true });
   });
 
+  test("setRpgMakerSave preserves object encoding for IndexedDB slots", async () => {
+    const puts = [];
+    const fakeStore = {
+      put(value, key) {
+        puts.push({ value, key });
+        const req = {};
+        setTimeout(() => req.onsuccess && req.onsuccess(), 0);
+        return req;
+      },
+    };
+    const fakeDb = {
+      objectStoreNames: ["keyvaluepairs"],
+      transaction: () => ({ objectStore: () => fakeStore }),
+      close() {},
+    };
+    globalThis.indexedDB = {
+      open() {
+        const req = {};
+        setTimeout(
+          () => req.onsuccess && req.onsuccess({ target: { result: fakeDb } }),
+          0,
+        );
+        return req;
+      },
+    };
+
+    try {
+      // encoding "json" → object slot must be written back as an object
+      listener(
+        {
+          cmd: "setRpgMakerSave",
+          key: "rmmzsave1",
+          source: "indexedDB",
+          raw: '{"gold":5}',
+          encoding: "json",
+        },
+        null,
+        jest.fn(),
+      );
+      await new Promise((r) => setTimeout(r, 50));
+
+      // encoding "string" → keep the raw string
+      listener(
+        {
+          cmd: "setRpgMakerSave",
+          key: "rmmzsave2",
+          source: "indexedDB",
+          raw: "compressed-string",
+          encoding: "string",
+        },
+        null,
+        jest.fn(),
+      );
+      await new Promise((r) => setTimeout(r, 50));
+
+      expect(puts).toEqual([
+        { key: "rmmzsave1", value: { gold: 5 } },
+        { key: "rmmzsave2", value: "compressed-string" },
+      ]);
+    } finally {
+      delete globalThis.indexedDB;
+    }
+  });
+
   test("sendCommand timeout returns indicator", async () => {
     jest.useFakeTimers();
     window.postMessage = jest.fn();

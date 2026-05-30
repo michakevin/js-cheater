@@ -133,7 +133,7 @@ einheitlich; Refine verwirft string-/bigint-gespeicherte Zahlen nicht mehr.
 Generierte [src/popup/scanner-code.js](src/popup/scanner-code.js) neu gebaut.
 Regressionstest in [tests/unit/scanner.test.js](tests/unit/scanner.test.js).
 
-### 5. ⚠️ Re-Encoding von Objekt-Speicherständen ändert den Typ (Datenintegrität)
+### 5. ✅ [BEHOBEN] Re-Encoding von Objekt-Speicherständen ändert den Typ (Datenintegrität)
 
 [src/content.js:274](src/content.js#L274) und
 [src/popup/save-editor.js:758-779](src/popup/save-editor.js#L758-L779)
@@ -147,6 +147,14 @@ kann ihn dann u. U. nicht mehr korrekt lesen.
 
 Betrifft Spiele mit unkomprimierten Objekt-Saves (Format `"json"`); bei den
 üblichen LZString-/zlib-komprimierten String-Saves ist der Roundtrip korrekt.
+
+**Behoben:** `readLocalForage` merkt sich jetzt pro Slot das ursprüngliche
+Encoding (`encoding: "string" | "json"`). Der Save-Editor
+([src/popup/save-editor.js](src/popup/save-editor.js)) reicht es beim Speichern
+an `setRpgMakerSave` zurück; `writeLocalForage` ([src/content.js](src/content.js))
+parst bei `encoding === "json"` den JSON-String vor dem `store.put` wieder zu
+einem Objekt, sodass der Original-Typ erhalten bleibt. Regressionstest in
+[tests/unit/content.test.js](tests/unit/content.test.js).
 
 ### 6. ⚠️ `writeLocalForage` erzeugt leere „Phantom"-IndexedDB-Datenbanken
 

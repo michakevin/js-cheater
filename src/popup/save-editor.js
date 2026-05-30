@@ -34,8 +34,8 @@ let hasChanges = false;
 
 /**
  * Cache of slot data from the last getRpgMakerSaves call.
- * Maps "key" → { key, source, raw }.
- * @type {Map<string, {key: string, source: string, raw: string}>}
+ * Maps "key" → { key, source, raw, encoding? }.
+ * @type {Map<string, {key: string, source: string, raw: string, encoding?: string}>}
  */
 const slotCache = new Map();
 
@@ -767,6 +767,8 @@ async function saveChanges() {
       key: currentSlotKey,
       source: currentSlotSource,
       raw: encoded,
+      // Preserve the original IndexedDB storage type (object vs. string).
+      encoding: slotCache.get(currentSlotKey)?.encoding,
     });
 
     if (!saveResult || saveResult.success !== true) {

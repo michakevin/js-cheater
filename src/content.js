@@ -176,17 +176,17 @@
     },
     /**
      * Write a single RPG Maker save slot back.
-     * @param {{key: string, source: string, raw: string}} msg
+     * @param {{key: string, source: string, raw: string, encoding?: string}} msg
      */
     setRpgMakerSave: async (msg) => {
-      const { key, source, raw } = msg;
+      const { key, source, raw, encoding } = msg;
       if (source === "localStorage") {
         localStorage.setItem(key, raw);
         return { success: true };
       }
       if (source === "indexedDB") {
         try {
-          await writeLocalForage(key, raw);
+          await writeLocalForage(key, raw, encoding);
           return { success: true };
         } catch (e) {
           return { error: e.message };
@@ -219,7 +219,7 @@
   /**
    * Read all RPG Maker MZ save entries from IndexedDB (localforage).
    * localforage uses DB "localforage" with store "keyvaluepairs".
-   * @returns {Promise<Array<{key: string, source: string, raw: string}>>}
+   * @returns {Promise<Array<{key: string, source: string, raw: string, encoding: string}>>}
    */
   function readLocalForage() {
     return new Promise((resolve, reject) => {
@@ -271,8 +271,17 @@
                       /^(file|save)\d+$/i.test(k) ||
                       /^(config|global)$/i.test(k))
                   ) {
-                    const raw = typeof v === "string" ? v : JSON.stringify(v);
-                    results.push({ key: k, source: "indexedDB", raw });
+                    const isString = typeof v === "string";
+                    const raw = isString ? v : JSON.stringify(v);
+                    // Remember the original storage encoding so the write-back
+                    // can restore the same type (object slots must not become
+                    // strings, or the game may fail to read them).
+                    results.push({
+                      key: k,
+                      source: "indexedDB",
+                      raw,
+                      encoding: isString ? "string" : "json",
+                    });
                   }
                   cursor.continue();
                 } else {
@@ -307,9 +316,20 @@
    * Write a value back to localforage IndexedDB.
    * @param {string} key
    * @param {string} raw
+   * @param {string} [encoding] - "json" if the slot was originally stored as a
+   *   non-string object; the raw JSON is then parsed back to an object before
+   *   writing so the stored type is preserved.
    * @returns {Promise<void>}
    */
-  function writeLocalForage(key, raw) {
+  function writeLocalForage(key, raw, encoding) {
+    let value = raw;
+    if (encoding === "json") {
+      try {
+        value = JSON.parse(raw);
+      } catch {
+        value = raw;
+      }
+    }
     return new Promise((resolve, reject) => {
       const dbNames = ["localforage", "RPG Maker MZ"];
       let tried = 0;
@@ -337,7 +357,7 @@
             try {
               const tx = db.transaction(storeName, "readwrite");
               const store = tx.objectStore(storeName);
-              const putReq = store.put(raw, key);
+              const putReq = store.put(value, key);
               putReq.onsuccess = () => {
                 db.close();
                 resolve();
