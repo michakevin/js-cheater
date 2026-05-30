@@ -160,12 +160,20 @@ export function createScanner(DEBUG = false) {
       if (seen.has(root)) return out;
       seen.add(root);
 
-      // Skip prototype objects to avoid triggering illegal invocation errors
-      if (
-        typeof root === "object" &&
-        root.constructor &&
-        root.constructor.prototype === root
-      ) {
+      // Skip prototype objects to avoid triggering illegal invocation errors.
+      // Accessing constructor/prototype can throw for exotic objects with a
+      // throwing getter, so guard it — the first findAll(window, ...) call in
+      // runPasses is not wrapped by the recursive try/catch below, so an
+      // unguarded throw here could abort the entire scan pass.
+      try {
+        if (
+          typeof root === "object" &&
+          root.constructor &&
+          root.constructor.prototype === root
+        ) {
+          return out;
+        }
+      } catch {
         return out;
       }
 

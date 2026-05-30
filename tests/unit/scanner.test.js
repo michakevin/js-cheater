@@ -358,3 +358,31 @@ describe("list and helpers", () => {
     expect(info.hitCount).toBe(0);
   });
 });
+
+describe("findAll robustness", () => {
+  beforeEach(() => {
+    delete window.__cheatScanner__;
+    const originalConsoleLog = console.log;
+    console.log = jest.fn();
+    eval(SCANNER_CODE);
+    console.log = originalConsoleLog;
+  });
+
+  test("does not throw on a root with a throwing constructor getter", () => {
+    const scanner = window.__cheatScanner__;
+    const evil = { hp: 100 };
+    Object.defineProperty(evil, "constructor", {
+      get() {
+        throw new Error("boom");
+      },
+    });
+
+    // The previously unguarded constructor/prototype access threw here,
+    // aborting the whole scan pass. It must now bail this branch gracefully.
+    let out;
+    expect(() => {
+      out = scanner.findAll(evil, (v) => v === 100);
+    }).not.toThrow();
+    expect(Array.isArray(out)).toBe(true);
+  });
+});

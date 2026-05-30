@@ -199,7 +199,7 @@ Sonder-Escaping nur für `parse-path` in
 (inkl. `\d`/`\s`-Regex) in
 [tests/unit/escape-template.test.js](tests/unit/escape-template.test.js).
 
-### 8. ⚠️ `findAll` – ungeschützter Zugriff auf `constructor.prototype`
+### 8. ✅ [BEHOBEN] `findAll` – ungeschützter Zugriff auf `constructor.prototype`
 
 [src/scanner-core.js:146-151](src/scanner-core.js#L146-L151),
 Top-Level-Aufruf in [src/scanner-core.js:229](src/scanner-core.js#L229)
@@ -214,6 +214,12 @@ Bei rekursiven Aufrufen ist das durch das umschließende try/catch abgefangen,
 der erste Aufruf `findAll(window, ...)` in `runPasses` jedoch nicht. Ein exotisches
 globales Objekt mit werfendem `constructor`-Getter könnte den gesamten
 Scan-Pass abbrechen. Geringe Eintrittswahrscheinlichkeit.
+
+**Behoben:** Der `constructor`/`prototype`-Check in `findAll`
+([src/scanner-core.js](src/scanner-core.js)) ist jetzt in try/catch gekapselt
+und bricht im Fehlerfall nur diesen Zweig ab (statt den ganzen Scan).
+Regressionstest mit werfendem `constructor`-Getter in
+[tests/unit/scanner.test.js](tests/unit/scanner.test.js).
 
 ### 9. ⚠️ Manifest: alle Icon-Größen zeigen auf das 128px-PNG
 
