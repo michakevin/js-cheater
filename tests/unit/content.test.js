@@ -294,6 +294,47 @@ describe("content message handler", () => {
     }
   });
 
+  test("writeLocalForage aborts and does not create phantom DBs when missing", async () => {
+    const aborts = [];
+    globalThis.indexedDB = {
+      open() {
+        const req = {};
+        const tx = { abort: () => aborts.push(true) };
+        // Simulate a non-existent DB: the browser fires onupgradeneeded.
+        setTimeout(
+          () =>
+            req.onupgradeneeded &&
+            req.onupgradeneeded({ target: { transaction: tx } }),
+          0,
+        );
+        return req;
+      },
+    };
+
+    const sendResponse = jest.fn();
+    try {
+      listener(
+        {
+          cmd: "setRpgMakerSave",
+          key: "rmmzsave1",
+          source: "indexedDB",
+          raw: "{}",
+          encoding: "json",
+        },
+        null,
+        sendResponse,
+      );
+      await new Promise((r) => setTimeout(r, 50));
+
+      // Both candidate DBs were aborted (not created), and the save reports
+      // that no save DB was found.
+      expect(aborts).toHaveLength(2);
+      expect(sendResponse).toHaveBeenCalledWith({ error: "Save-DB not found" });
+    } finally {
+      delete globalThis.indexedDB;
+    }
+  });
+
   test("sendCommand timeout returns indicator", async () => {
     jest.useFakeTimers();
     window.postMessage = jest.fn();

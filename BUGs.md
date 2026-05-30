@@ -156,7 +156,7 @@ parst bei `encoding === "json"` den JSON-String vor dem `store.put` wieder zu
 einem Objekt, sodass der Original-Typ erhalten bleibt. Regressionstest in
 [tests/unit/content.test.js](tests/unit/content.test.js).
 
-### 6. ⚠️ `writeLocalForage` erzeugt leere „Phantom"-IndexedDB-Datenbanken
+### 6. ✅ [BEHOBEN] `writeLocalForage` erzeugt leere „Phantom"-IndexedDB-Datenbanken
 
 [src/content.js:312-360](src/content.js#L312-L360)
 
@@ -165,6 +165,13 @@ Anders als `readLocalForage` (das in `onupgradeneeded` die Transaktion via
 **keinen** `onupgradeneeded`-Handler. Ein `indexedDB.open("localforage")` bzw.
 `open("RPG Maker MZ")` auf einer nicht existierenden DB legt diese damit als
 leere Datenbank an. Folge: ungewollte, leere DBs im Origin des Spiels.
+
+**Behoben:** `writeLocalForage` ([src/content.js](src/content.js)) hat jetzt –
+analog zu `readLocalForage` – einen `onupgradeneeded`-Handler, der die
+automatisch angelegte versionchange-Transaktion via `abort()` verwirft und zur
+nächsten DB weitergeht. Ein `advanced`-Guard verhindert doppelte
+Weiterschaltung (da `abort()` zusätzlich `onerror` auslöst). Regressionstest in
+[tests/unit/content.test.js](tests/unit/content.test.js).
 
 ---
 

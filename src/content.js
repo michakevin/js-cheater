@@ -340,9 +340,28 @@
           return;
         }
         const dbName = dbNames[tried++];
+        // Guard so a single open attempt advances to the next DB only once
+        // (abort() in onupgradeneeded also triggers onerror).
+        let advanced = false;
+        const next = () => {
+          if (advanced) return;
+          advanced = true;
+          tryNextDB();
+        };
         try {
           const openReq = indexedDB.open(dbName);
-          openReq.onerror = () => tryNextDB();
+          openReq.onerror = () => next();
+          openReq.onupgradeneeded = (ev) => {
+            // DB did not exist. Abort the auto-created versionchange
+            // transaction so we don't leave an empty "phantom" database
+            // behind, then move on to the next candidate.
+            try {
+              ev.target.transaction.abort();
+            } catch {
+              /* ignore */
+            }
+            next();
+          };
           openReq.onsuccess = (ev) => {
             const db = ev.target.result;
             const storeNames = [...db.objectStoreNames];
@@ -351,7 +370,7 @@
               : storeNames[0];
             if (!storeName) {
               db.close();
-              tryNextDB();
+              next();
               return;
             }
             try {
@@ -364,15 +383,15 @@
               };
               putReq.onerror = () => {
                 db.close();
-                tryNextDB();
+                next();
               };
             } catch {
               db.close();
-              tryNextDB();
+              next();
             }
           };
         } catch {
-          tryNextDB();
+          next();
         }
       }
       tryNextDB();
