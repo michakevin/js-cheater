@@ -18,6 +18,12 @@ let editorFrameTabId = null;
 let hitsInteractionContainer = null;
 let currentHits = [];
 
+// Scanner baut Pfade ab "window" zusammen (z. B. window.gameState.player.hp).
+// In der Anzeige entfernen wir den redundanten window.-/globalThis.-Vorsatz.
+function formatDisplayPath(path) {
+  return String(path).replace(/^(?:window|globalThis)\./, "");
+}
+
 function getEditorFrameBaseUrl() {
   const runtime = globalThis.chrome?.runtime;
   return runtime?.getURL
@@ -228,7 +234,7 @@ export function renderHitsWithSaveButtons(list) {
     const li = document.createElement("li");
     const hitInfo = document.createElement("div");
     hitInfo.className = "hit-info";
-    const displayPath = h.path.replace(/^window\.globalThis\./, "");
+    const displayPath = formatDisplayPath(h.path);
     hitInfo.textContent = `[${i}] ${displayPath} = ${safeStringify(h.value)}`;
 
     const saveBtn = document.createElement("button");
@@ -271,7 +277,7 @@ function ensureHitsInteractionBound(hitsUl) {
     if (!Number.isFinite(idx)) return;
     const hit = currentHits[idx];
     if (!hit) return;
-    const displayPath = hit.path.replace(/^window\.globalThis\./, "");
+    const displayPath = formatDisplayPath(hit.path);
     const action = actionEl.getAttribute("data-action");
 
     if (action === "save") {

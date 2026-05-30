@@ -19,7 +19,7 @@ mit Einschätzung der Sicherheit (✅ bestätigt / ⚠️ wahrscheinlich).
 
 ## Hoch
 
-### 1. ✅ Pfad-Präfix wird in der Trefferliste nie entfernt
+### 1. ✅ [BEHOBEN] Pfad-Präfix wird in der Trefferliste nie entfernt
 
 [src/popup/ui.js:231](src/popup/ui.js#L231) und [src/popup/ui.js:274](src/popup/ui.js#L274)
 
@@ -38,6 +38,11 @@ durchgehend der redundante `window.`-Vorsatz. Der Unit-Test
 künstlichen Fall `window.globalThis.bar` und verdeckt so den Fehler.
 
 **Fix:** Regex auf `/^window\./` ändern (ggf. zusätzlich `globalThis.` strippen).
+
+**Behoben:** Neue Helper-Funktion `formatDisplayPath()` in
+[src/popup/ui.js](src/popup/ui.js) strippt `window.`- und `globalThis.`-Präfix
+(`/^(?:window|globalThis)\./`) an beiden Stellen. Test in
+[tests/unit/ui.test.js](tests/unit/ui.test.js) prüft jetzt reale Pfade.
 
 ---
 

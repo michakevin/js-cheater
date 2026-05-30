@@ -68,8 +68,15 @@ describe("ui rendering", () => {
     expect(send).toHaveBeenCalledWith("unfreeze", { path: "foo" });
   });
 
-  test("renderHitsWithSaveButtons trims window.globalThis prefix", () => {
-    const list = [{ path: "window.globalThis.bar", value: 2 }];
+  test("renderHitsWithSaveButtons trims window. prefix", () => {
+    const list = [{ path: "window.gameState.player.hp", value: 2 }];
+    renderHitsWithSaveButtons(list);
+    const info = document.querySelector("#hits .hit-info");
+    expect(info.innerHTML).toBe("[0] gameState.player.hp = 2");
+  });
+
+  test("renderHitsWithSaveButtons trims globalThis. prefix", () => {
+    const list = [{ path: "globalThis.bar", value: 2 }];
     renderHitsWithSaveButtons(list);
     const info = document.querySelector("#hits .hit-info");
     expect(info.innerHTML).toBe("[0] bar = 2");
