@@ -221,12 +221,18 @@ und bricht im Fehlerfall nur diesen Zweig ab (statt den ganzen Scan).
 Regressionstest mit werfendem `constructor`-Getter in
 [tests/unit/scanner.test.js](tests/unit/scanner.test.js).
 
-### 9. ⚠️ Manifest: alle Icon-Größen zeigen auf das 128px-PNG
+### 9. ✅ [BEHOBEN] Manifest: alle Icon-Größen zeigen auf das 128px-PNG
 
 [manifest.json:13-18](manifest.json#L13-L18) (und die `action`/`side_panel`-Icons)
 
 Die Größen 16/32/48 verweisen alle auf `icons/icon128.png`. Funktioniert, ist
 aber suboptimal (Skalierung der 128px-Grafik auf 16px). Kosmetisch.
+
+**Behoben:** Aus `icons/icon128.png` wurden per LANCZOS-Downscaling die fehlenden
+`icons/icon16.png`, `icons/icon32.png` und `icons/icon48.png` erzeugt. Alle vier
+Icon-Blöcke in [manifest.json](manifest.json) (`icons`, `action.default_icon`,
+`side_panel.default_icon`, `sidebar_action.default_icon`) verweisen jetzt auf die
+zur jeweiligen Größe passende PNG-Datei.
 
 ---
 

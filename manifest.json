@@ -11,9 +11,9 @@
   },
 
   "icons": {
-    "16": "icons/icon128.png",
-    "32": "icons/icon128.png",
-    "48": "icons/icon128.png",
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
     "128": "icons/icon128.png"
   },
 
@@ -31,9 +31,9 @@
   "action": {
     "default_title": "Aktiviere JS-Cheater für diese Site",
     "default_icon": {
-      "16": "icons/icon128.png",
-      "32": "icons/icon128.png",
-      "48": "icons/icon128.png",
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   },
@@ -41,9 +41,9 @@
   "side_panel": {
     "default_path": "src/popup/popup.html",
     "default_icon": {
-      "16": "icons/icon128.png",
-      "32": "icons/icon128.png",
-      "48": "icons/icon128.png",
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   },
@@ -52,9 +52,9 @@
     "default_title": "JS-Cheater",
     "default_panel": "src/popup/popup.html",
     "default_icon": {
-      "16": "icons/icon128.png",
-      "32": "icons/icon128.png",
-      "48": "icons/icon128.png",
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     }
   },
