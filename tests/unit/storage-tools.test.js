@@ -19,6 +19,7 @@ import {
 } from "../../src/popup/storage-tools.js";
 import { send, queryTabs } from "../../src/popup/communication.js";
 import { showSuccess } from "../../src/popup/messages.js";
+import { showDialog } from "../../src/popup/dialog.js";
 
 describe("storage tools export/import", () => {
   beforeEach(() => {
@@ -84,10 +85,29 @@ describe("storage tools export/import", () => {
     document.createElement = origCreate;
   });
 
-  test("importLocalStorageFromText sends data", async () => {
-    await importLocalStorageFromText('{"a":1}');
-    expect(send).toHaveBeenCalledWith("setLocalStorage", { data: { a: 1 } });
+  test("importLocalStorageFromText replaces after confirmation", async () => {
+    showDialog.mockResolvedValue(true);
+    await importLocalStorageFromText('{"a":"1"}');
+    expect(send).toHaveBeenCalledWith("setLocalStorage", {
+      data: { a: "1" },
+      replace: true,
+    });
     expect(showSuccess).toHaveBeenCalled();
+  });
+
+  test("importLocalStorageFromText aborts when not confirmed", async () => {
+    showDialog.mockResolvedValue(false);
+    await importLocalStorageFromText('{"a":"1"}');
+    expect(send).not.toHaveBeenCalled();
+    expect(showSuccess).not.toHaveBeenCalled();
+  });
+
+  test("importLocalStorageFromText reports invalid JSON without confirming", async () => {
+    await importLocalStorageFromText("{not valid json");
+    expect(send).not.toHaveBeenCalled();
+    expect(showDialog).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "alert", title: "Import fehlgeschlagen" }),
+    );
   });
 
   test("exportLocalStorage handles invalid tab URL gracefully", async () => {

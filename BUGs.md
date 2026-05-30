@@ -256,3 +256,11 @@ zur jeweiligen Größe passende PNG-Datei.
   ([src/content.js:124-143](src/content.js#L124-L143)): Vorhandene Keys, die
   nicht im Import enthalten sind, bleiben erhalten. Je nach Erwartung an einen
   „Savegame-Restore" evtl. unerwünscht.
+  **Behoben:** Da der Export ein vollständiger Snapshot ist, ist der Import jetzt
+  ein echter Restore: `setLocalStorage` unterstützt ein `replace`-Flag
+  ([src/content.js](src/content.js)), das nicht im Import enthaltene Keys vorher
+  entfernt (Rückgabe enthält `removed`-Zähler). Der Import im Popup
+  ([src/popup/storage-tools.js](src/popup/storage-tools.js)) sendet `replace: true`
+  und holt vorher eine Bestätigung ein, da der Vorgang destruktiv ist.
+  Regressionstests in [tests/unit/content.test.js](tests/unit/content.test.js)
+  und [tests/unit/storage-tools.test.js](tests/unit/storage-tools.test.js).

@@ -122,8 +122,25 @@
       return data;
     },
     setLocalStorage: (msg) => {
+      const data = msg.data || {};
+      // When `replace` is set the import is treated as a full restore: existing
+      // keys that are not part of the imported snapshot are removed first, so
+      // the result matches the imported state instead of merging into it.
+      let removed = 0;
+      if (msg.replace === true) {
+        const incoming = new Set(Object.keys(data));
+        const toRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (!incoming.has(key)) toRemove.push(key);
+        }
+        toRemove.forEach((k) => {
+          localStorage.removeItem(k);
+          removed += 1;
+        });
+      }
       const skipped = [];
-      Object.entries(msg.data || {}).forEach(([k, v]) => {
+      Object.entries(data).forEach(([k, v]) => {
         if (typeof v !== "string") {
           skipped.push({ key: k, type: typeof v });
           console.warn(
@@ -139,7 +156,7 @@
           console.error("[js-cheater] Failed to set", k, e);
         }
       });
-      return { success: true, skipped };
+      return { success: true, skipped, removed };
     },
     /**
      * Enumerate RPG Maker save slots from both localStorage and IndexedDB.

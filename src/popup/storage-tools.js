@@ -29,9 +29,32 @@ export async function exportLocalStorage() {
 }
 
 export async function importLocalStorageFromText(text) {
+  let data;
   try {
-    const data = JSON.parse(text);
-    await send("setLocalStorage", { data });
+    data = JSON.parse(text);
+  } catch (e) {
+    console.error("Import failed", e);
+    await showDialog({
+      type: "alert",
+      title: "Import fehlgeschlagen",
+      message: e.message,
+    });
+    return;
+  }
+
+  // The export is a full snapshot, so import restores that exact state: confirm
+  // first because existing entries not contained in the file are removed.
+  const confirmed = await showDialog({
+    type: "confirm",
+    title: "Lokalen Speicher importieren",
+    message:
+      "Der aktuelle lokale Speicher dieser Seite wird durch den Import ersetzt. " +
+      "Vorhandene Einträge, die nicht in der Datei enthalten sind, werden entfernt. Fortfahren?",
+  });
+  if (!confirmed) return;
+
+  try {
+    await send("setLocalStorage", { data, replace: true });
     showSuccess("Lokaler Speicher importiert!");
   } catch (e) {
     console.error("Import failed", e);

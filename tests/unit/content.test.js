@@ -159,7 +159,51 @@ describe("content message handler", () => {
     );
     expect(ret).toBeUndefined();
     expect(localStorage.getItem("c")).toBe("3");
-    expect(sendResponse).toHaveBeenCalledWith({ success: true, skipped: [] });
+    expect(sendResponse).toHaveBeenCalledWith({
+      success: true,
+      skipped: [],
+      removed: 0,
+    });
+  });
+
+  test("setLocalStorage merges by default, keeping existing keys", () => {
+    localStorage.setItem("keep", "old");
+    const sendResponse = jest.fn();
+    listener(
+      { cmd: "setLocalStorage", data: { added: "new" } },
+      null,
+      sendResponse,
+    );
+    expect(localStorage.getItem("keep")).toBe("old");
+    expect(localStorage.getItem("added")).toBe("new");
+    expect(sendResponse).toHaveBeenCalledWith({
+      success: true,
+      skipped: [],
+      removed: 0,
+    });
+  });
+
+  test("setLocalStorage with replace removes keys not in the import", () => {
+    localStorage.setItem("stale", "old");
+    localStorage.setItem("shared", "old");
+    const sendResponse = jest.fn();
+    listener(
+      {
+        cmd: "setLocalStorage",
+        replace: true,
+        data: { shared: "new", fresh: "x" },
+      },
+      null,
+      sendResponse,
+    );
+    expect(localStorage.getItem("stale")).toBeNull();
+    expect(localStorage.getItem("shared")).toBe("new");
+    expect(localStorage.getItem("fresh")).toBe("x");
+    expect(sendResponse).toHaveBeenCalledWith({
+      success: true,
+      skipped: [],
+      removed: 1,
+    });
   });
 
   test("setLocalStorage skips non-string values", () => {
@@ -182,6 +226,7 @@ describe("content message handler", () => {
         { key: "bad", type: "object" },
         { key: "num", type: "number" },
       ],
+      removed: 0,
     });
     warnSpy.mockRestore();
   });
