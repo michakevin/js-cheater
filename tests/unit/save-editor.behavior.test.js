@@ -191,4 +191,88 @@ describe("save-editor behavior regressions", () => {
     const parsed = JSON.parse(decompressFromBase64(writes[0].raw));
     expect(parsed).toEqual({ party: { gold: 500, name: "Hero" } });
   });
+
+  test("search hides non-matching rows and reveals the path to matches", async () => {
+    const slotRaw = compressToBase64(
+      JSON.stringify({ party: { gold: 100, name: "Hero" } }),
+    );
+
+    globalThis.chrome = {
+      tabs: {
+        sendMessage: jest.fn((tabId, message, callback) => {
+          if (message.cmd === "getRpgMakerSaves") {
+            callback({
+              slots: [
+                { key: "RPG File1", source: "localStorage", raw: slotRaw },
+              ],
+            });
+            return;
+          }
+          callback(null);
+        }),
+      },
+      runtime: {},
+    };
+
+    document.body.innerHTML = `
+      <div class="editor-toolbar">
+        <select id="slotSelect"><option value="">--</option></select>
+        <button id="refreshSlots" type="button">refresh</button>
+        <button id="saveChanges" type="button" disabled>save</button>
+        <button id="expandAll" type="button">expand</button>
+        <button id="collapseAll" type="button">collapse</button>
+      </div>
+      <div id="searchBar" class="hidden">
+        <input id="searchInput" />
+        <span id="searchCount"></span>
+      </div>
+      <div id="statusMessage" class="hidden"></div>
+      <div id="editorContent"></div>
+    `;
+    window.history.replaceState(
+      {},
+      "",
+      "http://localhost/src/popup/save-editor.html?tabId=1",
+    );
+
+    await import("../../src/popup/save-editor.js");
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+    await settleAsyncWork();
+
+    const slotSelect = document.getElementById("slotSelect");
+    slotSelect.value = "RPG File1";
+    slotSelect.dispatchEvent(new Event("change"));
+    await settleAsyncWork();
+
+    const findRow = (text) =>
+      Array.from(document.querySelectorAll(".json-key-row")).find((r) =>
+        r.querySelector(".json-key")?.textContent === text,
+      );
+
+    const input = document.getElementById("searchInput");
+    input.value = "name";
+    input.dispatchEvent(new Event("input"));
+    // performSearch is debounced by 200ms
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    const nameRow = findRow("name");
+    const goldRow = findRow("gold");
+
+    // Match is visible and highlighted …
+    expect(nameRow.style.display).not.toBe("none");
+    expect(nameRow.classList.contains("search-match")).toBe(true);
+    // … but a sibling non-match is hidden.
+    expect(goldRow.style.display).toBe("none");
+    expect(document.getElementById("searchCount").textContent).toBe(
+      "1 Treffer",
+    );
+
+    // Clearing the query restores everything.
+    input.value = "";
+    input.dispatchEvent(new Event("input"));
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    expect(goldRow.style.display).not.toBe("none");
+    expect(nameRow.classList.contains("search-match")).toBe(false);
+    expect(document.getElementById("searchCount").textContent).toBe("");
+  });
 });

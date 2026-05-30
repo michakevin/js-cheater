@@ -819,6 +819,7 @@ function performSearch(query, countEl) {
   if (!query) {
     allRows.forEach((row) => {
       row.style.display = "";
+      row.classList.remove("search-match");
     });
     if (countEl) countEl.textContent = "";
     return;
@@ -827,49 +828,59 @@ function performSearch(query, countEl) {
   const lower = query.toLowerCase();
   let matchCount = 0;
 
+  // Zuerst alle Zeilen ausblenden, dann gezielt die Treffer und den jeweiligen
+  // Pfad zu ihnen (Eltern-Knoten) wieder einblenden.
+  allRows.forEach((row) => {
+    row.style.display = "none";
+    row.classList.remove("search-match");
+  });
+
   allRows.forEach((row) => {
     const keyEl = row.querySelector(".json-key");
     const valEl = row.querySelector(".json-value");
     const keyText = keyEl?.textContent?.toLowerCase() || "";
     const valText = valEl?.textContent?.toLowerCase() || "";
 
-    const matches = keyText.includes(lower) || valText.includes(lower);
-    row.style.display = "";
+    // Strukturzeilen (z. B. schließende Klammer) haben weder Key noch Value.
+    if (!keyText && !valText) return;
 
-    if (matches) {
+    if (keyText.includes(lower) || valText.includes(lower)) {
       matchCount++;
-      // Auto-expand parent containers
-      let parent = row.parentElement;
-      while (parent) {
-        if (
-          parent.classList.contains("json-children") &&
-          parent.classList.contains("collapsed")
-        ) {
-          parent.classList.remove("collapsed");
-          const prev = parent.previousElementSibling;
-          if (prev) {
-            const toggle = prev.querySelector(".json-toggle");
-            if (toggle) toggle.textContent = "▼";
-          }
-        }
-        if (
-          parent.classList.contains("category-children") &&
-          parent.classList.contains("collapsed")
-        ) {
-          parent.classList.remove("collapsed");
-          const prev = parent.previousElementSibling;
-          if (prev) {
-            const toggle = prev.querySelector(".category-toggle");
-            if (toggle) toggle.textContent = "▼";
-          }
-        }
-        parent = parent.parentElement;
-      }
+      row.style.display = "";
+      row.classList.add("search-match");
+      revealRowPath(row);
     }
   });
 
   if (countEl) {
     countEl.textContent = matchCount + " Treffer";
+  }
+}
+
+/**
+ * Blendet den gesamten Pfad zu einer Treffer-Zeile wieder ein: alle
+ * übergeordneten Knoten-Zeilen werden sichtbar gemacht und eingeklappte
+ * Container aufgeklappt.
+ * @param {Element} row
+ */
+function revealRowPath(row) {
+  let el = row.parentElement;
+  while (el) {
+    if (
+      (el.classList.contains("json-children") ||
+        el.classList.contains("category-children")) &&
+      el.classList.contains("collapsed")
+    ) {
+      el.classList.remove("collapsed");
+      const prev = el.previousElementSibling;
+      const toggle = prev?.querySelector(".json-toggle, .category-toggle");
+      if (toggle) toggle.textContent = "▼";
+    }
+    if (el.classList.contains("json-node")) {
+      const openRow = el.querySelector(":scope > .json-key-row");
+      if (openRow) openRow.style.display = "";
+    }
+    el = el.parentElement;
   }
 }
 

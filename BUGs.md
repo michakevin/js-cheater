@@ -85,7 +85,7 @@ und ein doppeltes Freeze-Intervall wird vermieden. Regressionstest in
 
 ---
 
-### 3. ✅ Suche im Save-Editor filtert nichts
+### 3. ✅ [BEHOBEN] Suche im Save-Editor filtert nichts
 
 [src/popup/save-editor.js:816-874](src/popup/save-editor.js#L816-L874)
 
@@ -97,6 +97,15 @@ und ein Zähler („N Treffer") gesetzt.
 Folge: Das Suchfeld wirkt funktionslos – außer dem Trefferzähler ändert sich
 optisch nichts. Erwartbar wäre ein Ausblenden der Nicht-Treffer oder ein
 Highlight.
+
+**Behoben:** [src/popup/save-editor.js](src/popup/save-editor.js)
+`performSearch()` blendet jetzt zuerst alle Zeilen aus und macht dann nur
+Treffer (Klasse `search-match`) plus deren kompletten Eltern-Pfad via neuer
+Helper-Funktion `revealRowPath()` wieder sichtbar; eingeklappte Container
+werden dabei aufgeklappt. Highlight-Styles in
+[src/popup/save-editor.css](src/popup/save-editor.css) (hell + dark).
+Regressionstest in
+[tests/unit/save-editor.behavior.test.js](tests/unit/save-editor.behavior.test.js).
 
 ---
 

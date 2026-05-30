@@ -215,6 +215,10 @@ body {
   background: #f0f4f8;
 }
 
+.json-key-row.search-match {
+  background: #fff3bf;
+}
+
 .json-toggle {
   cursor: pointer;
   user-select: none;
@@ -445,6 +449,10 @@ body {
 
   .json-key-row:hover {
     background: #2a2e33;
+  }
+
+  .json-key-row.search-match {
+    background: #4d4327;
   }
 
   .json-toggle {
