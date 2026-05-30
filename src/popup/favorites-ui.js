@@ -1,6 +1,7 @@
 import { escapeHtml, safeStringify } from "./utils.js";
 import { send } from "./communication.js";
 import { showDialog } from "./dialog.js";
+import { markFrozen, markUnfrozen, isFrozen } from "./freeze-state.js";
 
 function renderFavoriteValue(value) {
   if (value === undefined) return "-";
@@ -34,8 +35,9 @@ export function renderFavorites(favorites, inputs) {
     </thead>
     <tbody>
       ${Object.values(favorites)
-        .map(
-          (fav) => `
+        .map((fav) => {
+          const frozen = isFrozen(fav.path);
+          return `
         <tr>
           <td class="favorite-name" data-id="${fav.id}" title="${escapeHtml(
             fav.path,
@@ -46,14 +48,14 @@ export function renderFavorites(favorites, inputs) {
           )}" /></td>
           <td>
             <div class="action-buttons">
-              <button class="freeze-btn" data-id="${fav.id}" title="Einfrieren" aria-label="${escapeHtml(fav.name)} einfrieren">❄️</button>
+              <button class="freeze-btn${frozen ? " active" : ""}" data-id="${fav.id}" title="${frozen ? "Einfrieren aufheben" : "Einfrieren"}" aria-label="${escapeHtml(fav.name)} ${frozen ? "Einfrieren aufheben" : "einfrieren"}">${frozen ? "🔥" : "❄️"}</button>
               <button class="update-btn" data-id="${fav.id}" title="Wert ändern" aria-label="${escapeHtml(fav.name)} Wert ändern">✏️</button>
               <button class="delete-btn" data-id="${fav.id}" title="Favorit löschen" aria-label="${escapeHtml(fav.name)} löschen">🗑️</button>
             </div>
           </td>
         </tr>
-      `,
-        )
+      `;
+        })
         .join("")}
     </tbody>
   `;
@@ -121,8 +123,14 @@ export function setupFavoritesEventListeners({
       const fav = favorites[id];
       if (!fav) return;
       if (target.classList.toggle("active")) {
+        target.textContent = "🔥";
+        target.setAttribute("title", "Einfrieren aufheben");
+        markFrozen(fav.path);
         send("freeze", { path: fav.path, value: fav.value });
       } else {
+        target.textContent = "❄️";
+        target.setAttribute("title", "Einfrieren");
+        markUnfrozen(fav.path);
         send("unfreeze", { path: fav.path });
       }
     } else if (target.classList.contains("favorite-name")) {

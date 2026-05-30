@@ -9,6 +9,7 @@ import { setupStorageToolsEventListeners } from "./storage-tools.js";
 import { send, getActiveTab } from "./communication.js";
 import { showError, showSuccess } from "./messages.js";
 import { showDialog } from "./dialog.js";
+import { markFrozen, markUnfrozen, isFrozen } from "./freeze-state.js";
 
 let favoritesListenerAdded = false;
 let toolsListenerAdded = false;
@@ -247,12 +248,19 @@ export function renderHitsWithSaveButtons(list) {
 
     const freezeBtn = document.createElement("button");
     freezeBtn.className = "freeze-btn";
-    freezeBtn.textContent = "❄️";
     freezeBtn.dataset.action = "freeze";
     freezeBtn.dataset.idx = String(i);
-    freezeBtn.title = "Wert einfrieren";
-    freezeBtn.setAttribute("aria-label", `${displayPath} einfrieren`);
     freezeBtn.dataset.path = h.path;
+    if (isFrozen(h.path)) {
+      freezeBtn.classList.add("active");
+      freezeBtn.textContent = "🔥";
+      freezeBtn.title = "Einfrieren aufheben";
+      freezeBtn.setAttribute("aria-label", `${displayPath} Einfrieren aufheben`);
+    } else {
+      freezeBtn.textContent = "❄️";
+      freezeBtn.title = "Wert einfrieren";
+      freezeBtn.setAttribute("aria-label", `${displayPath} einfrieren`);
+    }
 
     hitInfo.dataset.action = "edit";
     hitInfo.dataset.idx = String(i);
@@ -295,11 +303,13 @@ function ensureHitsInteractionBound(hitsUl) {
           "aria-label",
           `${displayPath} Einfrieren aufheben`,
         );
+        markFrozen(hit.path);
         send("freeze", { path: hit.path, value: hit.value });
       } else {
         actionEl.textContent = "❄️";
         actionEl.setAttribute("title", "Wert einfrieren");
         actionEl.setAttribute("aria-label", `${displayPath} einfrieren`);
+        markUnfrozen(hit.path);
         send("unfreeze", { path: hit.path });
       }
       return;

@@ -46,7 +46,7 @@ künstlichen Fall `window.globalThis.bar` und verdeckt so den Fehler.
 
 ---
 
-### 2. ✅ Freeze-UI-Status desynchronisiert nach jedem Re-Render
+### 2. ✅ [BEHOBEN] Freeze-UI-Status desynchronisiert nach jedem Re-Render
 
 [src/popup/ui.js:214-259](src/popup/ui.js#L214-L259) (Treffer) und
 [src/popup/favorites-ui.js:117-127](src/popup/favorites-ui.js#L117-L127) (Favoriten)
@@ -72,6 +72,16 @@ ausgelöst. Folge:
 
 **Fix:** Eingefrorene Pfade in einem zentralen Set/State halten und beim Render
 den Button-Zustand daraus ableiten.
+
+**Behoben:** Neues Modul [src/popup/freeze-state.js](src/popup/freeze-state.js)
+hält ein zentrales `Set` der eingefrorenen Pfade als Single Source of Truth.
+Treffer-Render ([src/popup/ui.js](src/popup/ui.js)) und Favoriten-Render
+([src/popup/favorites-ui.js](src/popup/favorites-ui.js)) leiten den
+Button-Zustand (`active`, ❄️/🔥) jetzt aus `isFrozen(path)` ab; die
+Klick-Handler pflegen den State via `markFrozen`/`markUnfrozen`. Damit bleibt
+der Zustand über Re-Renders (Tab-Wechsel, Fokus, `visibilitychange`) erhalten
+und ein doppeltes Freeze-Intervall wird vermieden. Regressionstest in
+[tests/unit/ui.test.js](tests/unit/ui.test.js).
 
 ---
 

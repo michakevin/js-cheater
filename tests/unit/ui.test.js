@@ -30,9 +30,11 @@ import {
 import { send } from "../../src/popup/communication.js";
 import { saveFavorite } from "../../src/popup/favorites.js";
 import { showError } from "../../src/popup/messages.js";
+import { clearFrozen } from "../../src/popup/freeze-state.js";
 
 describe("ui rendering", () => {
   beforeEach(() => {
+    clearFrozen();
     document.body.innerHTML = `
       <div id="initialScanGroup" style="display:none"></div>
       <div id="refineScanGroup" class="hidden"></div>
@@ -66,6 +68,27 @@ describe("ui rendering", () => {
     freezeBtn.click();
     expect(freezeBtn.classList.contains("active")).toBe(false);
     expect(send).toHaveBeenCalledWith("unfreeze", { path: "foo" });
+  });
+
+  test("freeze state survives a re-render", () => {
+    const list = [{ path: "gameState.hp", value: 42 }];
+    renderHitsWithSaveButtons(list);
+    let freezeBtn = document.querySelector("#hits .freeze-btn");
+    freezeBtn.click();
+    expect(freezeBtn.classList.contains("active")).toBe(true);
+
+    // Re-render (e.g. on tab switch / visibilitychange) must keep the state.
+    renderHitsWithSaveButtons(list);
+    freezeBtn = document.querySelector("#hits .freeze-btn");
+    expect(freezeBtn.classList.contains("active")).toBe(true);
+    expect(freezeBtn.textContent).toBe("🔥");
+
+    // Unfreezing clears it across re-renders too.
+    freezeBtn.click();
+    renderHitsWithSaveButtons(list);
+    freezeBtn = document.querySelector("#hits .freeze-btn");
+    expect(freezeBtn.classList.contains("active")).toBe(false);
+    expect(freezeBtn.textContent).toBe("❄️");
   });
 
   test("renderHitsWithSaveButtons trims window. prefix", () => {
