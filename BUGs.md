@@ -111,7 +111,7 @@ Regressionstest in
 
 ## Mittel
 
-### 4. ⚠️ Verlorene Treffer beim Verfeinern numerischer „lose" Matches
+### 4. ✅ [BEHOBEN] Verlorene Treffer beim Verfeinern numerischer „lose" Matches
 
 [src/scanner-core.js:391-401](src/scanner-core.js#L391-L401) vs.
 [src/scanner-core.js:414-426](src/scanner-core.js#L414-L426)
@@ -124,6 +124,14 @@ Folge: Ein als String gespeicherter Wert (in Spielen häufig) wird beim ersten
 Scan gefunden, beim ersten „Verfeinern" aber zwangsweise verworfen – obwohl er
 weiterhin der korrekte Treffer ist. Refine sollte dieselbe Lockerheit wie Scan
 verwenden.
+
+**Behoben:** Gemeinsame Hilfsfunktion `looseValueEquals(v, value)` in
+[src/scanner-core.js](src/scanner-core.js) kapselt die lockere
+Numerik-Vergleichslogik (Number/String/BigInt). `scan`,
+`scanByNameAndValue`, `refine` und `refineByNameAndValue` nutzen sie jetzt
+einheitlich; Refine verwirft string-/bigint-gespeicherte Zahlen nicht mehr.
+Generierte [src/popup/scanner-code.js](src/popup/scanner-code.js) neu gebaut.
+Regressionstest in [tests/unit/scanner.test.js](tests/unit/scanner.test.js).
 
 ### 5. ⚠️ Re-Encoding von Objekt-Speicherständen ändert den Typ (Datenintegrität)
 

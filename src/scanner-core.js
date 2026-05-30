@@ -28,6 +28,24 @@ const GAME_KEYWORDS_VALUE = Object.freeze([
   "score",
 ]);
 
+// Value comparison used by both scan() and refine(). For numeric targets it
+// also matches values stored as numeric strings ("100") or BigInt, which games
+// commonly use. refine must apply the same looseness, otherwise a string-stored
+// value found during the initial scan would be wrongly discarded on the first
+// refine even though it is still the correct hit.
+function looseValueEquals(v, value) {
+  if (v === value) return true;
+  const isNumericTarget = typeof value === "number" && Number.isFinite(value);
+  if (!isNumericTarget) return false;
+  if (typeof v === "string" && v.trim() !== "" && Number(v) === value) {
+    return true;
+  }
+  if (typeof v === "bigint") {
+    return Number(v) === value;
+  }
+  return false;
+}
+
 export function createScanner(DEBUG = false) {
   return {
     hits: [],
@@ -388,17 +406,7 @@ export function createScanner(DEBUG = false) {
         typeof value === "number" && Number.isFinite(value);
       const isStringTarget = typeof value === "string";
       const conservativeMode = this.shouldAvoidGetterEvaluation();
-      const looseNumericMatch = (v) => {
-        if (v === value) return true;
-        if (!isNumericTarget) return false;
-        if (typeof v === "string" && v.trim() !== "" && Number(v) === value) {
-          return true;
-        }
-        if (typeof v === "bigint") {
-          return Number(v) === value;
-        }
-        return false;
-      };
+      const looseNumericMatch = (v) => looseValueEquals(v, value);
 
       const passes = this.buildValuePasses({
         exactPredicate: exactMatch,
@@ -415,7 +423,7 @@ export function createScanner(DEBUG = false) {
       const oldCount = this.hits.length;
       this.hits = this.hits.filter(({ obj, key }) => {
         try {
-          return obj[key] === value;
+          return looseValueEquals(obj[key], value);
         } catch {
           return false;
         }
@@ -484,19 +492,7 @@ export function createScanner(DEBUG = false) {
       const looseMatchByNameAndValue = (val, k) => {
         const nameMatches = k.toLowerCase().includes(loweredName);
         if (!nameMatches) return false;
-        if (val === value) return true;
-        if (!isNumericTarget) return false;
-        if (
-          typeof val === "string" &&
-          val.trim() !== "" &&
-          Number(val) === value
-        ) {
-          return true;
-        }
-        if (typeof val === "bigint") {
-          return Number(val) === value;
-        }
-        return false;
+        return looseValueEquals(val, value);
       };
 
       const passes = this.buildNamePasses({
@@ -518,7 +514,7 @@ export function createScanner(DEBUG = false) {
         const nameMatches = key.toLowerCase().includes(loweredName);
         if (!nameMatches) return false;
         try {
-          return obj[key] === value;
+          return looseValueEquals(obj[key], value);
         } catch {
           return false;
         }

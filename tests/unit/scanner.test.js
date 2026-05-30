@@ -257,6 +257,28 @@ describe("numeric string fallback scan", () => {
     const paths = window.__cheatScanner__.list().map((entry) => entry.path);
     expect(paths.some((p) => p.includes("hpTextValue"))).toBe(true);
   });
+
+  test("refine keeps numeric values stored as strings", () => {
+    const scanner = window.__cheatScanner__;
+    const originalCollectKeys = scanner.collectKeys;
+    const originalShouldAvoid = scanner.shouldAvoidGetterEvaluation;
+    scanner.shouldAvoidGetterEvaluation = () => false;
+    scanner.collectKeys = function (root, opts) {
+      if (root === window) return ["hpTextValue"];
+      return originalCollectKeys.call(this, root, opts);
+    };
+
+    scanner.scan(987654321);
+    // refine() must apply the same looseness as scan(): the string-stored value
+    // is still the correct hit and must not be discarded.
+    const refined = scanner.refine(987654321);
+    scanner.collectKeys = originalCollectKeys;
+    scanner.shouldAvoidGetterEvaluation = originalShouldAvoid;
+
+    expect(refined).toBeGreaterThan(0);
+    const paths = scanner.list().map((entry) => entry.path);
+    expect(paths.some((p) => p.includes("hpTextValue"))).toBe(true);
+  });
 });
 
 describe("poke and pokeByPath", () => {
