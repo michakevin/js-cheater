@@ -45,7 +45,7 @@ export function createTabContextController({
         return;
       }
 
-      setActiveTab(tabId);
+      setActiveTab(tab);
 
       const tabSignature = `${tabId}|${tab?.url || ""}`;
       const tabChanged = tabSignature !== activeTabSignature;
