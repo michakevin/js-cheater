@@ -463,6 +463,14 @@ export async function prepareUpdatedGlobalRaw(
 }
 
 /**
+ * @param {string} key
+ * @returns {boolean}
+ */
+export function isFileSlotKey(key) {
+  return /^RPG File\d+$/i.test(key) || /^rmmzsave\.\d+\.file\d+$/i.test(key);
+}
+
+/**
  * Rebuild the global save index from all readable file slots.
  * @param {Array<{key: string, raw: string}>} slots
  * @returns {Promise<{ globalInfo: Array<*>, format: string, registered: number[] }>}
@@ -511,14 +519,6 @@ export const AUXILIARY_SAVE_TARGETS = {
     mvDefault: "locale",
   },
 };
-
-/**
- * @param {string} key
- * @returns {boolean}
- */
-export function isFileSlotKey(key) {
-  return /^RPG File\d+$/i.test(key) || /^rmmzsave\.\d+\.file\d+$/i.test(key);
-}
 
 /**
  * Resolve import target for plugin auxiliary saves like achievements.rpgsave.
@@ -797,42 +797,47 @@ async function importSaveFile(file) {
 }
 
 async function fixGlobalState() {
-  const slots = [...slotCache.values()];
-  const rebuild = await rebuildGlobalInfoFromSlots(slots);
-
-  if (rebuild.registered.length === 0) {
-    showStatus(
-      "❌ Keine lesbaren Speicherstände gefunden, aus denen der Global-Index gebaut werden kann.",
-      "error",
-    );
-    return;
-  }
-
-  const globalTarget = resolveGlobalTarget(slots, rebuild.format);
-  if (!globalTarget) {
-    showStatus(
-      "❌ Global-Ziel unbekannt. Bitte einmal im Spiel speichern.",
-      "error",
-    );
-    return;
-  }
-
-  const slotList = rebuild.registered.join(", ");
-  const confirmed = await showDialog({
-    type: "confirm",
-    title: "Global-Index reparieren",
-    message:
-      `Den Global-Index in „${globalTarget.key}“ aus ${rebuild.registered.length} Speicherstand/Speicherständen neu aufbauen?\n\n` +
-      `Erkannte Slots: ${slotList}\n\n` +
-      "Bestehende Global-Daten werden überschrieben. Nicht gefundene Slots verschwinden aus dem Lade-Menü.",
-    confirmText: "Reparieren",
-    cancelText: "Abbrechen",
-  });
-  if (!confirmed) return;
-
-  showStatus("⏳ Repariere Global-Index…", "info");
+  showStatus("⏳ Analysiere Speicherstände…", "info");
 
   try {
+    const slots = [...slotCache.values()];
+    const rebuild = await rebuildGlobalInfoFromSlots(slots);
+
+    if (rebuild.registered.length === 0) {
+      showStatus(
+        "❌ Keine lesbaren Speicherstände gefunden, aus denen der Global-Index gebaut werden kann.",
+        "error",
+      );
+      return;
+    }
+
+    const globalTarget = resolveGlobalTarget(slots, rebuild.format);
+    if (!globalTarget) {
+      showStatus(
+        "❌ Global-Ziel unbekannt. Bitte einmal im Spiel speichern.",
+        "error",
+      );
+      return;
+    }
+
+    const slotList = rebuild.registered.join(", ");
+    const confirmed = await showDialog({
+      type: "confirm",
+      title: "Global-Index reparieren",
+      message:
+        `Den Global-Index in „${globalTarget.key}“ aus ${rebuild.registered.length} Speicherstand/Speicherständen neu aufbauen?\n\n` +
+        `Erkannte Slots: ${slotList}\n\n` +
+        "Bestehende Global-Daten werden überschrieben. Nicht gefundene Slots verschwinden aus dem Lade-Menü.",
+      confirmText: "Reparieren",
+      cancelText: "Abbrechen",
+    });
+    if (!confirmed) {
+      hideStatus();
+      return;
+    }
+
+    showStatus("⏳ Repariere Global-Index…", "info");
+
     const globalRaw = await encodeSaveData(rebuild.globalInfo, rebuild.format);
     const saveResult = await send("setRpgMakerSave", {
       key: globalTarget.key,
@@ -1575,7 +1580,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const fixGlobalBtn = $("#fixGlobalState");
   if (fixGlobalBtn) {
-    fixGlobalBtn.addEventListener("click", () => fixGlobalState());
+    fixGlobalBtn.addEventListener("click", () => {
+      void fixGlobalState();
+    });
   }
 
   const saveBtn = $("#saveChanges");

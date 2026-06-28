@@ -362,4 +362,80 @@ describe("save-editor behavior regressions", () => {
       playtime: "00:00:00",
     });
   });
+
+  test("fix global button shows feedback and rebuilds the global index", async () => {
+    const slotRaw = compressToBase64(JSON.stringify({ party: { _actors: [] }, system: { _framesOnSave: 0 } }));
+    const sentCommands = [];
+
+    globalThis.chrome = {
+      tabs: {
+        sendMessage: jest.fn((tabId, message, callback) => {
+          sentCommands.push(message);
+          if (message.cmd === "getRpgMakerSaves") {
+            callback({
+              slots: [
+                { key: "RPG File6", source: "localStorage", raw: slotRaw },
+              ],
+            });
+            return;
+          }
+          if (message.cmd === "setRpgMakerSave") {
+            callback({ success: true });
+            return;
+          }
+          callback(null);
+        }),
+      },
+      runtime: {},
+    };
+
+    document.body.innerHTML = `
+      <div class="editor-toolbar">
+        <select id="slotSelect"><option value="">--</option></select>
+        <button id="refreshSlots" type="button">refresh</button>
+        <button id="importSave" type="button">import</button>
+        <button id="fixGlobalState" type="button">fix global</button>
+        <button id="saveChanges" type="button" disabled>save</button>
+        <button id="expandAll" type="button">expand</button>
+        <button id="collapseAll" type="button">collapse</button>
+      </div>
+      <div id="searchBar" class="hidden">
+        <input id="searchInput" />
+        <span id="searchCount"></span>
+      </div>
+      <div id="statusMessage" class="hidden"></div>
+      <div id="editorContent"></div>
+    `;
+    window.history.replaceState(
+      {},
+      "",
+      "http://localhost/src/popup/save-editor.html?tabId=1",
+    );
+
+    await import("../../src/popup/save-editor.js");
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+    await settleAsyncWork();
+
+    document.getElementById("fixGlobalState").click();
+    await settleAsyncWork();
+
+    const statusMessage = document.getElementById("statusMessage");
+    expect(statusMessage.classList.contains("hidden")).toBe(false);
+    expect(statusMessage.textContent).toContain("Analysiere");
+
+    for (let attempt = 0; attempt < 20; attempt++) {
+      await settleAsyncWork();
+      const confirmBtn = document.querySelector(".dialog-btn-confirm");
+      if (confirmBtn) {
+        confirmBtn.click();
+        break;
+      }
+    }
+    await settleAsyncWork();
+
+    const writes = sentCommands.filter((m) => m.cmd === "setRpgMakerSave");
+    expect(writes).toHaveLength(1);
+    expect(writes[0].key).toBe("RPG Global");
+    expect(statusMessage.textContent).toContain("Global-Index repariert");
+  });
 });
