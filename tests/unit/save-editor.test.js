@@ -13,6 +13,7 @@ import {
   resolveGlobalTarget,
   resolveAuxiliaryImportTarget,
   isFileSlotKey,
+  rebuildGlobalInfoFromSlots,
 } from "../../src/popup/save-editor.js";
 import { compressToBase64, decompressFromBase64 } from "../../src/popup/lz-string.js";
 
@@ -427,5 +428,35 @@ describe("global save index helpers", () => {
     );
     expect(updated[1]).toEqual({ playtime: "00:01:00" });
     expect(updated[6]).toEqual({ playtime: "01:00:00" });
+  });
+
+  test("rebuilds global info from readable file slots", async () => {
+    const saveContents = {
+      party: { _actors: [1] },
+      actors: {
+        1: {
+          _characterName: "Hero",
+          _characterIndex: 0,
+          _faceName: "Actor1",
+          _faceIndex: 0,
+        },
+      },
+      system: { _framesOnSave: 3600 },
+    };
+    const raw = compressToBase64(JSON.stringify(saveContents));
+
+    const rebuild = await rebuildGlobalInfoFromSlots([
+      { key: "RPG File1", raw: "broken" },
+      { key: "RPG File6", raw },
+      { key: "RPG Global", raw: compressToBase64(JSON.stringify([])) },
+    ]);
+
+    expect(rebuild.format).toBe("lzstring");
+    expect(rebuild.registered).toEqual([6]);
+    expect(rebuild.globalInfo[6]).toMatchObject({
+      characters: [["Hero", 0]],
+      playtime: "00:01:00",
+    });
+    expect(rebuild.globalInfo[1]).toBeUndefined();
   });
 });

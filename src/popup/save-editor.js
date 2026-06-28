@@ -462,6 +462,44 @@ export async function prepareUpdatedGlobalRaw(
   return encodeSaveData(updated, format);
 }
 
+/**
+ * Rebuild the global save index from all readable file slots.
+ * @param {Array<{key: string, raw: string}>} slots
+ * @returns {Promise<{ globalInfo: Array<*>, format: string, registered: number[] }>}
+ */
+export async function rebuildGlobalInfoFromSlots(slots) {
+  const fileSlots = slots
+    .filter((slot) => isFileSlotKey(slot.key) && slot.raw)
+    .map((slot) => ({
+      slot,
+      savefileId: extractSavefileIdFromKey(slot.key),
+    }))
+    .filter(
+      (entry) =>
+        entry.savefileId !== null && entry.savefileId !== undefined,
+    )
+    .sort((a, b) => a.savefileId - b.savefileId);
+
+  let globalInfo = [];
+  let format = "lzstring";
+  const registered = [];
+
+  for (const { slot, savefileId } of fileSlots) {
+    const decoded = await decodeSaveData(slot.raw);
+    if (!decoded) continue;
+
+    format = decoded.format;
+    globalInfo = setGlobalInfoEntry(
+      globalInfo,
+      /** @type {number} */ (savefileId),
+      buildSavefileInfoFromContents(decoded.data),
+    );
+    registered.push(/** @type {number} */ (savefileId));
+  }
+
+  return { globalInfo, format, registered };
+}
+
 /** Plugin/auxiliary save files mapped from desktop filenames to browser keys. */
 export const AUXILIARY_SAVE_TARGETS = {
   achievements: {
@@ -755,6 +793,69 @@ async function importSaveFile(file) {
     );
   } catch (e) {
     showStatus("❌ Fehler beim Import: " + e.message, "error");
+  }
+}
+
+async function fixGlobalState() {
+  const slots = [...slotCache.values()];
+  const rebuild = await rebuildGlobalInfoFromSlots(slots);
+
+  if (rebuild.registered.length === 0) {
+    showStatus(
+      "❌ Keine lesbaren Speicherstände gefunden, aus denen der Global-Index gebaut werden kann.",
+      "error",
+    );
+    return;
+  }
+
+  const globalTarget = resolveGlobalTarget(slots, rebuild.format);
+  if (!globalTarget) {
+    showStatus(
+      "❌ Global-Ziel unbekannt. Bitte einmal im Spiel speichern.",
+      "error",
+    );
+    return;
+  }
+
+  const slotList = rebuild.registered.join(", ");
+  const confirmed = await showDialog({
+    type: "confirm",
+    title: "Global-Index reparieren",
+    message:
+      `Den Global-Index in „${globalTarget.key}“ aus ${rebuild.registered.length} Speicherstand/Speicherständen neu aufbauen?\n\n` +
+      `Erkannte Slots: ${slotList}\n\n` +
+      "Bestehende Global-Daten werden überschrieben. Nicht gefundene Slots verschwinden aus dem Lade-Menü.",
+    confirmText: "Reparieren",
+    cancelText: "Abbrechen",
+  });
+  if (!confirmed) return;
+
+  showStatus("⏳ Repariere Global-Index…", "info");
+
+  try {
+    const globalRaw = await encodeSaveData(rebuild.globalInfo, rebuild.format);
+    const saveResult = await send("setRpgMakerSave", {
+      key: globalTarget.key,
+      source: globalTarget.source,
+      raw: globalRaw,
+      encoding: globalTarget.encoding,
+    });
+
+    if (!saveResult || saveResult.success !== true) {
+      throw new Error(getSaveErrorMessage(saveResult));
+    }
+
+    await loadSlots();
+    showStatus(
+      "✅ Global-Index repariert (" +
+        globalTarget.key +
+        "). Registrierte Slots: " +
+        slotList +
+        ". Lade das Spiel neu.",
+      "success",
+    );
+  } catch (e) {
+    showStatus("❌ Fehler beim Reparieren: " + e.message, "error");
   }
 }
 
@@ -1470,6 +1571,11 @@ document.addEventListener("DOMContentLoaded", () => {
       importInput.value = "";
       if (file) importSaveFile(file);
     });
+  }
+
+  const fixGlobalBtn = $("#fixGlobalState");
+  if (fixGlobalBtn) {
+    fixGlobalBtn.addEventListener("click", () => fixGlobalState());
   }
 
   const saveBtn = $("#saveChanges");
