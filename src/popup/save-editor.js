@@ -26,6 +26,34 @@ import { showDialog } from "./dialog.js";
 let activeTabId = null;
 const send = createTabSender(() => activeTabId);
 
+const SEND_TIMEOUT_MS = 15000;
+
+/**
+ * @param {string} cmd
+ * @param {object} [extra]
+ * @returns {Promise<*>}
+ */
+async function sendWithTimeout(cmd, extra = {}) {
+  return await Promise.race([
+    send(cmd, extra),
+    new Promise((_, reject) => {
+      setTimeout(() => {
+        reject(
+          new Error(
+            "Zeitüberschreitung – Spiel-Tab nicht erreichbar. Spiel-Seite neu laden und Editor erneut öffnen.",
+          ),
+        );
+      }, SEND_TIMEOUT_MS);
+    }),
+  ]);
+}
+
+function cleanupEditorShell() {
+  document.querySelectorAll(".dialog-overlay").forEach((overlay) => {
+    overlay.remove();
+  });
+}
+
 // ---- State ----
 let currentSlotKey = "";
 /** @type {"localStorage"|"indexedDB"|""} */
@@ -371,21 +399,160 @@ export function formatPlaytimeFromFrames(frames) {
 }
 
 /**
+ * Normalize RPG Maker party actor ids from save data.
+ * JsonEx and some plugins store _actors as objects instead of arrays.
+ * @param {object|undefined|null} party
+ * @param {object|Array|undefined|null} actors
+ * @returns {number[]}
+ */
+export function extractActorIdsFromParty(party, actors) {
+  const raw = party?._actors;
+
+  if (Array.isArray(raw)) {
+    return raw.filter((id) => id != null && id !== "");
+  }
+
+  if (raw && typeof raw === "object") {
+    if (Array.isArray(raw["@a"])) {
+      return raw["@a"].filter((id) => id != null && id !== "");
+    }
+    const keys = Object.keys(raw);
+    if (keys.length > 0 && keys.every((key) => /^\d+$/.test(key))) {
+      return keys
+        .sort((a, b) => Number(a) - Number(b))
+        .map((key) => raw[key])
+        .filter((id) => id != null && id !== "");
+    }
+  }
+
+  if (actors && typeof actors === "object") {
+    if (Array.isArray(actors)) {
+      return actors
+        .map((actor) => actor?._actorId ?? actor?.actorId)
+        .filter((id) => id != null && id !== "");
+    }
+    const actorKeys = Object.keys(actors).filter((key) => /^\d+$/.test(key));
+    if (actorKeys.length > 0) {
+      return actorKeys
+        .sort((a, b) => Number(a) - Number(b))
+        .map((key) => Number(key));
+    }
+  }
+
+  return [];
+}
+
+/**
+ * @param {object|Array|undefined|null} actors
+ * @param {number|string} id
+ * @returns {object|null}
+ */
+function getActorRecord(actors, id) {
+  if (!actors) return null;
+  if (Array.isArray(actors)) {
+    const match = actors.find(
+      (actor) => actor?._actorId === id || actor?.actorId === id,
+    );
+    return match ?? actors[Number(id)] ?? null;
+  }
+  return actors[String(id)] ?? actors[id] ?? null;
+}
+
+/**
+ * Try to recover a map label from save contents for save-menu plugins.
+ * @param {object} contents
+ * @returns {string}
+ */
+export function extractMapDisplayName(contents) {
+  const map = contents?.map;
+  if (map && typeof map === "object") {
+    for (const candidate of [
+      map._displayName,
+      map.displayName,
+      map._name,
+      map.name,
+    ]) {
+      if (typeof candidate === "string" && candidate) return candidate;
+    }
+  }
+
+  const player = contents?.player;
+  if (player && typeof player._mapName === "string" && player._mapName) {
+    return player._mapName;
+  }
+
+  return "";
+}
+
+/**
+ * Ensure common save-menu string fields are never null/undefined.
+ * @param {object} info
+ * @returns {object}
+ */
+export function normalizeSavefileInfoStrings(info) {
+  const normalized = { ...info };
+  for (const field of [
+    "mapname",
+    "mapName",
+    "displayName",
+    "title",
+    "playtime",
+  ]) {
+    if (normalized[field] == null) normalized[field] = "";
+  }
+  return normalized;
+}
+
+/**
+ * Merge rebuilt save-menu metadata with an existing global entry.
+ * Preserves plugin-specific fields (mapname, custom stats, etc.).
+ * @param {object|undefined|null} existing
+ * @param {object} built
+ * @returns {object}
+ */
+export function mergeSavefileInfo(existing, built) {
+  const base =
+    existing && typeof existing === "object" && !Array.isArray(existing)
+      ? { ...existing }
+      : {};
+  const merged = { ...base, ...built };
+
+  const mapLabel =
+    built.mapname ||
+    built.mapName ||
+    built.displayName ||
+    base.mapname ||
+    base.mapName ||
+    base.displayName ||
+    "";
+
+  merged.mapname = mapLabel;
+  if (merged.mapName == null) merged.mapName = mapLabel;
+  if (merged.displayName == null) merged.displayName = mapLabel;
+  if (base.globalId != null && merged.globalId == null) {
+    merged.globalId = base.globalId;
+  }
+
+  return normalizeSavefileInfoStrings(merged);
+}
+
+/**
  * Build save-menu metadata from imported save contents.
  * Mirrors RPG Maker's DataManager.makeSavefileInfo output.
  * @param {object} contents
- * @returns {{ title: string, characters: Array<Array<string|number>>, faces: Array<Array<string|number>>, playtime: string, timestamp: number }}
+ * @returns {{ title: string, characters: Array<Array<string|number>>, faces: Array<Array<string|number>>, playtime: string, timestamp: number, mapname: string, mapName: string, displayName: string }}
  */
 export function buildSavefileInfoFromContents(contents) {
   const party = contents?.party;
   const actors = contents?.actors;
   const system = contents?.system;
-  const actorIds = party?._actors || [];
+  const actorIds = extractActorIdsFromParty(party, actors);
+  const mapLabel = extractMapDisplayName(contents);
 
   const characters = [];
   const faces = [];
   for (const id of actorIds) {
-    const actor = actors?.[String(id)] ?? actors?.[id];
+    const actor = getActorRecord(actors, id);
     if (!actor) continue;
     characters.push([
       actor._characterName ?? "",
@@ -394,13 +561,16 @@ export function buildSavefileInfoFromContents(contents) {
     faces.push([actor._faceName ?? "", actor._faceIndex ?? 0]);
   }
 
-  return {
+  return normalizeSavefileInfoStrings({
     title: system?._gameTitle ?? system?.gameTitle ?? "",
     characters,
     faces,
     playtime: formatPlaytimeFromFrames(system?._framesOnSave ?? 0),
     timestamp: Date.now(),
-  };
+    mapname: mapLabel,
+    mapName: mapLabel,
+    displayName: mapLabel,
+  });
 }
 
 /**
@@ -457,25 +627,29 @@ export async function prepareUpdatedGlobalRaw(
     }
   }
 
-  const entry = buildSavefileInfoFromContents(saveContents);
+  const entry = mergeSavefileInfo(
+    globalInfo[savefileId],
+    buildSavefileInfoFromContents(saveContents),
+  );
   const updated = setGlobalInfoEntry(globalInfo, savefileId, entry);
   return encodeSaveData(updated, format);
 }
 
 /**
- * @param {string} key
- * @returns {boolean}
- */
-export function isFileSlotKey(key) {
-  return /^RPG File\d+$/i.test(key) || /^rmmzsave\.\d+\.file\d+$/i.test(key);
-}
-
-/**
  * Rebuild the global save index from all readable file slots.
  * @param {Array<{key: string, raw: string}>} slots
+ * @param {string|null|undefined} [existingGlobalRaw]
  * @returns {Promise<{ globalInfo: Array<*>, format: string, registered: number[] }>}
  */
-export async function rebuildGlobalInfoFromSlots(slots) {
+export async function rebuildGlobalInfoFromSlots(slots, existingGlobalRaw) {
+  let globalInfo = [];
+  if (existingGlobalRaw) {
+    const decoded = await decodeSaveData(existingGlobalRaw);
+    if (decoded && Array.isArray(decoded.data)) {
+      globalInfo = [...decoded.data];
+    }
+  }
+
   const fileSlots = slots
     .filter((slot) => isFileSlotKey(slot.key) && slot.raw)
     .map((slot) => ({
@@ -488,7 +662,6 @@ export async function rebuildGlobalInfoFromSlots(slots) {
     )
     .sort((a, b) => a.savefileId - b.savefileId);
 
-  let globalInfo = [];
   let format = "lzstring";
   const registered = [];
 
@@ -497,15 +670,27 @@ export async function rebuildGlobalInfoFromSlots(slots) {
     if (!decoded) continue;
 
     format = decoded.format;
+    const entry = mergeSavefileInfo(
+      globalInfo[/** @type {number} */ (savefileId)],
+      buildSavefileInfoFromContents(decoded.data),
+    );
     globalInfo = setGlobalInfoEntry(
       globalInfo,
       /** @type {number} */ (savefileId),
-      buildSavefileInfoFromContents(decoded.data),
+      entry,
     );
     registered.push(/** @type {number} */ (savefileId));
   }
 
   return { globalInfo, format, registered };
+}
+
+/**
+ * @param {string} key
+ * @returns {boolean}
+ */
+export function isFileSlotKey(key) {
+  return /^RPG File\d+$/i.test(key) || /^rmmzsave\.\d+\.file\d+$/i.test(key);
 }
 
 /** Plugin/auxiliary save files mapped from desktop filenames to browser keys. */
@@ -801,7 +986,22 @@ async function fixGlobalState() {
 
   try {
     const slots = [...slotCache.values()];
-    const rebuild = await rebuildGlobalInfoFromSlots(slots);
+
+    let formatHint = "lzstring";
+    for (const slot of slots) {
+      if (!isFileSlotKey(slot.key) || !slot.raw) continue;
+      const decoded = await decodeSaveData(slot.raw);
+      if (decoded) {
+        formatHint = decoded.format;
+        break;
+      }
+    }
+
+    let globalTarget = resolveGlobalTarget(slots, formatHint);
+    const existingGlobalRaw = globalTarget
+      ? slotCache.get(globalTarget.key)?.raw ?? null
+      : null;
+    const rebuild = await rebuildGlobalInfoFromSlots(slots, existingGlobalRaw);
 
     if (rebuild.registered.length === 0) {
       showStatus(
@@ -811,7 +1011,8 @@ async function fixGlobalState() {
       return;
     }
 
-    const globalTarget = resolveGlobalTarget(slots, rebuild.format);
+    globalTarget =
+      resolveGlobalTarget(slots, rebuild.format) ?? globalTarget;
     if (!globalTarget) {
       showStatus(
         "❌ Global-Ziel unbekannt. Bitte einmal im Spiel speichern.",
@@ -827,7 +1028,7 @@ async function fixGlobalState() {
       message:
         `Den Global-Index in „${globalTarget.key}“ aus ${rebuild.registered.length} Speicherstand/Speicherständen neu aufbauen?\n\n` +
         `Erkannte Slots: ${slotList}\n\n` +
-        "Bestehende Global-Daten werden überschrieben. Nicht gefundene Slots verschwinden aus dem Lade-Menü.",
+        "Bestehende Global-Daten werden für diese Slots aktualisiert. Plugin-Felder (z. B. Ortsname) bleiben erhalten, wenn sie schon vorhanden waren.",
       confirmText: "Reparieren",
       cancelText: "Abbrechen",
     });
@@ -1301,7 +1502,7 @@ async function loadSlots() {
   slotCache.clear();
 
   try {
-    const result = await send("getRpgMakerSaves");
+    const result = await sendWithTimeout("getRpgMakerSaves");
     if (!result) {
       select.innerHTML = '<option value="">❌ Keine Daten</option>';
       return;
@@ -1329,6 +1530,7 @@ async function loadSlots() {
     }
   } catch (e) {
     select.innerHTML = `<option value="">❌ Fehler: ${e.message}</option>`;
+    showStatus("❌ Slots konnten nicht geladen werden: " + e.message, "error");
   }
 }
 
@@ -1553,7 +1755,15 @@ function collapseAll() {
 // ---- Init ----
 
 document.addEventListener("DOMContentLoaded", () => {
+  cleanupEditorShell();
   activeTabId = readTabIdFromLocation();
+
+  if (!activeTabId) {
+    showStatus(
+      "❌ Kein Spiel-Tab verknüpft. Editor aus der Erweiterung mit geöffnetem Spiel neu öffnen.",
+      "error",
+    );
+  }
 
   const select = /** @type {HTMLSelectElement} */ ($("#slotSelect"));
   if (select) {

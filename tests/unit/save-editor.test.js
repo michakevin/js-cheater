@@ -7,6 +7,9 @@ import {
   extractMzGameId,
   extractSavefileIdFromKey,
   buildSavefileInfoFromContents,
+  extractActorIdsFromParty,
+  mergeSavefileInfo,
+  normalizeSavefileInfoStrings,
   setGlobalInfoEntry,
   prepareUpdatedGlobalRaw,
   resolveImportTarget,
@@ -363,6 +366,73 @@ describe("global save index helpers", () => {
     ]);
     expect(info.playtime).toBe("00:01:01");
     expect(typeof info.timestamp).toBe("number");
+  });
+
+  test("extracts actor ids from JsonEx-style party objects", () => {
+    expect(
+      extractActorIdsFromParty({ _actors: { 0: 1, 1: 3, 2: 5 } }, null),
+    ).toEqual([1, 3, 5]);
+    expect(
+      extractActorIdsFromParty({ _actors: { "@a": [2, 4] } }, null),
+    ).toEqual([2, 4]);
+  });
+
+  test("builds savefile info when party actors are stored as objects", () => {
+    const info = buildSavefileInfoFromContents({
+      party: { _actors: { 0: 1, 1: 2 } },
+      actors: {
+        1: {
+          _characterName: "Hero",
+          _characterIndex: 0,
+          _faceName: "Actor1",
+          _faceIndex: 0,
+        },
+        2: {
+          _characterName: "Mage",
+          _characterIndex: 1,
+          _faceName: "Actor2",
+          _faceIndex: 2,
+        },
+      },
+      system: { _framesOnSave: 7200 },
+    });
+
+    expect(info.characters).toEqual([
+      ["Hero", 0],
+      ["Mage", 1],
+    ]);
+    expect(info.playtime).toBe("00:02:00");
+  });
+
+  test("merges rebuilt savefile info without dropping plugin fields", () => {
+    const merged = mergeSavefileInfo(
+      {
+        mapname: "Chapter 3",
+        customField: "keep-me",
+        playtime: "00:00:01",
+      },
+      buildSavefileInfoFromContents({
+        party: { _actors: [1] },
+        actors: {
+          1: {
+            _characterName: "Hero",
+            _characterIndex: 0,
+            _faceName: "Actor1",
+            _faceIndex: 0,
+          },
+        },
+        system: { _framesOnSave: 3600 },
+      }),
+    );
+
+    expect(merged.mapname).toBe("Chapter 3");
+    expect(merged.customField).toBe("keep-me");
+    expect(merged.playtime).toBe("00:01:00");
+    expect(merged.characters).toEqual([["Hero", 0]]);
+  });
+
+  test("ensures mapname is always a string", () => {
+    expect(normalizeSavefileInfoStrings({ mapname: null }).mapname).toBe("");
   });
 
   test("updates the global index entry for a save slot", async () => {
