@@ -502,34 +502,6 @@
         line-height: 1.35;
       }
 
-      .gallery-tier-risk {
-        display: flex;
-        align-items: flex-start;
-        gap: 8px;
-        margin: 8px 0;
-        padding: 8px 10px;
-        border: 1px solid #e6b800;
-        border-radius: 4px;
-        background: #fffbea;
-        font-size: 12px;
-        line-height: 1.35;
-        cursor: pointer;
-      }
-
-      .gallery-tier-risk input[type="checkbox"] {
-        flex-shrink: 0;
-        width: 16px;
-        height: 16px;
-        margin: 1px 0 0 0;
-        cursor: pointer;
-      }
-
-      .gallery-tier-risk-text {
-        flex: 1;
-        color: #5c4a00;
-        font-weight: 500;
-      }
-
       /* ---- Status Bar ---- */
       .status-bar {
         margin-top: 8px;

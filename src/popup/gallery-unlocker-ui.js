@@ -8,7 +8,6 @@
 
 import { send } from "./communication.js";
 import { $, escapeHtml } from "./utils.js";
-import { showDialog } from "./dialog.js";
 
 let lastAnalysis = null;
 let galleryStatusTimeout = null;
@@ -372,39 +371,15 @@ function renderTierRange(tier3, tier2) {
     }
   });
 
-  const risk = document.createElement("label");
-  risk.className = "gallery-tier-risk";
-  const ack = document.createElement("input");
-  ack.type = "checkbox";
-  ack.id = "galleryRangeAck";
-  const riskText = document.createElement("span");
-  riskText.className = "gallery-tier-risk-text";
-  riskText.textContent =
-    "Ich verstehe das Risiko: Schalter außerhalb der Galerie können mit aktiviert werden.";
-  risk.appendChild(ack);
-  risk.appendChild(riskText);
-  card.appendChild(risk);
-
   const btn = createApplyButton("Stufe 3 anwenden", async () => {
-    const ack = $("#galleryRangeAck");
     const fromInput = $("#galleryRangeFrom");
     const toInput = $("#galleryRangeTo");
-    if (!ack?.checked) {
-      showGalleryStatus("Bitte die Risiko-Bestätigung ankreuzen.", "error");
-      return;
-    }
     const fromVal = Number(fromInput?.value);
     const toVal = Number(toInput?.value);
     if (!Number.isFinite(fromVal) || !Number.isFinite(toVal) || toVal < fromVal) {
       showGalleryStatus("Bitte einen gültigen Bereich angeben.", "error");
       return;
     }
-    const confirmed = await showDialog({
-      type: "confirm",
-      title: "Schalter-IDs anwenden?",
-      message: `Setzt alle Schalter mit ID ${fromVal} bis ${toVal} auf EIN (${toVal - fromVal + 1} Stück). Story-Flags können mit betroffen sein. Fortfahren?`,
-    });
-    if (!confirmed) return;
     await applyTier({ tier: "range", range: { from: fromVal, to: toVal } });
   });
   btn.disabled = !tier3.available;

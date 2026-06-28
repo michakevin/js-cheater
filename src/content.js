@@ -194,11 +194,16 @@
     getRpgMakerSaves: async () => {
       const slots = [];
 
-      // 1) localStorage: RPG Maker MV keys ("RPG File1", "RPG Global")
+      // 1) localStorage: RPG Maker MV keys ("RPG File1", "RPG Global", "RPG Config")
       //    and MZ-style keys ("rmmzsave.*")
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
-        if (/^RPG\s+(File\d+|Global)$/i.test(key) || /^rmmzsave\b/i.test(key)) {
+        if (
+          /^RPG\s+(File\d+|Global|Config)$/i.test(key) ||
+          /^rmmzsave\b/i.test(key) ||
+          /achievement/i.test(key) ||
+          /^locale$/i.test(key)
+        ) {
           slots.push({
             key,
             source: "localStorage",
@@ -312,9 +317,10 @@
                   if (
                     typeof k === "string" &&
                     (/rmmzsave/i.test(k) ||
-                      /^RPG\s+(File|Global)/i.test(k) ||
+                      /^RPG\s+(File|Global|Config)/i.test(k) ||
                       /^(file|save)\d+$/i.test(k) ||
-                      /^(config|global)$/i.test(k))
+                      /^(config|global|achievements|locale)$/i.test(k) ||
+                      /achievement/i.test(k))
                   ) {
                     const isString = typeof v === "string";
                     const raw = isString ? v : JSON.stringify(v);

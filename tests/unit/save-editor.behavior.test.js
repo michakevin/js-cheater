@@ -347,11 +347,19 @@ describe("save-editor behavior regressions", () => {
     await settleAsyncWork();
 
     const writes = sentCommands.filter((m) => m.cmd === "setRpgMakerSave");
-    expect(writes).toHaveLength(1);
+    expect(writes).toHaveLength(2);
     expect(writes[0]).toMatchObject({
       key: "RPG File6",
       source: "localStorage",
       raw: importedRaw,
+    });
+    expect(writes[1]).toMatchObject({
+      key: "RPG Global",
+      source: "localStorage",
+    });
+    const globalInfo = JSON.parse(decompressFromBase64(writes[1].raw));
+    expect(globalInfo[6]).toMatchObject({
+      playtime: "00:00:00",
     });
   });
 });

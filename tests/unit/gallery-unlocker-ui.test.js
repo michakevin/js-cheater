@@ -82,32 +82,6 @@ describe("gallery-unlocker-ui", () => {
     expect(status.textContent).toMatch(/2 freigeschaltet/);
   });
 
-  test("renders risk checkbox and label as adjacent flex row", async () => {
-    send.mockResolvedValue({
-      scannerEngineDetected: true,
-      tier1: { available: false, adapters: [] },
-      tier2: { available: false, switchCount: 0, totalSwitches: 5, sampleNames: [], idRange: null },
-      tier3: {
-        available: true,
-        totalSwitches: 5,
-        suggestedRange: { min: 1, max: 5 },
-      },
-      warnings: [],
-    });
-
-    setupGalleryUnlockerListeners();
-    document.getElementById("analyzeGalleryBtn").click();
-    await Promise.resolve();
-    await new Promise((r) => setTimeout(r, 0));
-
-    const risk = document.querySelector(".gallery-tier-risk");
-    expect(risk).toBeTruthy();
-    expect(risk.querySelector("#galleryRangeAck")).toBeTruthy();
-    expect(risk.querySelector(".gallery-tier-risk-text")?.textContent).toMatch(
-      /Risiko/,
-    );
-  });
-
   test("hides gallery group and clears status for non-rpgmaker", () => {
     document.getElementById("galleryUnlockerStatus").textContent = "Test";
     document.getElementById("galleryUnlockerStatus").classList.remove("hidden");

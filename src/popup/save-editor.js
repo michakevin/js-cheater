@@ -73,7 +73,7 @@ export function detectSaveSlots(input) {
 
   // Legacy format: plain object of localStorage key→value
   return Object.keys(input)
-    .filter((key) => /^RPG\s+(File\d+|Global)$/i.test(key))
+    .filter((key) => /^RPG\s+(File\d+|Global|Config)$/i.test(key))
     .map((key) => ({ key, source: "localStorage", raw: input[key] }))
     .sort(slotSorter);
 }
@@ -85,8 +85,8 @@ export function detectSaveSlots(input) {
  * @returns {number}
  */
 function slotSorter(a, b) {
-  const aGlobal = /global|config/i.test(a.key) ? 0 : 1;
-  const bGlobal = /global|config/i.test(b.key) ? 0 : 1;
+  const aGlobal = /global|config|achievement|locale/i.test(a.key) ? 0 : 1;
+  const bGlobal = /global|config|achievement|locale/i.test(b.key) ? 0 : 1;
   if (aGlobal !== bGlobal) return aGlobal - bGlobal;
   return a.key.localeCompare(b.key, undefined, { numeric: true });
 }
@@ -241,14 +241,14 @@ export async function encodeSaveData(data, format) {
 /**
  * Parse an RPG Maker save filename like file6.rpgsave or global.rmmzsave.
  * @param {string} filename
- * @returns {{ kind: "file"|"global"|"config"|"unknown", index: number|null, extension: string|null }}
+ * @returns {{ kind: "file"|"global"|"config"|"achievements"|"locale"|"unknown", index: number|null, extension: string|null }}
  */
 export function parseSaveFileName(filename) {
   const base = String(filename || "")
     .replace(/^.*[\\/]/, "")
     .trim();
   const match = base.match(
-    /^(global|config|file(\d+))(?:\.(rpgsave|rmmzsave))?$/i,
+    /^(global|config|achievements|locale|file(\d+))(?:\.(rpgsave|rmmzsave))?$/i,
   );
   if (!match) {
     return { kind: "unknown", index: null, extension: null };
@@ -261,6 +261,12 @@ export function parseSaveFileName(filename) {
   }
   if (/^config$/i.test(name)) {
     return { kind: "config", index: null, extension };
+  }
+  if (/^achievements$/i.test(name)) {
+    return { kind: "achievements", index: null, extension };
+  }
+  if (/^locale$/i.test(name)) {
+    return { kind: "locale", index: null, extension };
   }
   return {
     kind: "file",
@@ -336,6 +342,185 @@ export function extractMzGameId(slots) {
 }
 
 /**
+ * Extract a savefile id from a browser storage key.
+ * @param {string} key
+ * @returns {number|null}
+ */
+export function extractSavefileIdFromKey(key) {
+  const mvMatch = key.match(/^RPG File(\d+)$/i);
+  if (mvMatch) return parseInt(mvMatch[1], 10);
+
+  const mzMatch = key.match(/^rmmzsave\.\d+\.file(\d+)$/i);
+  if (mzMatch) return parseInt(mzMatch[1], 10);
+
+  return null;
+}
+
+/**
+ * Format RPG Maker playtime from frame count.
+ * @param {number} frames
+ * @returns {string}
+ */
+export function formatPlaytimeFromFrames(frames) {
+  const totalSeconds = Math.floor(Number(frames || 0) / 60);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+}
+
+/**
+ * Build save-menu metadata from imported save contents.
+ * Mirrors RPG Maker's DataManager.makeSavefileInfo output.
+ * @param {object} contents
+ * @returns {{ title: string, characters: Array<Array<string|number>>, faces: Array<Array<string|number>>, playtime: string, timestamp: number }}
+ */
+export function buildSavefileInfoFromContents(contents) {
+  const party = contents?.party;
+  const actors = contents?.actors;
+  const system = contents?.system;
+  const actorIds = party?._actors || [];
+
+  const characters = [];
+  const faces = [];
+  for (const id of actorIds) {
+    const actor = actors?.[String(id)] ?? actors?.[id];
+    if (!actor) continue;
+    characters.push([
+      actor._characterName ?? "",
+      actor._characterIndex ?? 0,
+    ]);
+    faces.push([actor._faceName ?? "", actor._faceIndex ?? 0]);
+  }
+
+  return {
+    title: system?._gameTitle ?? system?.gameTitle ?? "",
+    characters,
+    faces,
+    playtime: formatPlaytimeFromFrames(system?._framesOnSave ?? 0),
+    timestamp: Date.now(),
+  };
+}
+
+/**
+ * Insert or replace one entry in the global save index array.
+ * @param {Array<*>} globalInfo
+ * @param {number} savefileId
+ * @param {object} entry
+ * @returns {Array<*>}
+ */
+export function setGlobalInfoEntry(globalInfo, savefileId, entry) {
+  const info = Array.isArray(globalInfo) ? [...globalInfo] : [];
+  info[savefileId] = entry;
+  return info;
+}
+
+/**
+ * Resolve the browser storage key for the global save index.
+ * @param {Array<{key: string}>} slots
+ * @param {string} format
+ * @returns {{ key: string, source: string, encoding?: string } | null}
+ */
+export function resolveGlobalTarget(slots, format) {
+  const mzGameId = extractMzGameId(slots);
+  if (format === "zlib" || (mzGameId && format !== "lzstring")) {
+    if (!mzGameId) return null;
+    return {
+      key: `rmmzsave.${mzGameId}.global`,
+      source: "indexedDB",
+      encoding: "string",
+    };
+  }
+  return { key: "RPG Global", source: "localStorage" };
+}
+
+/**
+ * Update the global save index after importing a slot file.
+ * @param {number} savefileId
+ * @param {object} saveContents
+ * @param {string|null|undefined} existingGlobalRaw
+ * @param {string} format
+ * @returns {Promise<string>}
+ */
+export async function prepareUpdatedGlobalRaw(
+  savefileId,
+  saveContents,
+  existingGlobalRaw,
+  format,
+) {
+  let globalInfo = [];
+  if (existingGlobalRaw) {
+    const decoded = await decodeSaveData(existingGlobalRaw);
+    if (decoded && Array.isArray(decoded.data)) {
+      globalInfo = decoded.data;
+    }
+  }
+
+  const entry = buildSavefileInfoFromContents(saveContents);
+  const updated = setGlobalInfoEntry(globalInfo, savefileId, entry);
+  return encodeSaveData(updated, format);
+}
+
+/** Plugin/auxiliary save files mapped from desktop filenames to browser keys. */
+export const AUXILIARY_SAVE_TARGETS = {
+  achievements: {
+    match: /achievement/i,
+    mvDefault: "Achievement-Game",
+  },
+  locale: {
+    match: /^locale$/i,
+    mvDefault: "locale",
+  },
+};
+
+/**
+ * @param {string} key
+ * @returns {boolean}
+ */
+export function isFileSlotKey(key) {
+  return /^RPG File\d+$/i.test(key) || /^rmmzsave\.\d+\.file\d+$/i.test(key);
+}
+
+/**
+ * Resolve import target for plugin auxiliary saves like achievements.rpgsave.
+ * @param {"achievements"|"locale"} name
+ * @param {Array<{key: string, source: string, encoding?: string}>} slots
+ * @param {boolean} preferMz
+ * @param {boolean} preferMv
+ * @returns {{ key: string, source: string, encoding?: string, guessed?: boolean } | null}
+ */
+export function resolveAuxiliaryImportTarget(name, slots, preferMz, preferMv) {
+  const config = AUXILIARY_SAVE_TARGETS[name];
+  if (!config) return null;
+
+  if (preferMz && !preferMv) {
+    const mzGameId = extractMzGameId(slots);
+    if (!mzGameId) return null;
+    return {
+      key: `rmmzsave.${mzGameId}.${name}`,
+      source: "indexedDB",
+      encoding: "string",
+    };
+  }
+
+  const existing = slots.find((slot) => config.match.test(slot.key));
+  if (existing) {
+    return {
+      key: existing.key,
+      source: existing.source,
+      encoding: existing.encoding,
+    };
+  }
+
+  return {
+    key: config.mvDefault,
+    source: "localStorage",
+    guessed: true,
+  };
+}
+
+/**
  * Resolve where an imported save file should be written.
  * Uses the selected slot, filename, detected format, and existing slots.
  * @param {{ kind: string, index: number|null, extension: string|null }} parsed
@@ -345,7 +530,14 @@ export function extractMzGameId(slots) {
  * @returns {{ key: string, source: string, encoding?: string } | null}
  */
 export function resolveImportTarget(parsed, slots, format, selectedSlotKey) {
-  if (selectedSlotKey) {
+  const useSelectedSlot =
+    selectedSlotKey &&
+    (parsed.kind === "file" ||
+      parsed.kind === "unknown" ||
+      (["achievements", "locale"].includes(parsed.kind) &&
+        !isFileSlotKey(selectedSlotKey)));
+
+  if (useSelectedSlot) {
     const existing = slots.find((slot) => slot.key === selectedSlotKey);
     if (existing) {
       return {
@@ -354,7 +546,7 @@ export function resolveImportTarget(parsed, slots, format, selectedSlotKey) {
         encoding: existing.encoding,
       };
     }
-    if (/^RPG\s+(File\d+|Global)$/i.test(selectedSlotKey)) {
+    if (/^RPG\s+(File\d+|Global|Config)$/i.test(selectedSlotKey)) {
       return { key: selectedSlotKey, source: "localStorage" };
     }
     if (/^rmmzsave\.\d+\./i.test(selectedSlotKey)) {
@@ -363,6 +555,9 @@ export function resolveImportTarget(parsed, slots, format, selectedSlotKey) {
         source: "indexedDB",
         encoding: format === "zlib" ? "string" : undefined,
       };
+    }
+    if (["achievements", "locale"].includes(parsed.kind)) {
+      return { key: selectedSlotKey, source: "localStorage" };
     }
   }
 
@@ -375,6 +570,10 @@ export function resolveImportTarget(parsed, slots, format, selectedSlotKey) {
     parsed.extension === "rpgsave" ||
     format === "lzstring" ||
     (!preferMz && !mzGameId);
+
+  if (parsed.kind === "achievements" || parsed.kind === "locale") {
+    return resolveAuxiliaryImportTarget(parsed.kind, slots, preferMz, preferMv);
+  }
 
   if (parsed.kind === "global") {
     if (preferMz && !preferMv) {
@@ -389,12 +588,15 @@ export function resolveImportTarget(parsed, slots, format, selectedSlotKey) {
   }
 
   if (parsed.kind === "config") {
-    if (!mzGameId) return null;
-    return {
-      key: `rmmzsave.${mzGameId}.config`,
-      source: "indexedDB",
-      encoding: "string",
-    };
+    if (preferMz && !preferMv) {
+      if (!mzGameId) return null;
+      return {
+        key: `rmmzsave.${mzGameId}.config`,
+        source: "indexedDB",
+        encoding: "string",
+      };
+    }
+    return { key: "RPG Config", source: "localStorage" };
   }
 
   if (parsed.kind === "file" && parsed.index !== null) {
@@ -413,6 +615,26 @@ export function resolveImportTarget(parsed, slots, format, selectedSlotKey) {
   }
 
   return null;
+}
+
+/**
+ * @param {string} fileName
+ * @param {{ key: string }} target
+ * @param {{ kind: string }} parsed
+ * @returns {string}
+ */
+function buildImportConfirmMessage(fileName, target, parsed) {
+  let message =
+    `${fileName} nach „${target.key}“ importieren?\n\n` +
+    "Bestehende Daten werden überschrieben.";
+  if (parsed.kind === "file") {
+    message +=
+      "\n\nDer Slot wird zusätzlich im Global-Index registriert, damit er im Spielmenü erscheint.";
+  } else if (parsed.kind === "achievements" && target.guessed) {
+    message +=
+      "\n\nEs wird der Standard-Schlüssel für Achievement-Plugins verwendet. Wenn das Spiel einen anderen Schlüssel nutzt, wähle ihn oben in der Liste.";
+  }
+  return message;
 }
 
 /**
@@ -468,8 +690,7 @@ async function importSaveFile(file) {
     }
 
     const confirmed = await confirmImport(
-      `${file.name} nach „${target.key}“ importieren?\n\n` +
-        "Bestehende Daten in diesem Slot werden überschrieben.",
+      buildImportConfirmMessage(file.name, target, parsed),
     );
     if (!confirmed) {
       hideStatus();
@@ -489,6 +710,32 @@ async function importSaveFile(file) {
       throw new Error(getSaveErrorMessage(saveResult));
     }
 
+    let globalTargetKey = "";
+    if (parsed.kind === "file") {
+      const savefileId =
+        extractSavefileIdFromKey(target.key) ?? parsed.index ?? null;
+      const globalTarget = resolveGlobalTarget(slots, decoded.format);
+      if (savefileId !== null && globalTarget) {
+        const existingGlobalRaw = slotCache.get(globalTarget.key)?.raw ?? null;
+        const globalRaw = await prepareUpdatedGlobalRaw(
+          savefileId,
+          decoded.data,
+          existingGlobalRaw,
+          decoded.format,
+        );
+        const globalResult = await send("setRpgMakerSave", {
+          key: globalTarget.key,
+          source: globalTarget.source,
+          raw: globalRaw,
+          encoding: globalTarget.encoding,
+        });
+        if (!globalResult || globalResult.success !== true) {
+          throw new Error(getSaveErrorMessage(globalResult));
+        }
+        globalTargetKey = globalTarget.key;
+      }
+    }
+
     await loadSlots();
 
     if (select) {
@@ -501,7 +748,9 @@ async function importSaveFile(file) {
         file.name +
         " nach " +
         target.key +
-        " importiert! Lade das Spiel neu, um den Stand zu laden.",
+        " importiert!" +
+        (globalTargetKey ? " Global-Index (" + globalTargetKey + ") aktualisiert." : "") +
+        " Lade das Spiel neu, um den Stand zu laden.",
       "success",
     );
   } catch (e) {
