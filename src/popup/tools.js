@@ -1,5 +1,9 @@
 import { detectAndShowPresets, getLastDetection } from "./engine-detect.js";
 import { getActiveTab } from "./communication.js";
+import {
+  setupGalleryUnlockerListeners,
+  updateGalleryUnlockerVisibility,
+} from "./gallery-unlocker-ui.js";
 
 function isRpgMakerEngine() {
   const detection = getLastDetection();
@@ -49,12 +53,15 @@ export function setupToolsEventListeners() {
         await detectAndShowPresets("enginePresetsTools");
         updateSaveEditorVisibility();
         updateRpgDataEditorVisibility();
+        updateGalleryUnlockerVisibility(isRpgMakerEngine());
       } finally {
         detectBtn.disabled = false;
         detectBtn.textContent = "🔍 Engine erkennen";
       }
     });
   }
+
+  setupGalleryUnlockerListeners();
 
   const saveEditorBtn = document.getElementById("openSaveEditor");
   if (saveEditorBtn) {
@@ -72,6 +79,7 @@ export function setupToolsEventListeners() {
     detectAndShowPresets("enginePresetsTools");
     updateSaveEditorVisibility();
     updateRpgDataEditorVisibility();
+    updateGalleryUnlockerVisibility(isRpgMakerEngine());
   }
 }
 
@@ -92,4 +100,5 @@ export function updateRpgDataEditorVisibility() {
   const isRpg = isRpgMakerEngine();
   toggleGroupVisibility("rpgDataEditorGroup", isRpg);
   document.body.classList.toggle("engine-rpgmaker", isRpg);
+  updateGalleryUnlockerVisibility(isRpg);
 }

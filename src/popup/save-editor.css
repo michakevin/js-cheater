@@ -73,6 +73,10 @@ body {
   background: #e9ecef;
 }
 
+.hidden {
+  display: none !important;
+}
+
 .toolbar-actions {
   display: flex;
   gap: 6px;
@@ -110,6 +114,73 @@ body {
 .btn-save:disabled {
   background: #95a5a6;
   cursor: not-allowed;
+}
+
+/* ---- Import dialog (shared with popup/dialog.js) ---- */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog-box {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+  min-width: 260px;
+  max-width: 420px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.dialog-title {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.dialog-message {
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 12px;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dialog-btn {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.dialog-btn-cancel {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.dialog-btn-cancel:hover {
+  background: #ccc;
+}
+
+.dialog-btn-confirm {
+  background: #3498db;
+  color: #fff;
+}
+
+.dialog-btn-confirm:hover {
+  background: #2980b9;
 }
 
 /* ---- Search Bar ---- */

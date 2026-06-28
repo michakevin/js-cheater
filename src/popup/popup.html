@@ -225,6 +225,26 @@
               🎮 Spielwerte & Items öffnen
             </button>
           </div>
+
+          <!-- Gallery-Unlocker (nur bei RPG Maker Engines sichtbar) -->
+          <div id="galleryUnlockerGroup" class="tool-group hidden">
+            <h3 class="tool-group-title">🖼 Galerie freischalten</h3>
+            <p class="tool-group-description">
+              Schaltet CG/Recall-Galerien in RPG Maker MV/MZ live frei.
+              Erst werden bekannte Plugins versucht, dann namensbasierte
+              Schalter, optional ein freier ID-Bereich. Erfordert aktiven
+              Scanner.
+            </p>
+            <button id="analyzeGalleryBtn" class="btn-save-editor">
+              🔍 Galerie analysieren
+            </button>
+            <div
+              id="galleryUnlockerStatus"
+              class="gallery-unlocker-status hidden"
+              aria-live="polite"
+            ></div>
+            <div id="galleryUnlockerResult" class="gallery-unlocker-result hidden"></div>
+          </div>
         </div>
 
         <!-- Editor Tab (nur in breiter Sidebar + RPG Maker Engine sichtbar) -->

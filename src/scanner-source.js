@@ -68,6 +68,15 @@ import { createScanner } from "./scanner-core.js";
           case "readPath":
             result = window.__cheatScanner__.readPath(data.path);
             break;
+          case "analyzeGallery":
+            result = window.__cheatScanner__.analyzeGallery(data);
+            break;
+          case "unlockGallery":
+            result = window.__cheatScanner__.unlockGallery(data);
+            break;
+          case "previewGallery":
+            result = window.__cheatScanner__.previewGallery(data);
+            break;
           case "test":
             result = window.__cheatScanner__.test();
             break;

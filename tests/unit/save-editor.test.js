@@ -2,6 +2,10 @@ import {
   detectSaveSlots,
   decodeSaveData,
   encodeSaveData,
+  parseSaveFileName,
+  arrayBufferToSaveRaw,
+  extractMzGameId,
+  resolveImportTarget,
 } from "../../src/popup/save-editor.js";
 import { compressToBase64 } from "../../src/popup/lz-string.js";
 
@@ -105,5 +109,112 @@ describe("encodeSaveData", () => {
     const data = { gold: 1000 };
     const encoded = await encodeSaveData(data, "json");
     expect(encoded).toBe(JSON.stringify(data));
+  });
+});
+
+describe("parseSaveFileName", () => {
+  test("parses MV save slot filenames", () => {
+    expect(parseSaveFileName("file6.rpgsave")).toEqual({
+      kind: "file",
+      index: 6,
+      extension: "rpgsave",
+    });
+    expect(parseSaveFileName("C:\\Downloads\\file1.rpgsave")).toEqual({
+      kind: "file",
+      index: 1,
+      extension: "rpgsave",
+    });
+  });
+
+  test("parses MZ save slot filenames", () => {
+    expect(parseSaveFileName("file0.rmmzsave")).toEqual({
+      kind: "file",
+      index: 0,
+      extension: "rmmzsave",
+    });
+    expect(parseSaveFileName("global.rmmzsave")).toEqual({
+      kind: "global",
+      index: null,
+      extension: "rmmzsave",
+    });
+    expect(parseSaveFileName("config.rmmzsave")).toEqual({
+      kind: "config",
+      index: null,
+      extension: "rmmzsave",
+    });
+  });
+
+  test("returns unknown for unrelated filenames", () => {
+    expect(parseSaveFileName("backup.txt")).toEqual({
+      kind: "unknown",
+      index: null,
+      extension: null,
+    });
+  });
+});
+
+describe("arrayBufferToSaveRaw", () => {
+  test("reads MV saves as trimmed UTF-8 text", () => {
+    const bytes = Uint8Array.from([32, 32, 115, 97, 118, 101, 45, 100, 97, 116, 97, 32, 32]);
+    const raw = arrayBufferToSaveRaw(bytes.buffer);
+    expect(raw).toBe("save-data");
+  });
+
+  test("reads MZ saves as binary strings", () => {
+    const bytes = new Uint8Array([0x78, 0x01, 0x03, 0x04]);
+    const raw = arrayBufferToSaveRaw(bytes.buffer);
+    expect(raw).toBe("\x78\x01\x03\x04");
+  });
+});
+
+describe("resolveImportTarget", () => {
+  const mzSlots = [
+    { key: "rmmzsave.12345.file0", source: "indexedDB", encoding: "string" },
+    { key: "rmmzsave.12345.config", source: "indexedDB", encoding: "string" },
+  ];
+
+  test("maps MV filenames to localStorage keys", () => {
+    expect(
+      resolveImportTarget(
+        parseSaveFileName("file6.rpgsave"),
+        [],
+        "lzstring",
+      ),
+    ).toEqual({
+      key: "RPG File6",
+      source: "localStorage",
+    });
+  });
+
+  test("maps MZ filenames to indexedDB keys using existing game id", () => {
+    expect(
+      resolveImportTarget(
+        parseSaveFileName("file2.rmmzsave"),
+        mzSlots,
+        "zlib",
+      ),
+    ).toEqual({
+      key: "rmmzsave.12345.file2",
+      source: "indexedDB",
+      encoding: "string",
+    });
+  });
+
+  test("uses the selected slot when provided", () => {
+    expect(
+      resolveImportTarget(
+        parseSaveFileName("file6.rpgsave"),
+        [{ key: "RPG File3", source: "localStorage", raw: "" }],
+        "lzstring",
+        "RPG File3",
+      ),
+    ).toEqual({
+      key: "RPG File3",
+      source: "localStorage",
+    });
+  });
+
+  test("extracts MZ game id from slot keys", () => {
+    expect(extractMzGameId(mzSlots)).toBe("12345");
   });
 });

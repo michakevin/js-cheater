@@ -216,6 +216,94 @@
           background: #7d3c98;
         }
 
+        /* Gallery unlocker */
+        .gallery-tier {
+          background: #2a2a2a;
+          border-color: #444;
+        }
+
+        .gallery-tier.is-available {
+          background: #1f3a2a;
+          border-color: #2e6b41;
+        }
+
+        .gallery-tier-desc {
+          color: #bbb;
+        }
+
+        .gallery-tier-sample {
+          background: rgba(255, 255, 255, 0.05);
+          color: #aaa;
+        }
+
+        .gallery-tier-warning {
+          color: #f1a64c;
+        }
+
+        .gallery-unlocker-status.status-success {
+          background: #1e3a28;
+          color: #a8e6b8;
+          border-color: #2e6b41;
+        }
+
+        .gallery-unlocker-status.status-error {
+          background: #3a1e1e;
+          color: #f5a8a8;
+          border-color: #6b2e2e;
+        }
+
+        .gallery-unlocker-status.status-info {
+          background: #1e2f3a;
+          color: #a8d8f1;
+          border-color: #2e5a6b;
+        }
+
+        .gallery-tier-risk {
+          background: #3a3218;
+          border-color: #8a7020;
+        }
+
+        .gallery-tier-risk-text {
+          color: #f1d98a;
+        }
+
+        .gallery-tier-range-label {
+          color: #bbb;
+        }
+
+        .gallery-tier-range-meta {
+          color: #999;
+        }
+
+        .gallery-tier-hint {
+          color: #7dcea0;
+        }
+
+        .gallery-tier-preview {
+          background: rgba(255, 255, 255, 0.05);
+          color: #ccc;
+        }
+
+        .gallery-tier-preview.is-warning {
+          background: #3a3218;
+          color: #f1d98a;
+          border-color: #8a7020;
+        }
+
+        .gallery-tier-filter-input {
+          background: #1e1e1e;
+          color: #eee;
+          border: 1px solid #555;
+        }
+
+        .gallery-tier-btn-secondary {
+          background: #4a5866;
+        }
+
+        .gallery-tier-btn-secondary:hover {
+          background: #5d6d7e;
+        }
+
         /* Dialog */
         .dialog-box {
           background: #2a2a2a;

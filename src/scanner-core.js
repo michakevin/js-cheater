@@ -1,4 +1,5 @@
 import { parsePath } from "./parse-path.js";
+import { analyzeGallery, unlockGallery, previewGallery } from "./gallery-unlocker.js";
 
 // Path parsing utility function
 
@@ -833,6 +834,46 @@ export function createScanner(DEBUG = false) {
           obj = obj[pathParts[i]];
         }
         return { value: obj };
+      } catch (error) {
+        return { error: error.message };
+      }
+    },
+
+    analyzeGallery: function (data) {
+      try {
+        return analyzeGallery({ win: window, systemData: data?.systemData });
+      } catch (error) {
+        return { error: error.message };
+      }
+    },
+
+    unlockGallery: function (data) {
+      try {
+        return unlockGallery(
+          { win: window, systemData: data?.systemData },
+          {
+            tier: data?.tier,
+            range: data?.range,
+            nameFilter: data?.nameFilter,
+            targets: data?.targets,
+          },
+        );
+      } catch (error) {
+        return { error: error.message };
+      }
+    },
+
+    previewGallery: function (data) {
+      try {
+        return previewGallery(
+          { win: window, systemData: data?.systemData },
+          {
+            type: data?.type,
+            range: data?.range,
+            nameFilter: data?.nameFilter,
+            targets: data?.targets,
+          },
+        );
       } catch (error) {
         return { error: error.message };
       }

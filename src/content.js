@@ -89,6 +89,24 @@
       return this.sendCommand("readPath", { path });
     },
 
+    async analyzeGallery(systemData) {
+      return this.sendCommand("analyzeGallery", { systemData });
+    },
+
+    async unlockGallery({ tier, range, systemData, nameFilter, targets }) {
+      return this.sendCommand("unlockGallery", {
+        tier,
+        range,
+        systemData,
+        nameFilter,
+        targets,
+      });
+    },
+
+    async previewGallery(payload) {
+      return this.sendCommand("previewGallery", payload);
+    },
+
     async test() {
       // Short timeout for setup polling, but not too short for slower pages.
       return this.sendCommand("test", {}, 1500);
@@ -113,6 +131,16 @@
     unfreeze: (msg) => API.unfreezeByPath(msg.path),
     detectEngine: () => API.detectEngine(),
     readPath: (msg) => API.readPath(msg.path),
+    analyzeGallery: (msg) => API.analyzeGallery(msg.systemData),
+    unlockGallery: (msg) =>
+      API.unlockGallery({
+        tier: msg.tier,
+        range: msg.range,
+        systemData: msg.systemData,
+        nameFilter: msg.nameFilter,
+        targets: msg.targets,
+      }),
+    previewGallery: (msg) => API.previewGallery(msg),
     getLocalStorage: () => {
       const data = {};
       for (let i = 0; i < localStorage.length; i++) {

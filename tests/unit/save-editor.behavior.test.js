@@ -275,4 +275,83 @@ describe("save-editor behavior regressions", () => {
     expect(nameRow.classList.contains("search-match")).toBe(false);
     expect(document.getElementById("searchCount").textContent).toBe("");
   });
+
+  test("importing a save file writes it to the resolved browser slot", async () => {
+    const importedRaw = compressToBase64(JSON.stringify({ gold: 999 }));
+    const sentCommands = [];
+
+    globalThis.chrome = {
+      tabs: {
+        sendMessage: jest.fn((tabId, message, callback) => {
+          sentCommands.push(message);
+          if (message.cmd === "getRpgMakerSaves") {
+            callback({
+              slots: [
+                { key: "RPG File1", source: "localStorage", raw: "old" },
+              ],
+            });
+            return;
+          }
+          if (message.cmd === "setRpgMakerSave") {
+            callback({ success: true });
+            return;
+          }
+          callback(null);
+        }),
+      },
+      runtime: {},
+    };
+
+    document.body.innerHTML = `
+      <div class="editor-toolbar">
+        <select id="slotSelect"><option value="">--</option></select>
+        <button id="refreshSlots" type="button">refresh</button>
+        <button id="importSave" type="button">import</button>
+        <input id="importSaveInput" type="file" />
+        <button id="saveChanges" type="button" disabled>save</button>
+        <button id="expandAll" type="button">expand</button>
+        <button id="collapseAll" type="button">collapse</button>
+      </div>
+      <div id="searchBar" class="hidden">
+        <input id="searchInput" />
+        <span id="searchCount"></span>
+      </div>
+      <div id="statusMessage" class="hidden"></div>
+      <div id="editorContent"></div>
+    `;
+    window.history.replaceState(
+      {},
+      "",
+      "http://localhost/src/popup/save-editor.html?tabId=1",
+    );
+
+    await import("../../src/popup/save-editor.js");
+    document.dispatchEvent(new Event("DOMContentLoaded"));
+    await settleAsyncWork();
+
+    const input = document.getElementById("importSaveInput");
+    const file = new File([importedRaw], "file6.rpgsave", {
+      type: "application/octet-stream",
+    });
+    Object.defineProperty(input, "files", { value: [file] });
+    input.dispatchEvent(new Event("change"));
+
+    for (let attempt = 0; attempt < 20; attempt++) {
+      await settleAsyncWork();
+      const confirmBtn = document.querySelector(".dialog-btn-confirm");
+      if (confirmBtn) {
+        confirmBtn.click();
+        break;
+      }
+    }
+    await settleAsyncWork();
+
+    const writes = sentCommands.filter((m) => m.cmd === "setRpgMakerSave");
+    expect(writes).toHaveLength(1);
+    expect(writes[0]).toMatchObject({
+      key: "RPG File6",
+      source: "localStorage",
+      raw: importedRaw,
+    });
+  });
 });

@@ -8,6 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const sourcePath = resolve(__dirname, "../src/scanner-source.js");
 const corePath = resolve(__dirname, "../src/scanner-core.js");
 const parsePathFile = resolve(__dirname, "../src/parse-path.js");
+const galleryUnlockerFile = resolve(__dirname, "../src/gallery-unlocker.js");
 const debugPath = resolve(__dirname, "../src/debug.js");
 const destPath = resolve(__dirname, "../src/popup/scanner-code.js");
 let sourceCode = await readFile(sourcePath, "utf8");
@@ -34,6 +35,25 @@ const indentedParsePath = parsePath
   .map((l) => "  " + l)
   .join("\n");
 coreCode = coreCode.replace(insertMarker, `$1\n${indentedParsePath}`);
+
+// Inline gallery-unlocker.js: strip BUILD_STRIP markers and `export`
+// keywords, then drop the corresponding import in scanner-core.
+let galleryUnlocker = await readFile(galleryUnlockerFile, "utf8");
+galleryUnlocker = galleryUnlocker
+  .replace(/\/\*\s*BUILD_STRIP_START\s*\*\/[\s\S]*?\/\*\s*BUILD_STRIP_END\s*\*\//g, "")
+  .replace(/^export\s+/gm, "")
+  .trim();
+
+coreCode = coreCode.replace(
+  /^import\s+\{[^}]+\}\s+from\s+"\.\/gallery-unlocker\.js";\r?\n/m,
+  "",
+);
+
+const indentedGallery = galleryUnlocker
+  .split("\n")
+  .map((l) => "  " + l)
+  .join("\n");
+coreCode = coreCode.replace(insertMarker, `$1\n${indentedGallery}\n`);
 
 // make createScanner a regular function in the bundled code
 coreCode = coreCode.replace(/^export\s+(function\s+createScanner)/m, "$1");

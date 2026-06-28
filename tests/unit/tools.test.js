@@ -7,11 +7,13 @@ jest.mock("../../src/popup/engine-detect.js", () => ({
 
 jest.mock("../../src/popup/communication.js", () => ({
   getActiveTab: jest.fn().mockResolvedValue({ id: 1 }),
+  send: jest.fn().mockResolvedValue(null),
 }));
 
 import {
   setupToolsEventListeners,
   updateSaveEditorVisibility,
+  updateRpgDataEditorVisibility,
 } from "../../src/popup/tools.js";
 import { getLastDetection } from "../../src/popup/engine-detect.js";
 
@@ -21,6 +23,11 @@ describe("tools – save editor visibility", () => {
       <button id="detectEngine">🔍 Engine erkennen</button>
       <div id="openSaveEditor"></div>
       <div id="saveEditorGroup" class="hidden"></div>
+      <div id="rpgDataEditorGroup" class="hidden"></div>
+      <div id="galleryUnlockerGroup" class="hidden">
+        <button id="analyzeGalleryBtn"></button>
+        <div id="galleryUnlockerResult" class="hidden"></div>
+      </div>
     `;
     jest.clearAllMocks();
     globalThis.chrome = {
@@ -62,5 +69,22 @@ describe("tools – save editor visibility", () => {
     expect(btn).toBeTruthy();
     // Click the button to ensure no errors; the mock prevents real work
     btn.click();
+  });
+
+  test("shows gallery-unlocker group for rpgmaker engine", () => {
+    getLastDetection.mockReturnValue({
+      id: "rpgmaker-mv-mz",
+      name: "RPG Maker MV/MZ",
+    });
+    updateRpgDataEditorVisibility();
+    const group = document.getElementById("galleryUnlockerGroup");
+    expect(group.classList.contains("hidden")).toBe(false);
+  });
+
+  test("hides gallery-unlocker group for non-rpgmaker engine", () => {
+    getLastDetection.mockReturnValue({ id: "phaser", name: "Phaser" });
+    updateRpgDataEditorVisibility();
+    const group = document.getElementById("galleryUnlockerGroup");
+    expect(group.classList.contains("hidden")).toBe(true);
   });
 });
